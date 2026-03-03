@@ -28,8 +28,8 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Post-build: copy next from root node_modules (dereferencing pnpm symlinks)
-// so Amplify's post-build runtime check can find the 'next' dependency.
+// Next.js output: 'standalone' bundles all runtime deps into .next/standalone/,
+// eliminating pnpm symlink issues with Amplify's bundler.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -42,7 +42,6 @@ applications:
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
-            - mkdir -p node_modules && cp -rL ../../node_modules/next node_modules/next
       artifacts:
         baseDirectory: .next
         files:

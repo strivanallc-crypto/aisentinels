@@ -36,6 +36,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Standalone output: bundles all runtime deps into .next/standalone/ so
+  // Amplify WEB_COMPUTE can find them without relying on pnpm symlinks.
+  output: 'standalone',
   // WEB_COMPUTE platform on Amplify handles Next.js SSR natively
   async headers() {
     return [
