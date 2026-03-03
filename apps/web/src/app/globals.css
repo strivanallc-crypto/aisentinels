@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* ── Sentinel Design Tokens ─────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Brand */
+    --sentinel-blue: #2563eb;
+    --sentinel-blue-hover: #1d4ed8;
+    --sentinel-accent: #3b82f6;
+
+    /* Sidebar (dark shell) */
+    --sidebar-bg: #0f1117;
+    --sidebar-surface: #151a27;
+    --sidebar-border: #1e2130;
+    --sidebar-text: #9ca3af;
+    --sidebar-text-dim: #6b7280;
+    --sidebar-text-muted: #4b5563;
+    --sidebar-active-bg: rgba(37, 99, 235, 0.12);
+    --sidebar-active-text: #60a5fa;
+    --sidebar-active-icon: #3b82f6;
+
+    /* Content area */
+    --content-bg: #f8fafc;
+    --content-surface: #ffffff;
+    --content-border: #e5e7eb;
+    --content-text: #111827;
+    --content-text-muted: #6b7280;
+    --content-text-dim: #9ca3af;
+
+    /* shadcn/ui semantic vars (Sentinel override) */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 6%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --border: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.5rem;
+
+    /* Status */
+    --status-success: #16a34a;
+    --status-warning: #d97706;
+    --status-error: #dc2626;
+    --status-info: #2563eb;
+  }
+}
+
+body {
+  background: var(--content-bg);
+  color: var(--content-text);
+  font-family: var(--font-inter, Arial, Helvetica, sans-serif);
+}

@@ -1,0 +1,24 @@
+{
+  "name": "aisentinels",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "api:typecheck": "pnpm --filter @aisentinels/api typecheck",
+    "ai:typecheck": "pnpm --filter @aisentinels/ai-orchestrator typecheck",
+    "web:typecheck": "pnpm --filter @aisentinels/web typecheck",
+    "web:dev": "pnpm --filter @aisentinels/web dev",
+    "web:build": "pnpm --filter @aisentinels/web build",
+    "db:generate": "pnpm --filter @aisentinels/db generate",
+    "db:migrate": "pnpm --filter @aisentinels/db migrate",
+    "db:seed": "pnpm --filter @aisentinels/db seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "~5.7.0"
+  }
+}
