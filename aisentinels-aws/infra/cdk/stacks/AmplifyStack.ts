@@ -28,9 +28,9 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Post-build: pnpm deploy creates a flat node_modules (no symlinks) so Amplify's
-// bundler can resolve runtime dependencies. pnpm's default symlink layout works
-// for the build phase but breaks Amplify's post-build runtime check.
+// Post-build: dereference pnpm symlinks via cp -rL so Amplify's bundler can
+// resolve runtime dependencies. pnpm's default symlink layout works for the
+// build phase but breaks Amplify's post-build runtime check.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -43,8 +43,7 @@ applications:
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
-            - cd ../.. && pnpm --filter @aisentinels/web deploy --prod /tmp/deploy
-            - rm -rf node_modules && cp -r /tmp/deploy/node_modules ./node_modules
+            - mv node_modules node_modules_pnpm && cp -rL node_modules_pnpm node_modules && rm -rf node_modules_pnpm
       artifacts:
         baseDirectory: .next
         files:
