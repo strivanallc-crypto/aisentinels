@@ -28,8 +28,9 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Next.js output: 'standalone' bundles all runtime deps into .next/standalone/,
-// eliminating pnpm symlink issues with Amplify's bundler.
+// Post-install: dereference pnpm symlinks in BOTH app-level and root node_modules
+// so Amplify's post-build bundler can find the 'next' package (it can't follow
+// pnpm's symlink chains). Done in preBuild since build phase is read-only.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -39,6 +40,30 @@ applications:
           commands:
             - npm install -g pnpm@9.15.0
             - cd ../.. && pnpm install --frozen-lockfile
+            - |
+              echo "=== Dereferencing pnpm symlinks for Amplify compatibility ==="
+              # Dereference in app-level node_modules
+              if [ -d node_modules ]; then
+                for link in $(find node_modules -maxdepth 1 -type l 2>/dev/null); do
+                  target=$(readlink -f "$link")
+                  if [ -d "$target" ]; then rm "$link" && cp -r "$target" "$link"; fi
+                done
+                # Handle scoped packages (@scope/pkg)
+                for scope_dir in node_modules/@*; do
+                  [ -d "$scope_dir" ] || continue
+                  for link in $(find "$scope_dir" -maxdepth 1 -type l 2>/dev/null); do
+                    target=$(readlink -f "$link")
+                    if [ -d "$target" ]; then rm "$link" && cp -r "$target" "$link"; fi
+                  done
+                done
+              fi
+              # Also dereference 'next' at root level (Amplify may check either location)
+              cd ../..
+              if [ -L node_modules/next ]; then
+                target=$(readlink -f node_modules/next)
+                rm node_modules/next && cp -r "$target" node_modules/next
+              fi
+              echo "=== Symlink dereferencing complete ==="
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
