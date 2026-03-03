@@ -27,25 +27,27 @@ export interface AmplifyStackProps extends cdk.StackProps {
   envName: string;
 }
 
-// Build spec — pnpm monorepo, apps/web root, Next.js SSR output
+// Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
 const BUILD_SPEC = `version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - npm install -g pnpm@9.15.0
-        - pnpm install --frozen-lockfile
-    build:
-      commands:
-        - pnpm --filter @aisentinels/web run build
-  artifacts:
-    baseDirectory: apps/web/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - apps/web/.next/cache/**/*
-      - node_modules/**/*
+applications:
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install -g pnpm@9.15.0
+            - cd ../.. && pnpm install --frozen-lockfile
+        build:
+          commands:
+            - cd ../.. && pnpm --filter @aisentinels/web run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - ../../node_modules/**/*
 `;
 
 export class AmplifyStack extends cdk.Stack {
