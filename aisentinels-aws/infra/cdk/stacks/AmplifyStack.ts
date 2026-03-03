@@ -28,6 +28,10 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
+// node-linker=hoisted: Amplify's bundler cannot follow pnpm symlinks, so we
+// flatten node_modules at build time (does not affect local dev).
+// Post-build symlink: Amplify checks apps/web/node_modules for 'next' at runtime;
+// with hoisted layout all deps live at root, so we symlink to satisfy the check.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -36,10 +40,11 @@ applications:
         preBuild:
           commands:
             - npm install -g pnpm@9.15.0
-            - cd ../.. && pnpm install --frozen-lockfile
+            - cd ../.. && echo "node-linker=hoisted" > .npmrc && pnpm install --frozen-lockfile
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
+            - rm -rf node_modules 2>/dev/null; ln -s ../../node_modules node_modules
       artifacts:
         baseDirectory: .next
         files:
