@@ -28,8 +28,9 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Amplify WEB_COMPUTE checks node_modules/next in the ARTIFACTS (not source tree).
-// We copy node_modules into .next/ after the build so it's included in artifacts.
+// Amplify's post-build check can't follow pnpm symlinks. Dereference the 'next'
+// symlink at the MONOREPO ROOT node_modules (where AMPLIFY_MONOREPO_APP_ROOT
+// points Amplify to check). Also dereference at app level for belt-and-suspenders.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -39,18 +40,29 @@ applications:
           commands:
             - npm install -g pnpm@9.15.0
             - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
+            - |
+              echo "=== Dereferencing pnpm symlinks for Amplify ==="
+              # Dereference at ROOT node_modules (Amplify checks here via AMPLIFY_MONOREPO_APP_ROOT)
+              cd ../..
+              for pkg in next react react-dom; do
+                if [ -L "node_modules/$pkg" ]; then
+                  REAL=$(readlink -f "node_modules/$pkg")
+                  rm "node_modules/$pkg"
+                  cp -r "$REAL" "node_modules/$pkg"
+                  echo "Dereferenced root/node_modules/$pkg"
+                fi
+              done
+              cd apps/web
+              # Also ensure app-level node_modules/next exists
+              mkdir -p node_modules
+              if [ ! -d node_modules/next ]; then
+                cp -r ../../node_modules/next node_modules/next
+                echo "Copied next to apps/web/node_modules/"
+              fi
+              echo "=== Done ==="
         build:
           commands:
-            - cd ../.. && pnpm --filter @aisentinels/web run build && cd apps/web
-            - |
-              echo "Copying node_modules/next into .next/ for Amplify runtime check"
-              NEXT_REAL=$(find ../../node_modules/.pnpm -maxdepth 3 -path "*/node_modules/next" -type d 2>/dev/null | head -1)
-              if [ -n "$NEXT_REAL" ]; then
-                mkdir -p .next/node_modules
-                cp -r "$NEXT_REAL" .next/node_modules/next
-                echo "SUCCESS: .next/node_modules/next created"
-                ls .next/node_modules/next/package.json
-              fi
+            - cd ../.. && pnpm --filter @aisentinels/web run build
       artifacts:
         baseDirectory: .next
         files:
