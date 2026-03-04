@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, type RefObject } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,23 +8,18 @@ import {
   Shield,
   Menu,
   X,
-  Clock,
-  DollarSign,
-  FileStack,
-  SearchX,
-  Zap,
-  FileText,
+  Check,
+  ChevronDown,
+  ArrowRight,
+  Layers,
   ClipboardCheck,
   Wrench,
-  Library,
-  LayoutDashboard,
   Upload,
   Sparkles,
   GitMerge,
   BadgeCheck,
-  Check,
-  ChevronDown,
   Lock,
+  Activity,
 } from 'lucide-react';
 import { Qualy } from '@/components/sentinels/qualy';
 import { Saffy } from '@/components/sentinels/saffy';
@@ -32,64 +27,184 @@ import { Envi } from '@/components/sentinels/envi';
 import { Risko } from '@/components/sentinels/risko';
 import { Doki } from '@/components/sentinels/doki';
 
-/* ─── FAQ Data ────────────────────────────────────────────────────────────── */
-const FAQ_ITEMS = [
+/* ─── Constants ───────────────────────────────────────────────────────────── */
+
+const SENTINELS = [
   {
-    q: 'What ISO standards do you support?',
-    a: 'AI Sentinels currently supports ISO 9001 (Quality), ISO 14001 (Environmental), ISO 27001 (Information Security), ISO 45001 (Occupational Health & Safety), and ISO 50001 (Energy Management). Our Unified Core Engine maps controls across all five standards simultaneously.',
+    name: 'Qualy',
+    standard: 'ISO 9001',
+    color: '#3b82f6',
+    role: 'Quality Management Agent',
+    Component: Qualy,
+    capabilities: [
+      'Document generation & control',
+      'Process audit automation',
+      'Customer satisfaction tracking',
+    ],
   },
   {
-    q: 'How is this different from hiring a consultant?',
-    a: 'Traditional consultants charge $50K+ and take 12-18 months. AI Sentinels uses artificial intelligence to do 80% of the heavy lifting\u2014document transformation, gap analysis, control mapping\u2014so you get audit-ready faster at a fraction of the cost. You still get expert guidance, but the AI accelerates everything.',
+    name: 'Envi',
+    standard: 'ISO 14001',
+    color: '#22c55e',
+    role: 'Environmental Management Agent',
+    Component: Envi,
+    capabilities: [
+      'Environmental impact assessment',
+      'Waste management audit',
+      'Regulatory compliance tracking',
+    ],
   },
   {
-    q: 'What does \u201cWrite Once, Comply Everywhere\u201d mean?',
-    a: 'ISO standards share a common Annex SL harmonized structure. When you create a document in AI Sentinels, our engine automatically maps it to every applicable standard. One policy can satisfy requirements across ISO 9001, 14001, 27001, 45001, and 50001 simultaneously.',
+    name: 'Saffy',
+    standard: 'ISO 45001',
+    color: '#f59e0b',
+    role: 'Safety Management Agent',
+    Component: Saffy,
+    capabilities: [
+      'Hazard identification & risk',
+      'Incident tracking & reporting',
+      'Safety audit automation',
+    ],
   },
   {
-    q: 'Is my data secure?',
-    a: 'Absolutely. AI Sentinels runs on AWS infrastructure with encryption at rest (AES-256 via KMS) and in transit (TLS 1.3). We use Aurora Serverless PostgreSQL with RDS Proxy, S3 Object Lock for compliance evidence, and follow SOC 2 architecture principles. Your data never leaves your dedicated tenant boundary.',
+    name: 'Risko',
+    standard: 'ISO 27001',
+    color: '#8b5cf6',
+    role: 'Information Security Agent',
+    Component: Risko,
+    capabilities: [
+      'Risk assessment & treatment',
+      'Access control audit',
+      'Data protection monitoring',
+    ],
   },
   {
-    q: 'Can I try before I buy?',
-    a: 'Yes! We offer a 14-day free trial with full access to the platform. No credit card required. Start with Document Studio Solo or jump straight into the full Compliance Platform\u2014you can upgrade or downgrade at any time.',
+    name: 'Doki',
+    standard: 'ISO 50001',
+    color: '#06b6d4',
+    role: 'Energy Management Agent',
+    Component: Doki,
+    capabilities: [
+      'Energy baseline tracking',
+      'EnPI calculation & reporting',
+      'Consumption optimization',
+    ],
   },
 ];
 
-/* ─── Reusable Sub-components ─────────────────────────────────────────────── */
+const FAQ_ITEMS = [
+  {
+    q: 'What ISO standards do you support?',
+    a: 'AI Sentinels supports ISO 9001 (Quality), ISO 14001 (Environmental), ISO 27001 (Information Security), ISO 45001 (Occupational Health & Safety), and ISO 50001 (Energy Management). Our Unified Core Engine maps controls across all five standards simultaneously.',
+  },
+  {
+    q: 'How is this different from hiring a consultant?',
+    a: 'Traditional consultants charge $50K+ and take 12\u201318 months. AI Sentinels deploys autonomous AI agents that handle 80% of the work\u2014document transformation, gap analysis, control mapping\u2014so you reach audit-readiness faster at a fraction of the cost.',
+  },
+  {
+    q: 'What does \u201cWrite Once, Comply Everywhere\u201d mean?',
+    a: 'ISO standards share a common Annex SL harmonized structure. When you create a document in AI Sentinels, our engine automatically maps it to every applicable standard. One policy can satisfy requirements across multiple ISO standards simultaneously.',
+  },
+  {
+    q: 'Is my data secure?',
+    a: 'AI Sentinels runs on AWS with encryption at rest (AES-256 via KMS) and in transit (TLS 1.3). We use Aurora Serverless PostgreSQL with RDS Proxy, S3 Object Lock for compliance evidence, and follow SOC 2 architecture principles. Your data never leaves your dedicated tenant boundary.',
+  },
+  {
+    q: 'Can I try before I buy?',
+    a: 'Yes. We offer a 14-day free trial with full platform access. No credit card required. Start with Compliance Starter or jump straight into Professional IMS\u2014upgrade or downgrade at any time.',
+  },
+];
+
+const STATS = [
+  '5 ISO Standards',
+  '90-Day Certification',
+  '66% Less Work',
+  '24/7 AI Monitoring',
+];
+
+const INDUSTRIES = [
+  'Manufacturing',
+  'Construction',
+  'Food & Beverage',
+  'Energy',
+  'Medical Devices',
+  'Logistics',
+];
+
+/* ─── Hooks ───────────────────────────────────────────────────────────────── */
+
+function useFadeIn(): RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
+
+function FadeIn({
+  children,
+  className = '',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useFadeIn();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: 0,
+        transform: 'translateY(32px)',
+        transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Sub-components ──────────────────────────────────────────────────────── */
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div
-      style={{ borderColor: 'var(--content-border)' }}
-      className="border-b last:border-b-0"
-    >
+    <div className="border-b border-white/5 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left text-base font-semibold transition-colors hover:text-blue-600"
-        style={{ color: open ? '#2563eb' : 'var(--content-text)' }}
+        className="flex w-full items-center justify-between gap-4 py-5 text-left text-base font-semibold text-gray-200 transition-colors hover:text-white"
       >
         {q}
         <ChevronDown
-          size={20}
-          className="shrink-0 transition-transform duration-200"
+          size={18}
+          className="shrink-0 text-gray-500 transition-transform duration-200"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
       </button>
       <div
-        className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: open ? '300px' : '0px',
-          opacity: open ? 1 : 0,
-        }}
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: open ? '300px' : '0px', opacity: open ? 1 : 0 }}
       >
-        <p
-          className="pb-5 text-sm leading-relaxed"
-          style={{ color: 'var(--content-text-muted)' }}
-        >
-          {a}
-        </p>
+        <p className="pb-5 text-sm leading-relaxed text-gray-400">{a}</p>
       </div>
     </div>
   );
@@ -99,59 +214,80 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { status } = useSession();
   const router = useRouter();
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (status === 'authenticated') router.replace('/dashboard');
   }, [status, router]);
 
+  const handleScroll = useCallback(() => {
+    setScrolled(window.scrollY > 20);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-inter, Inter, sans-serif)' }}>
-      {/* ─── NAVBAR ──────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur-md" style={{ borderColor: 'var(--content-border)' }}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          {/* Logo */}
+    <div
+      className="min-h-screen"
+      style={{
+        fontFamily: 'var(--font-inter, Inter, sans-serif)',
+        background: '#070b18',
+        color: '#e5e7eb',
+      }}
+    >
+      {/* ─── NAVBAR ───────────────────────────────────────────────────── */}
+      <nav
+        className="fixed left-0 right-0 top-0 z-50 transition-all duration-300"
+        style={{
+          background: scrolled ? 'rgba(7,11,24,0.92)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(16px)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+        }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <Shield size={28} className="text-blue-600" />
-            <span className="text-xl font-bold" style={{ color: 'var(--content-text)' }}>AI Sentinels</span>
+            <Shield size={26} className="text-blue-500" />
+            <span className="text-lg font-bold text-white">AI Sentinels</span>
           </Link>
 
-          {/* Desktop Links */}
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm font-medium transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              Features
-            </a>
-            <a href="#pricing" className="text-sm font-medium transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              Pricing
-            </a>
-            <a href="#faq" className="text-sm font-medium transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              FAQ
-            </a>
+            {[
+              ['Platform', '#platform'],
+              ['Sentinels', '#sentinels'],
+              ['Pricing', '#pricing'],
+            ].map(([label, href]) => (
+              <a
+                key={label}
+                href={href}
+                className="text-sm font-medium text-gray-400 transition-colors hover:text-white"
+              >
+                {label}
+              </a>
+            ))}
           </div>
 
-          {/* Desktop Buttons */}
           <div className="hidden items-center gap-3 md:flex">
             <Link
               href="/login"
-              className="rounded-xl border px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-50"
-              style={{ borderColor: 'var(--content-border)', color: 'var(--content-text)' }}
+              className="rounded-lg px-5 py-2 text-sm font-medium text-gray-300 transition-colors hover:text-white"
             >
               Log In
             </Link>
             <a
               href="#pricing"
-              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ background: 'var(--sentinel-blue)' }}
+              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500"
             >
               Book a Demo
             </a>
           </div>
 
-          {/* Mobile hamburger */}
           <button
-            className="md:hidden"
+            className="text-gray-400 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -159,32 +295,37 @@ export function LandingPage() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-t bg-white px-6 pb-6 pt-4 md:hidden" style={{ borderColor: 'var(--content-border)' }}>
+          <div
+            className="px-6 pb-6 pt-2 md:hidden"
+            style={{ background: 'rgba(7,11,24,0.98)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
             <div className="flex flex-col gap-4">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
-                Features
-              </a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
-                Pricing
-              </a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
-                FAQ
-              </a>
-              <div className="flex flex-col gap-3 pt-2">
+              {[
+                ['Platform', '#platform'],
+                ['Sentinels', '#sentinels'],
+                ['Pricing', '#pricing'],
+              ].map(([label, href]) => (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-medium text-gray-400"
+                >
+                  {label}
+                </a>
+              ))}
+              <div className="mt-2 flex flex-col gap-3">
                 <Link
                   href="/login"
-                  className="rounded-xl border py-2.5 text-center text-sm font-semibold"
-                  style={{ borderColor: 'var(--content-border)', color: 'var(--content-text)' }}
+                  className="rounded-lg border border-white/10 py-2.5 text-center text-sm font-medium text-gray-300"
                 >
                   Log In
                 </Link>
                 <a
                   href="#pricing"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-xl py-2.5 text-center text-sm font-semibold text-white"
-                  style={{ background: 'var(--sentinel-blue)' }}
+                  className="rounded-lg bg-blue-600 py-2.5 text-center text-sm font-semibold text-white"
                 >
                   Book a Demo
                 </a>
@@ -194,467 +335,560 @@ export function LandingPage() {
         )}
       </nav>
 
-      {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-12 px-6 py-20 md:flex-row md:py-28 lg:py-32">
-          {/* Text */}
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-              ISO Certification in{' '}
-              <span className="text-blue-400">90 Days</span>,{' '}
-              <br className="hidden sm:block" />
-              Not 18 Months
+      {/* ─── HERO ─────────────────────────────────────────────────────── */}
+      <section
+        className="relative flex min-h-screen items-center overflow-hidden pt-20"
+        style={{
+          background: 'linear-gradient(145deg, #070b18 0%, #0c1529 40%, #111d3a 70%, #0a1022 100%)',
+        }}
+      >
+        {/* Subtle radial glow */}
+        <div
+          className="pointer-events-none absolute right-0 top-1/4 h-[600px] w-[600px] rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' }}
+        />
+
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-16 px-6 py-20 md:flex-row lg:px-8">
+          {/* Text — 60% */}
+          <div className="flex-[3] text-center md:text-left">
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-4 py-1.5">
+              <Activity size={14} className="text-blue-400" />
+              <span className="text-xs font-medium text-blue-300">AI-Powered Compliance Platform</span>
+            </div>
+
+            <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[64px]">
+              Your AI Compliance Team.
+              <br />
+              <span className="text-gray-500">Always Audit-Ready.</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-blue-100/80 md:mx-0">
-              AI-powered compliance platform for manufacturing, construction, and energy.
-              One system for ISO 9001, 14001, 27001, 45001, and 50001.
+
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-gray-400 md:mx-0 md:text-xl">
+              Five autonomous AI agents manage ISO 9001, 14001, 27001, 45001, and
+              50001 — so you don&apos;t have to. One platform. Every standard.
+              Certification in 90 days.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row md:justify-start">
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row md:justify-start">
               <a
                 href="#pricing"
-                className="w-full rounded-xl px-8 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 sm:w-auto"
-                style={{ background: 'var(--sentinel-blue)' }}
+                className="w-full rounded-lg bg-blue-600 px-8 py-4 text-center text-sm font-semibold text-white transition-all hover:bg-blue-500 sm:w-auto"
               >
-                Book Your Free Demo
+                Book a Demo
               </a>
               <Link
                 href="/login"
-                className="w-full rounded-xl border border-white/20 px-8 py-3.5 text-center text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 px-6 py-4 text-sm font-medium text-gray-300 transition-colors hover:text-white sm:w-auto"
               >
                 Start Free Trial
+                <ArrowRight size={16} />
               </Link>
             </div>
-
-            {/* Trust Badges */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 md:justify-start">
-              {['Multi-Standard', 'AI-Powered', 'Audit-Ready'].map((badge) => (
-                <span key={badge} className="flex items-center gap-2 text-sm text-blue-200/70">
-                  <Check size={16} className="text-blue-400" />
-                  {badge}
-                </span>
-              ))}
-            </div>
           </div>
 
-          {/* Qualy Character */}
-          <div className="flex shrink-0 items-center justify-center">
+          {/* Visual — 40% */}
+          <div className="flex flex-[2] items-center justify-center">
             <div className="relative">
-              <div className="absolute -inset-8 rounded-full bg-blue-500/10 blur-2xl" />
-              <Qualy size={220} className="relative drop-shadow-2xl" />
+              <div
+                className="absolute -inset-12 rounded-full opacity-30 blur-3xl"
+                style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/sentinels-trio.png"
+                alt=""
+                width={480}
+                height={480}
+                className="relative hidden drop-shadow-2xl"
+                onLoad={(e) => {
+                  (e.target as HTMLImageElement).classList.remove('hidden');
+                  const fallback = (e.target as HTMLImageElement).nextElementSibling;
+                  if (fallback) (fallback as HTMLElement).classList.add('hidden');
+                }}
+              />
+              {/* Fallback: sentinel SVGs */}
+              <div className="relative flex items-end gap-3">
+                <Saffy size={100} className="translate-y-2 opacity-90" />
+                <Qualy size={140} className="opacity-100" />
+                <Envi size={100} className="translate-y-2 opacity-90" />
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Stats ticker */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-white/5 bg-black/20 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl items-center justify-center gap-8 overflow-x-auto px-6 py-4 md:gap-16">
+            {STATS.map((stat) => (
+              <span
+                key={stat}
+                className="shrink-0 text-xs font-medium uppercase tracking-wider text-gray-500"
+              >
+                {stat}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ─── PROBLEM / SOLUTION ──────────────────────────────────────────── */}
-      <section className="py-20 md:py-28" style={{ background: 'var(--content-bg)' }}>
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-3xl font-bold md:text-4xl" style={{ color: 'var(--content-text)' }}>
-            The Old Way vs The AI Sentinels Way
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base" style={{ color: 'var(--content-text-muted)' }}>
-            Traditional ISO certification is slow, expensive, and fragmented. We changed that.
+      {/* ─── SOCIAL PROOF BAR ─────────────────────────────────────────── */}
+      <section className="border-b border-white/5 py-14" style={{ background: '#080d1c' }}>
+        <div className="mx-auto max-w-7xl px-6 text-center lg:px-8">
+          <p className="mb-8 text-xs font-medium uppercase tracking-[0.2em] text-gray-600">
+            Trusted by forward-thinking manufacturers
           </p>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-            {/* Old Way */}
-            <div className="rounded-2xl border bg-red-50/50 p-8" style={{ borderColor: '#fecaca' }}>
-              <div className="mb-6 inline-block rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-700">
-                The Old Way
-              </div>
-              <ul className="space-y-5">
-                {[
-                  { icon: Clock, text: '12\u201318 months to certification' },
-                  { icon: DollarSign, text: '$50K+ in consultant fees' },
-                  { icon: FileStack, text: '100+ separate documents to manage' },
-                  { icon: SearchX, text: 'Manual gap analysis and control mapping' },
-                ].map((item) => (
-                  <li key={item.text} className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-red-100 p-2">
-                      <item.icon size={18} className="text-red-600" />
-                    </div>
-                    <span className="text-sm font-medium text-red-900">{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* AI Sentinels Way */}
-            <div className="rounded-2xl border bg-green-50/50 p-8" style={{ borderColor: '#bbf7d0' }}>
-              <div className="mb-6 inline-block rounded-xl bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
-                The AI Sentinels Way
-              </div>
-              <ul className="space-y-5">
-                {[
-                  { icon: Zap, text: '90 days to audit-ready' },
-                  { icon: DollarSign, text: 'Flat monthly fee, no surprises' },
-                  { icon: FileText, text: 'Unified document system across all standards' },
-                  { icon: Sparkles, text: 'AI-powered gap detection and remediation' },
-                ].map((item) => (
-                  <li key={item.text} className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-green-100 p-2">
-                      <item.icon size={18} className="text-green-600" />
-                    </div>
-                    <span className="text-sm font-medium text-green-900">{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+            {INDUSTRIES.map((ind) => (
+              <span key={ind} className="text-sm font-medium text-gray-600">
+                {ind}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ─── FEATURES GRID ───────────────────────────────────────────────── */}
-      <section id="features" className="scroll-mt-20 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-3xl font-bold md:text-4xl" style={{ color: 'var(--content-text)' }}>
-            Everything You Need to Get Certified
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base" style={{ color: 'var(--content-text-muted)' }}>
-            Six integrated modules that work together to streamline your entire compliance journey.
-          </p>
+      {/* ─── MEET YOUR SENTINELS ──────────────────────────────────────── */}
+      <section
+        id="sentinels"
+        className="scroll-mt-20 py-24 md:py-32"
+        style={{ background: '#0a0f1e' }}
+      >
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <FadeIn className="text-center">
+            <h2 className="text-3xl font-bold text-white md:text-5xl">
+              Meet Your Autonomous Compliance Team
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-400 md:text-lg">
+              Each Sentinel is an AI agent specialized in one ISO standard. They work
+              24/7 — auditing, generating documents, tracking compliance, and alerting
+              you to risks before auditors find them.
+            </p>
+          </FadeIn>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Sentinel cards — horizontal scroll on mobile */}
+          <div className="mt-16 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-5 md:overflow-visible">
+            {SENTINELS.map((s, i) => (
+              <FadeIn
+                key={s.name}
+                delay={i * 0.08}
+                className="w-[260px] shrink-0 snap-center md:w-auto"
+              >
+                <div
+                  className="group flex h-full flex-col rounded-2xl border border-white/5 p-6 transition-all duration-300 hover:border-white/10"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    borderTopColor: s.color,
+                    borderTopWidth: '2px',
+                  }}
+                >
+                  <div className="mb-4">
+                    <s.Component size={48} />
+                  </div>
+                  <h3 className="text-lg font-bold" style={{ color: s.color }}>
+                    {s.name}
+                  </h3>
+                  <span
+                    className="mt-1 inline-block self-start rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                    style={{
+                      color: s.color,
+                      background: `${s.color}15`,
+                      border: `1px solid ${s.color}30`,
+                    }}
+                  >
+                    {s.standard}
+                  </span>
+                  <p className="mt-3 text-sm text-gray-400">{s.role}</p>
+                  <ul className="mt-4 flex-1 space-y-2">
+                    {s.capabilities.map((c) => (
+                      <li
+                        key={c}
+                        className="flex items-start gap-2 text-xs leading-relaxed text-gray-500"
+                      >
+                        <Check size={12} className="mt-0.5 shrink-0" style={{ color: s.color }} />
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-5 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-[11px] font-medium text-gray-600">Active 24/7</span>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+
+          <FadeIn delay={0.3} className="mt-10 text-center">
+            <p className="text-sm font-medium tracking-wide text-gray-600">
+              Always on. Always compliant.
+            </p>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ─── PLATFORM SECTION ─────────────────────────────────────────── */}
+      <section
+        id="platform"
+        className="scroll-mt-20 py-24 md:py-32"
+        style={{ background: '#070b18' }}
+      >
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <FadeIn className="text-center">
+            <h2 className="text-3xl font-bold text-white md:text-5xl">
+              One Platform. Every Standard.
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-400 md:text-lg">
+              Write once, comply everywhere. Our Annex SL harmonized engine means one
+              document satisfies multiple standards simultaneously.
+            </p>
+          </FadeIn>
+
+          <div className="mt-16 grid gap-6 md:grid-cols-3">
             {[
               {
-                icon: Zap,
+                icon: Layers,
                 title: 'Unified Core Engine',
-                desc: 'Write once, comply everywhere across 5 ISO standards.',
-                color: '#2563eb',
-                bg: '#eff6ff',
-              },
-              {
-                icon: FileText,
-                title: 'AI Document Studio',
-                desc: 'Generate ISO-compliant documents in minutes, not weeks.',
-                color: '#7c3aed',
-                bg: '#f5f3ff',
+                desc: 'One control maps to ISO 9001, 14001, and 45001 at once. Save 66% of documentation effort.',
               },
               {
                 icon: ClipboardCheck,
-                title: 'Smart Audit Room',
-                desc: 'Mock audits that prepare you for the real thing.',
-                color: '#059669',
-                bg: '#ecfdf5',
+                title: 'AI Audit Room',
+                desc: 'Mock audits that mimic real registrar scrutiny. Know your score before the auditor arrives.',
               },
               {
                 icon: Wrench,
-                title: 'CAPA Engine',
-                desc: 'Finding to resolution, tracked and verified automatically.',
-                color: '#d97706',
-                bg: '#fffbeb',
+                title: 'CAPA Intelligence',
+                desc: 'From finding to resolution. AI tracks root causes, assigns actions, and verifies closure.',
               },
-              {
-                icon: Library,
-                title: 'Controls Library',
-                desc: 'Map controls to standards automatically with AI.',
-                color: '#dc2626',
-                bg: '#fef2f2',
-              },
-              {
-                icon: LayoutDashboard,
-                title: 'Management Dashboard',
-                desc: 'Real-time compliance visibility across all standards.',
-                color: '#0891b2',
-                bg: '#ecfeff',
-              },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="group rounded-2xl border p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
-                style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-              >
-                <div
-                  className="mb-4 inline-flex rounded-xl p-3"
-                  style={{ background: feature.bg }}
+            ].map((f, i) => (
+              <FadeIn key={f.title} delay={i * 0.1}>
+                <div className="group flex h-full flex-col rounded-2xl border border-white/5 p-8 transition-all duration-300 hover:border-white/10 hover:bg-white/[0.02]">
+                  <div className="mb-5 inline-flex rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                    <f.icon size={24} className="text-blue-400" />
+                  </div>
+                  <h3 className="mb-3 text-xl font-semibold text-white">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-gray-400">{f.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32" style={{ background: '#0a0f1e' }}>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <FadeIn className="text-center">
+            <h2 className="text-3xl font-bold text-white md:text-5xl">How It Works</h2>
+            <p className="mx-auto mt-5 max-w-xl text-base text-gray-400 md:text-lg">
+              Four steps from where you are today to audit-ready confidence.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={0.15}>
+            <div className="relative mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Connector line (desktop) */}
+              <div className="absolute left-[12.5%] right-[12.5%] top-7 hidden h-px bg-gradient-to-r from-transparent via-white/10 to-transparent lg:block" />
+
+              {[
+                { icon: Upload, step: 1, title: 'Upload', desc: 'Your existing documents and policies' },
+                { icon: Sparkles, step: 2, title: 'AI Transforms', desc: 'Sentinels convert to ISO-compliant format' },
+                { icon: GitMerge, step: 3, title: 'Auto-Map', desc: 'One document satisfies multiple standards' },
+                { icon: BadgeCheck, step: 4, title: 'Get Certified', desc: 'Pass your audit with confidence' },
+              ].map((item) => (
+                <div key={item.step} className="relative text-center">
+                  <div className="relative z-10 mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-blue-600/10 text-lg font-bold text-blue-400">
+                    {item.step}
+                  </div>
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center">
+                    <item.icon size={22} className="text-gray-500" />
+                  </div>
+                  <h3 className="mb-2 text-base font-semibold text-white">{item.title}</h3>
+                  <p className="text-sm text-gray-500">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ─── PRICING ──────────────────────────────────────────────────── */}
+      <section id="pricing" className="scroll-mt-20 py-24 md:py-32" style={{ background: '#070b18' }}>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <FadeIn className="text-center">
+            <h2 className="text-3xl font-bold text-white md:text-5xl">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-base text-gray-400 md:text-lg">
+              Start small and scale as you grow. All plans include a 14-day free trial.
+            </p>
+          </FadeIn>
+
+          {/* Certification banner */}
+          <FadeIn delay={0.1}>
+            <div
+              className="mx-auto mt-12 max-w-3xl rounded-2xl border border-blue-500/20 p-6 text-center"
+              style={{ background: 'linear-gradient(135deg, rgba(30,58,95,0.4), rgba(30,64,175,0.15))' }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-300">
+                Certification Readiness Package
+              </p>
+              <p className="mt-2 text-2xl font-bold text-white">
+                $15,000{' '}
+                <span className="text-base font-normal text-gray-400">one-time</span>
+              </p>
+              <p className="mt-2 text-sm text-gray-400">
+                Audit-ready in 90 days or your money back
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+            {/* Tier 1 — Starter */}
+            <FadeIn delay={0.1}>
+              <div className="flex h-full flex-col rounded-2xl border border-white/5 p-8">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white">Compliance Starter</h3>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-white">$497</span>
+                    <span className="text-sm text-gray-500">/month</span>
+                  </div>
+                </div>
+                <ul className="mb-8 flex-1 space-y-3">
+                  {[
+                    'AI Document Generation (30 docs/mo)',
+                    'Single ISO standard',
+                    '1 AI Sentinel active',
+                    'Email support',
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-gray-400">
+                      <Check size={15} className="mt-0.5 shrink-0 text-gray-600" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/login"
+                  className="rounded-lg border border-white/10 py-3 text-center text-sm font-semibold text-gray-300 transition-colors hover:border-white/20 hover:text-white"
                 >
-                  <feature.icon size={24} style={{ color: feature.color }} />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
-                  {feature.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--content-text-muted)' }}>
-                  {feature.desc}
-                </p>
+                  Start 14-Day Free Trial
+                </Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </FadeIn>
 
-      {/* ─── HOW IT WORKS ────────────────────────────────────────────────── */}
-      <section className="py-20 md:py-28" style={{ background: 'var(--content-bg)' }}>
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-3xl font-bold md:text-4xl" style={{ color: 'var(--content-text)' }}>
-            How It Works
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base" style={{ color: 'var(--content-text-muted)' }}>
-            Four simple steps from where you are today to audit-ready confidence.
-          </p>
-
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: Upload, step: 1, title: 'Upload', desc: 'Upload your existing documents and policies.' },
-              { icon: Sparkles, step: 2, title: 'Transform', desc: 'AI transforms them into ISO-compliant format.' },
-              { icon: GitMerge, step: 3, title: 'Map', desc: 'Platform maps to all standards automatically.' },
-              { icon: BadgeCheck, step: 4, title: 'Certify', desc: 'Pass your audit with confidence.' },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white" style={{ background: 'var(--sentinel-blue)' }}>
-                  {item.step}
-                </div>
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: '#eff6ff' }}>
-                  <item.icon size={24} className="text-blue-600" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
-                  {item.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--content-text-muted)' }}>
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── PRICING ─────────────────────────────────────────────────────── */}
-      <section id="pricing" className="scroll-mt-20 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-3xl font-bold md:text-4xl" style={{ color: 'var(--content-text)' }}>
-            Simple, Transparent Pricing
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base" style={{ color: 'var(--content-text-muted)' }}>
-            Start small and scale as you grow. All plans include a 14-day free trial.
-          </p>
-
-          {/* Certification Package Banner */}
-          <div
-            className="mx-auto mt-10 max-w-3xl rounded-2xl p-6 text-center"
-            style={{ background: 'linear-gradient(135deg, #1e3a5f, #1e40af)' }}
-          >
-            <p className="text-sm font-semibold text-blue-200">Certification Readiness Package</p>
-            <p className="mt-1 text-2xl font-bold text-white">
-              $15,000 <span className="text-base font-normal text-blue-200">one-time</span>
-            </p>
-            <p className="mt-2 text-sm text-blue-100/80">
-              Audit-ready in 90 days or your money back. Includes dedicated implementation team.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            {/* Tier 1 */}
-            <div
-              className="flex flex-col rounded-2xl border p-8"
-              style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-            >
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
-                  Document Studio Solo
-                </h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold" style={{ color: 'var(--content-text)' }}>$197</span>
-                  <span className="text-sm" style={{ color: 'var(--content-text-muted)' }}>/month</span>
-                </div>
-              </div>
-              <ul className="mb-8 flex-1 space-y-3">
-                {[
-                  'AI Document Transformation (20 docs/mo)',
-                  'Document Library (unlimited storage)',
-                  'Single standard compliance mapping',
-                  'Email support',
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                    <Check size={16} className="mt-0.5 shrink-0 text-green-500" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/login"
-                className="rounded-xl border py-3 text-center text-sm font-semibold transition-colors hover:bg-gray-50"
-                style={{ borderColor: 'var(--content-border)', color: 'var(--content-text)' }}
+            {/* Tier 2 — Professional (Most Popular) */}
+            <FadeIn delay={0.2}>
+              <div
+                className="relative flex h-full flex-col rounded-2xl border-2 border-blue-500/30 p-8"
+                style={{
+                  background: 'rgba(59,130,246,0.03)',
+                  boxShadow: '0 0 60px -12px rgba(59,130,246,0.15)',
+                }}
               >
-                Start Free Trial
-              </Link>
-            </div>
-
-            {/* Tier 2 — Most Popular */}
-            <div
-              className="relative flex flex-col rounded-2xl border-2 p-8 shadow-xl"
-              style={{ borderColor: '#2563eb' }}
-            >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold text-white" style={{ background: 'var(--sentinel-blue)' }}>
-                Most Popular
-              </div>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
-                  Compliance Platform
-                </h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold" style={{ color: 'var(--content-text)' }}>$497</span>
-                  <span className="text-sm" style={{ color: 'var(--content-text-muted)' }}>/month</span>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+                  Most Popular
                 </div>
-              </div>
-              <ul className="mb-8 flex-1 space-y-3">
-                {[
-                  'Everything in Document Studio Solo',
-                  'Full Unified Core (all standards)',
-                  'AI Mock Auditor (10 sessions/mo)',
-                  'CAPA Management',
-                  'Priority email support',
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                    <Check size={16} className="mt-0.5 shrink-0 text-blue-500" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/login"
-                className="rounded-xl py-3 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: 'var(--sentinel-blue)' }}
-              >
-                Start Free Trial
-              </Link>
-            </div>
-
-            {/* Tier 3 */}
-            <div
-              className="flex flex-col rounded-2xl border p-8"
-              style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-            >
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
-                  Enterprise Suite
-                </h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold" style={{ color: 'var(--content-text)' }}>$997</span>
-                  <span className="text-sm" style={{ color: 'var(--content-text-muted)' }}>/month</span>
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white">Professional IMS</h3>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-white">$997</span>
+                    <span className="text-sm text-gray-500">/month</span>
+                  </div>
                 </div>
+                <ul className="mb-8 flex-1 space-y-3">
+                  {[
+                    'Everything in Starter',
+                    'Up to 3 ISO standards simultaneously',
+                    '3 AI Sentinels active',
+                    'AI Mock Auditor (10 sessions/mo)',
+                    'CAPA Management',
+                    'Priority support',
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-gray-300">
+                      <Check size={15} className="mt-0.5 shrink-0 text-blue-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-blue-600 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-blue-500"
+                >
+                  Start 14-Day Free Trial
+                </Link>
               </div>
-              <ul className="mb-8 flex-1 space-y-3">
-                {[
-                  'Everything in Compliance Platform',
-                  'Energy Management + API integrations',
-                  'Unlimited AI interactions',
-                  'Predictive audit engine',
-                  'Dedicated success manager',
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                    <Check size={16} className="mt-0.5 shrink-0 text-green-500" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="#pricing"
-                className="rounded-xl border py-3 text-center text-sm font-semibold transition-colors hover:bg-gray-50"
-                style={{ borderColor: 'var(--content-border)', color: 'var(--content-text)' }}
-              >
-                Contact Sales
-              </a>
-            </div>
+            </FadeIn>
+
+            {/* Tier 3 — Enterprise */}
+            <FadeIn delay={0.3}>
+              <div className="flex h-full flex-col rounded-2xl border border-white/5 p-8">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white">Enterprise Command</h3>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-white">$2,497</span>
+                    <span className="text-sm text-gray-500">/month</span>
+                  </div>
+                </div>
+                <ul className="mb-8 flex-1 space-y-3">
+                  {[
+                    'Everything in Professional',
+                    'All 5 ISO standards + unlimited',
+                    'All 5 AI Sentinels active',
+                    'Unlimited AI interactions',
+                    'Predictive audit engine',
+                    'Dedicated success manager',
+                    'API access + integrations',
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-gray-400">
+                      <Check size={15} className="mt-0.5 shrink-0 text-gray-600" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#pricing"
+                  className="rounded-lg border border-white/10 py-3 text-center text-sm font-semibold text-gray-300 transition-colors hover:border-white/20 hover:text-white"
+                >
+                  Contact Sales
+                </a>
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
-      {/* ─── FAQ ──────────────────────────────────────────────────────────── */}
-      <section id="faq" className="scroll-mt-20 py-20 md:py-28" style={{ background: 'var(--content-bg)' }}>
-        <div className="mx-auto max-w-3xl px-6">
-          <h2 className="text-center text-3xl font-bold md:text-4xl" style={{ color: 'var(--content-text)' }}>
-            Frequently Asked Questions
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-base" style={{ color: 'var(--content-text-muted)' }}>
-            Everything you need to know about AI Sentinels.
-          </p>
+      {/* ─── FAQ ──────────────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32" style={{ background: '#0a0f1e' }}>
+        <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <FadeIn className="text-center">
+            <h2 className="text-3xl font-bold text-white md:text-4xl">
+              Frequently Asked Questions
+            </h2>
+          </FadeIn>
 
-          <div className="mt-12 rounded-2xl border bg-white p-6 md:p-8" style={{ borderColor: 'var(--content-border)' }}>
-            {FAQ_ITEMS.map((item) => (
-              <FaqItem key={item.q} q={item.q} a={item.a} />
-            ))}
-          </div>
+          <FadeIn delay={0.1}>
+            <div className="mt-12 rounded-2xl border border-white/5 bg-white/[0.02] px-6 py-2 md:px-8">
+              {FAQ_ITEMS.map((item) => (
+                <FaqItem key={item.q} q={item.q} a={item.a} />
+              ))}
+            </div>
+          </FadeIn>
         </div>
       </section>
 
-      {/* ─── FINAL CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900 py-20 md:py-28">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="text-3xl font-bold text-white md:text-4xl">
-            Ready to Get Audit-Ready in 90 Days?
+      {/* ─── FINAL CTA ────────────────────────────────────────────────── */}
+      <section
+        className="py-24 md:py-32"
+        style={{
+          background: 'linear-gradient(145deg, #0c1529 0%, #111d3a 50%, #0a1022 100%)',
+        }}
+      >
+        <FadeIn className="mx-auto max-w-3xl px-6 text-center lg:px-8">
+          <h2 className="text-3xl font-bold text-white md:text-5xl">
+            Ready to deploy your AI compliance team?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-blue-100/70">
-            Join manufacturing, construction, and energy companies who trust AI Sentinels
+          <p className="mx-auto mt-5 max-w-xl text-base text-gray-400 md:text-lg">
+            Join forward-thinking manufacturers and engineers who trust AI Sentinels
             to simplify ISO compliance.
           </p>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
               href="#pricing"
-              className="w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 sm:w-auto"
-              style={{ background: 'var(--sentinel-blue)' }}
+              className="w-full rounded-lg bg-blue-600 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-blue-500 sm:w-auto"
             >
               Book a Demo
             </a>
             <Link
               href="/login"
-              className="w-full rounded-xl border border-white/20 px-8 py-3.5 text-center text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
+              className="w-full rounded-lg border border-white/10 px-8 py-4 text-center text-sm font-semibold text-gray-300 transition-colors hover:border-white/20 hover:text-white sm:w-auto"
             >
               Start Free Trial
             </Link>
           </div>
 
-          {/* Sentinel Characters */}
-          <div className="mt-14 flex items-end justify-center gap-4 md:gap-6">
-            <Qualy size={52} className="opacity-90" />
-            <Saffy size={52} className="opacity-90" />
-            <Envi size={52} className="opacity-90" />
-            <Risko size={52} className="opacity-90" />
-            <Doki size={52} className="opacity-90" />
-          </div>
-          <p className="mt-4 text-xs text-blue-200/50">
-            Meet your Sentinels: Qualy, Saffy, Envi, Risko & Doki
+          <p className="mt-6 text-xs text-gray-600">
+            No credit card required &middot; 14-day free trial &middot; Cancel anytime
           </p>
-        </div>
+        </FadeIn>
       </section>
 
-      {/* ─── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer className="border-t py-12" style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}>
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 md:flex-row md:justify-between">
-          <div className="flex items-center gap-2.5">
-            <Shield size={20} className="text-blue-600" />
-            <span className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>AI Sentinels</span>
+      {/* ─── FOOTER ───────────────────────────────────────────────────── */}
+      <footer
+        className="border-t border-white/5 py-16"
+        style={{ background: '#070b18' }}
+      >
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid gap-12 md:grid-cols-4">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2.5">
+                <Shield size={22} className="text-blue-500" />
+                <span className="text-base font-bold text-white">AI Sentinels</span>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-gray-600">
+                AI-powered integrated management system for ISO compliance.
+              </p>
+            </div>
+
+            {/* Platform */}
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Platform</p>
+              <ul className="space-y-2.5">
+                {['Features', 'Pricing', 'Sentinels'].map((link) => (
+                  <li key={link}>
+                    <a
+                      href={`#${link.toLowerCase()}`}
+                      className="text-sm text-gray-500 transition-colors hover:text-gray-300"
+                    >
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Company</p>
+              <ul className="space-y-2.5">
+                {['About', 'Contact', 'Blog'].map((link) => (
+                  <li key={link}>
+                    <a href="#" className="text-sm text-gray-500 transition-colors hover:text-gray-300">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Legal</p>
+              <ul className="space-y-2.5">
+                {['Privacy Policy', 'Terms of Service'].map((link) => (
+                  <li key={link}>
+                    <a href="#" className="text-sm text-gray-500 transition-colors hover:text-gray-300">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-xs transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              Privacy Policy
-            </a>
-            <a href="#" className="text-xs transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              Terms of Service
-            </a>
-            <a href="#" className="text-xs transition-colors hover:text-blue-600" style={{ color: 'var(--content-text-muted)' }}>
-              Contact
-            </a>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--content-text-dim)' }}>
-            <span className="flex items-center gap-1">
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 md:flex-row">
+            <p className="text-xs text-gray-600">
+              &copy; 2026 AI Sentinels. All rights reserved.
+            </p>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
               <Lock size={12} />
-              Secured by AWS
-            </span>
-            <span>\u00b7</span>
-            <span>Multi-tenant EQMS</span>
+              <span>Secured by AWS</span>
+            </div>
           </div>
         </div>
-        <p className="mt-6 text-center text-xs" style={{ color: 'var(--content-text-dim)' }}>
-          &copy; 2026 AI Sentinels. All rights reserved.
-        </p>
       </footer>
 
-      {/* Smooth scroll CSS */}
       <style jsx global>{`
         html {
           scroll-behavior: smooth;
