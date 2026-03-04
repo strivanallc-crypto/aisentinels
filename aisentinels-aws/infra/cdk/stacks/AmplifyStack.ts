@@ -28,9 +28,8 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Amplify's post-build check can't follow pnpm symlinks. Dereference the 'next'
-// symlink at the MONOREPO ROOT node_modules (where AMPLIFY_MONOREPO_APP_ROOT
-// points Amplify to check). Also dereference at app level for belt-and-suspenders.
+// .npmrc sets node-linker=hoisted so pnpm creates flat node_modules (per Amplify FAQ).
+// This ensures Amplify's post-build check finds node_modules/next as a real directory.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -40,26 +39,6 @@ applications:
           commands:
             - npm install -g pnpm@9.15.0
             - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
-            - |
-              echo "=== Dereferencing pnpm symlinks for Amplify ==="
-              # Dereference at ROOT node_modules (Amplify checks here via AMPLIFY_MONOREPO_APP_ROOT)
-              cd ../..
-              for pkg in next react react-dom; do
-                if [ -L "node_modules/$pkg" ]; then
-                  REAL=$(readlink -f "node_modules/$pkg")
-                  rm "node_modules/$pkg"
-                  cp -r "$REAL" "node_modules/$pkg"
-                  echo "Dereferenced root/node_modules/$pkg"
-                fi
-              done
-              cd apps/web
-              # Also ensure app-level node_modules/next exists
-              mkdir -p node_modules
-              if [ ! -d node_modules/next ]; then
-                cp -r ../../node_modules/next node_modules/next
-                echo "Copied next to apps/web/node_modules/"
-              fi
-              echo "=== Done ==="
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
