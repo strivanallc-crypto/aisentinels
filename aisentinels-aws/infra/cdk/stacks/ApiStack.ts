@@ -541,6 +541,45 @@ export class ApiStack extends cdk.Stack {
       integration: recordsIntegration,
     });
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: AI Sentinels — POST /api/v1/ai/* routes (Gemini 2.5 Pro)
+    // Higher memory + timeout for AI inference. SSM access for Gemini key.
+    // ══════════════════════════════════════════════════════════════════════════
+    const aiLogGroup = new logs.LogGroup(this, 'AiFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-ai-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(aiLogGroup);
+
+    const aiFn = new NodejsFunction(this, 'AiFn', {
+      functionName: `aisentinels-api-ai-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/ai/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(90),
+      memorySize: 1024,
+      ...businessLambdaVpcConfig,
+      environment: businessLambdaEnv,
+      logGroup: aiLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(aiFn);
+    // Allow aiFn to read the Gemini API key from SSM (SecureString → needs decrypt)
+    aiFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'ReadAiSecrets',
+      actions: ['ssm:GetParameter'],
+      resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/ai/*`],
+    }));
+    aiFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'DecryptAiSecrets',
+      actions: ['kms:Decrypt'],
+      resources: ['*'], // SSM SecureString uses AWS-managed key
+      conditions: {
+        StringEquals: { 'kms:ViaService': `ssm.${this.region}.amazonaws.com` },
+      },
+    }));
+
     // ── Billing routes (E9) ──────────────────────────────────────────────────
     const billingIntegration = new HttpLambdaIntegration('BillingIntegration', billingFn);
 
@@ -567,12 +606,57 @@ export class ApiStack extends cdk.Stack {
       authorizer: new HttpNoneAuthorizer(),
     });
 
+    // ── AI Sentinel routes (Phase 1) ─────────────────────────────────────────
+    const aiIntegration = new HttpLambdaIntegration('AiIntegration', aiFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/document-generate',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/clause-classify',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/audit-plan',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/audit-examine',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/audit-report',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/root-cause',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/gap-detect',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/ai/management-review',
+      methods: [HttpMethod.POST],
+      integration: aiIntegration,
+    });
+
     // ANY /api/v1/{proxy+} — catch-all route to internal ALB via VpcLink
     // API Gateway evaluates more-specific routes first:
     //   POST /api/v1/tenants/provision → Lambda (matched above)
     //   E7 document-studio + audit routes → Lambda (matched above)
     //   E8 CAPA + records routes → Lambda (matched above)
     //   E9 billing routes → Lambda (matched above)
+    //   Phase 1 AI routes → Lambda (matched above)
     //   Everything else → ALB → Fargate service (path-based routing on ALB)
     this.httpApi.addRoutes({
       path: '/api/v1/{proxy+}',
