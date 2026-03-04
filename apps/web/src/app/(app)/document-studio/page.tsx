@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FileText, Plus, AlertCircle, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  FileText,
+  Plus,
+  AlertCircle,
+  Sparkles,
+  Upload,
+  ChevronRight,
+  Search,
+} from 'lucide-react';
 import { documentsApi } from '@/lib/api';
-import type { Document, DocType } from '@/lib/types';
+import type { Document, DocType, DocStatus } from '@/lib/types';
 import {
   DOC_TYPE_LABELS,
   DOC_STATUS_LABELS,
@@ -13,8 +22,20 @@ import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Doki } from '@/components/sentinels/doki';
+import { AiGenerateWizard } from '@/components/document-studio/ai-generate-wizard';
+import { UploadClassifyModal } from '@/components/document-studio/upload-classify-modal';
 
 const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
+
+const STATUS_TABS: { value: DocStatus | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'review', label: 'Under Review' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'published', label: 'Published' },
+  { value: 'archived', label: 'Archived' },
+];
 
 interface CreateForm {
   title: string;
@@ -25,13 +46,17 @@ interface CreateForm {
 const EMPTY_FORM: CreateForm = { title: '', docType: 'procedure', content: '' };
 
 export default function DocumentStudioPage() {
+  const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAiWizard, setShowAiWizard] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [submitting, setSubmitting] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<DocStatus | 'all'>('all');
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,7 +79,7 @@ export default function DocumentStudioPage() {
     setSaving(true);
     try {
       await documentsApi.create({
-        title:   form.title.trim(),
+        title: form.title.trim(),
         docType: form.docType,
         content: form.content.trim() || undefined,
       });
@@ -68,78 +93,141 @@ export default function DocumentStudioPage() {
     }
   };
 
-  const handleSubmitForApproval = async (id: string) => {
-    setSubmitting(id);
-    try {
-      await documentsApi.submit(id, []);
-      await load();
-    } catch {
-      setError('Failed to submit document for approval.');
-    } finally {
-      setSubmitting(null);
+  const filtered = documents.filter((doc) => {
+    if (statusFilter !== 'all' && doc.status !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return doc.title.toLowerCase().includes(q) || doc.docType.includes(q);
     }
-  };
+    return true;
+  });
+
+  const statusCounts = documents.reduce<Record<string, number>>((acc, d) => {
+    acc[d.status] = (acc[d.status] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
-      {/* ── Header ──────────────────────────────────────────────── */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-            ISO Platform › Document Studio
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Document Studio</h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-            Controlled document lifecycle — ISO 9001 Clause 7.5
-          </p>
+        <div className="flex items-center gap-3">
+          <Doki size={36} />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+              ISO Platform › Document Studio
+            </p>
+            <h1 className="mt-0.5 text-2xl font-bold">Document Studio</h1>
+            <p className="text-sm" style={{ color: 'var(--content-text-muted)' }}>
+              Controlled document lifecycle — ISO 9001 Clause 7.5
+            </p>
+          </div>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Document
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowUpload(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Upload
+          </Button>
+          <Button variant="outline" onClick={() => setShowAiWizard(true)}>
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            AI Generate
+          </Button>
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Document
+          </Button>
+        </div>
       </div>
 
-      {/* ── Error banner ─────────────────────────────────────────── */}
+      {/* ── Error banner ── */}
       {error && (
         <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
-          <button
-            onClick={load}
-            className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline"
-          >
+          <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
             Retry
           </button>
         </div>
       )}
 
-      {/* ── Table / Loading / Empty ───────────────────────────────── */}
+      {/* ── Status tabs + Search ── */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex gap-1">
+          {STATUS_TABS.map((tab) => {
+            const count = tab.value === 'all' ? documents.length : (statusCounts[tab.value] ?? 0);
+            const active = statusFilter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setStatusFilter(tab.value)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  active
+                    ? 'bg-indigo-50 text-indigo-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                {tab.label}
+                {count > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    active ? 'bg-indigo-200 text-indigo-800' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search documents…"
+            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 w-60"
+          />
+        </div>
+      </div>
+
+      {/* ── Table / Loading / Empty ── */}
       <div
         className="overflow-hidden rounded-xl border"
         style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
       >
         {loading ? (
-          <TableSkeleton rows={5} cols={5} />
-        ) : documents.length === 0 ? (
+          <TableSkeleton rows={5} cols={6} />
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-              <FileText className="h-7 w-7 text-blue-500" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
+              <Doki size={32} />
             </div>
             <div>
-              <p className="font-semibold">No documents yet</p>
+              <p className="font-semibold">
+                {documents.length === 0 ? 'No documents yet' : 'No matching documents'}
+              </p>
               <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                Create your first controlled document
+                {documents.length === 0
+                  ? 'Create your first controlled document or let Doki generate one'
+                  : 'Try adjusting your filters'}
               </p>
             </div>
-            <Button onClick={() => setShowCreate(true)} className="mt-1">
-              <Plus className="mr-1.5 h-4 w-4" /> New Document
-            </Button>
+            {documents.length === 0 && (
+              <div className="flex gap-2 mt-2">
+                <Button variant="outline" onClick={() => setShowAiWizard(true)}>
+                  <Sparkles className="mr-1.5 h-4 w-4" /> AI Generate
+                </Button>
+                <Button onClick={() => setShowCreate(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" /> New Document
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--content-border)', background: 'var(--content-bg)' }}>
-                {['Title', 'Type', 'Version', 'Status', 'Updated', ''].map((h) => (
+                {['Title', 'Type', 'Standards', 'Version', 'Status', 'Updated'].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
@@ -151,20 +239,30 @@ export default function DocumentStudioPage() {
               </tr>
             </thead>
             <tbody>
-              {documents.map((doc, i) => (
+              {filtered.map((doc, i) => (
                 <tr
                   key={doc.id}
-                  className="transition-colors hover:bg-gray-50"
+                  onClick={() => router.push(`/document-studio/${doc.id}`)}
+                  className="cursor-pointer transition-colors hover:bg-gray-50"
                   style={{ borderTop: i > 0 ? '1px solid var(--content-border)' : undefined }}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                      <FileText className="h-4 w-4 flex-shrink-0 text-indigo-400" />
                       <span className="font-medium">{doc.title}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3" style={{ color: 'var(--content-text-muted)' }}>
                     {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      {doc.standards.slice(0, 3).map((s) => (
+                        <Badge key={s} variant="outline" className="text-[10px]">
+                          {s.replace('iso_', '').replace(/(\d)/, ' $1')}
+                        </Badge>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
@@ -176,20 +274,13 @@ export default function DocumentStudioPage() {
                       {DOC_STATUS_LABELS[doc.status] ?? doc.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--content-text-muted)' }}>
-                    {new Date(doc.updatedAt).toLocaleDateString()}
-                  </td>
                   <td className="px-4 py-3">
-                    {doc.status === 'draft' && (
-                      <button
-                        onClick={() => handleSubmitForApproval(doc.id)}
-                        disabled={submitting === doc.id}
-                        className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
-                      >
-                        {submitting === doc.id ? 'Submitting…' : 'Submit'}
-                        <ChevronRight className="h-3 w-3" />
-                      </button>
-                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs" style={{ color: 'var(--content-text-muted)' }}>
+                        {new Date(doc.updatedAt).toLocaleDateString()}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -198,7 +289,7 @@ export default function DocumentStudioPage() {
         )}
       </div>
 
-      {/* ── Create Document Modal ─────────────────────────────────── */}
+      {/* ── Create Document Modal ── */}
       <Modal
         open={showCreate}
         onOpenChange={(o) => { setShowCreate(o); if (!o) setForm(EMPTY_FORM); }}
@@ -218,7 +309,6 @@ export default function DocumentStudioPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Document Type <span className="text-red-500">*</span>
@@ -234,11 +324,9 @@ export default function DocumentStudioPage() {
               ))}
             </select>
           </div>
-
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Content{' '}
-              <span className="font-normal text-gray-400">(optional)</span>
+              Content <span className="font-normal text-gray-400">(optional)</span>
             </label>
             <textarea
               rows={4}
@@ -248,13 +336,8 @@ export default function DocumentStudioPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div className="flex justify-end gap-3 pt-1">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); }}
-            >
+            <Button type="button" variant="ghost" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); }}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
@@ -263,6 +346,20 @@ export default function DocumentStudioPage() {
           </div>
         </form>
       </Modal>
+
+      {/* ── AI Generate Wizard ── */}
+      <AiGenerateWizard
+        open={showAiWizard}
+        onOpenChange={setShowAiWizard}
+        onCreated={load}
+      />
+
+      {/* ── Upload & Classify Modal ── */}
+      <UploadClassifyModal
+        open={showUpload}
+        onOpenChange={setShowUpload}
+        onCreated={load}
+      />
     </div>
   );
 }
