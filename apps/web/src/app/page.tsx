@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { LandingPage } from '@/components/landing/landing-page';
 
-// Root → redirect to the main dashboard
-export default function RootPage() {
-  redirect('/dashboard');
+export default async function RootPage() {
+  const session = await auth();
+  if (session) redirect('/dashboard');
+  return <LandingPage />;
 }
