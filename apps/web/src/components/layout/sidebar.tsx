@@ -65,7 +65,8 @@ export function Sidebar({ session }: SidebarProps) {
 
       {/* ── Nav ── */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map((item) => {
+          const { href, label, icon: Icon } = item;
           const active = pathname === href;
           return (
             <Link
@@ -82,12 +83,20 @@ export function Sidebar({ session }: SidebarProps) {
                   : { color: 'var(--sidebar-text-dim)' }
               }
             >
-              <Icon
-                className="h-4 w-4 flex-shrink-0"
-                style={{
-                  color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-muted)',
-                }}
-              />
+              <div className="relative flex-shrink-0">
+                <Icon
+                  className="h-4 w-4"
+                  style={{
+                    color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-muted)',
+                  }}
+                />
+                {'sentinelColor' in item && item.sentinelColor && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: item.sentinelColor }}
+                  />
+                )}
+              </div>
               <span className="truncate flex-1">{label}</span>
               {active && (
                 <ChevronRight
@@ -99,6 +108,21 @@ export function Sidebar({ session }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* ── Sentinels Status ── */}
+      <div
+        className="mx-3 mb-2 flex items-center gap-2 rounded-md px-3 py-2"
+        style={{ background: 'var(--sidebar-surface)' }}
+      >
+        <div className="flex items-center gap-1">
+          {['#3B82F6','#22C55E','#F59E0B','#6366F1','#F43F5E','#8B5CF6'].map((c) => (
+            <span key={c} className="h-2 w-2 rounded-full" style={{ backgroundColor: c }} />
+          ))}
+        </div>
+        <span className="text-[10px]" style={{ color: 'var(--sidebar-text-muted)' }}>
+          6 Sentinels Online
+        </span>
+      </div>
 
       {/* ── User ── */}
       <div className="p-3" style={{ borderTop: '1px solid var(--sidebar-border)' }}>

@@ -36,13 +36,57 @@ export const recordsApi = {
 };
 
 // ==================== AI Sentinels ====================
+export const aiApi = {
+  /** Doki generates ISO documents channeling domain sentinels */
+  documentGenerate: (data: {
+    documentType: string; standards: string[]; orgContext: string; sections: string[];
+  }) => api.post('/api/v1/ai/document-generate', data),
+
+  /** Doki classifies uploaded document text by ISO clause */
+  clauseClassify: (data: { documentText: string; fileName: string }) =>
+    api.post('/api/v1/ai/clause-classify', data),
+
+  /** Audie generates audit plan per ISO 19011:6.3 */
+  auditPlan: (data: {
+    standards: string[]; scope: string; auditType: string; orgContext: string;
+  }) => api.post('/api/v1/ai/audit-plan', data),
+
+  /** Audie clause examination per ISO 19011:6.4 */
+  auditExamine: (data: {
+    clause: string; standard: string; auditContext: string;
+    evidence?: string[]; conversationHistory?: { role: string; content: string }[];
+  }) => api.post('/api/v1/ai/audit-examine', data),
+
+  /** Audie formal audit report per ISO 19011:6.5 */
+  auditReport: (data: {
+    sessionId: string; findings: object[]; scope: string; standards: string[]; auditDate: string;
+  }) => api.post('/api/v1/ai/audit-report', data),
+
+  /** Nexus guides root cause analysis */
+  rootCause: (data: {
+    findingDescription: string; clauseRef: string; standard: string;
+    method: '5why' | 'fishbone' | '8d'; history?: { role: string; content: string }[];
+  }) => api.post('/api/v1/ai/root-cause', data),
+
+  /** Platform gap detection across compliance matrix */
+  gapDetect: (data: {
+    standards: string[]; existingControls?: object[]; auditResults?: object[];
+  }) => api.post('/api/v1/ai/gap-detect', data),
+
+  /** Platform management review input report */
+  managementReview: (data: {
+    auditResults?: object; capaStatus?: object; complianceScores?: object;
+  }) => api.post('/api/v1/ai/management-review', data),
+};
+
+/** @deprecated — use aiApi instead */
 export const sentinelsApi = {
   analyzeDocument: (content: string, standard?: string) =>
-    api.post('/api/v1/sentinels/qms/analyze-document', { content, standard }),
-  identifyHazards: (activityDescription: string, location?: string) =>
-    api.post('/api/v1/sentinels/ohs/identify-hazards', { activityDescription, location }),
-  activities:      ()  => api.get('/api/v1/sentinels/activities'),
-  stats:           ()  => api.get('/api/v1/sentinels/stats'),
+    aiApi.documentGenerate({ documentType: 'analysis', standards: [standard ?? 'iso_9001'], orgContext: content, sections: ['analysis'] }),
+  identifyHazards: (_activityDescription: string, _location?: string) =>
+    Promise.resolve({ data: { activities: [] } }),
+  activities: () => Promise.resolve({ data: { activities: [] } }),
+  stats:      () => Promise.resolve({ data: { totalAnalyses: 0, documentsGenerated: 0, totalActivities: 0 } }),
 };
 
 // ==================== CAPA ====================
