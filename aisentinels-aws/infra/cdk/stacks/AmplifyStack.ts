@@ -28,10 +28,8 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Key insight: cd ../.. persists between commands in the same phase, so we must
-// cd back to apps/web before any subsequent commands that reference ../../.
-// Post-install: copy 'next' from pnpm's .pnpm store to apps/web/node_modules/
-// so Amplify's post-build runtime check passes. Done in preBuild (writable).
+// Amplify WEB_COMPUTE checks node_modules/next in the ARTIFACTS (not source tree).
+// We copy node_modules into .next/ after the build so it's included in artifacts.
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -41,22 +39,18 @@ applications:
           commands:
             - npm install -g pnpm@9.15.0
             - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
-            - |
-              echo "PWD: $(pwd)"
-              mkdir -p node_modules
-              NEXT_REAL=$(find ../../node_modules/.pnpm -maxdepth 3 -path "*/node_modules/next" -type d 2>/dev/null | head -1)
-              echo "Found next at: $NEXT_REAL"
-              if [ -n "$NEXT_REAL" ]; then
-                cp -r "$NEXT_REAL" node_modules/next
-                echo "SUCCESS: node_modules/next copied"
-              else
-                echo "ERROR: next not found in .pnpm store"
-                ls ../../node_modules/ 2>&1 | head -20
-                exit 1
-              fi
         build:
           commands:
-            - cd ../.. && pnpm --filter @aisentinels/web run build
+            - cd ../.. && pnpm --filter @aisentinels/web run build && cd apps/web
+            - |
+              echo "Copying node_modules/next into .next/ for Amplify runtime check"
+              NEXT_REAL=$(find ../../node_modules/.pnpm -maxdepth 3 -path "*/node_modules/next" -type d 2>/dev/null | head -1)
+              if [ -n "$NEXT_REAL" ]; then
+                mkdir -p .next/node_modules
+                cp -r "$NEXT_REAL" .next/node_modules/next
+                echo "SUCCESS: .next/node_modules/next created"
+                ls .next/node_modules/next/package.json
+              fi
       artifacts:
         baseDirectory: .next
         files:
