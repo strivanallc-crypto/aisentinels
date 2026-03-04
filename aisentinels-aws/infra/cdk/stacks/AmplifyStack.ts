@@ -28,9 +28,10 @@ export interface AmplifyStackProps extends cdk.StackProps {
 }
 
 // Build spec — pnpm monorepo with 'applications' key for Amplify monorepo support
-// Post-install: find the real 'next' directory in pnpm's .pnpm store and copy it
-// to apps/web/node_modules/next so Amplify's post-build runtime check passes.
-// Done in preBuild since build phase is read-only.
+// Key insight: cd ../.. persists between commands in the same phase, so we must
+// cd back to apps/web before any subsequent commands that reference ../../.
+// Post-install: copy 'next' from pnpm's .pnpm store to apps/web/node_modules/
+// so Amplify's post-build runtime check passes. Done in preBuild (writable).
 const BUILD_SPEC = `version: 1
 applications:
   - appRoot: apps/web
@@ -39,26 +40,20 @@ applications:
         preBuild:
           commands:
             - npm install -g pnpm@9.15.0
-            - cd ../.. && pnpm install --frozen-lockfile
+            - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
             - |
-              echo "=== Filesystem diagnostics ==="
               echo "PWD: $(pwd)"
-              echo "App node_modules: $(ls -la node_modules 2>&1 | head -5)"
-              echo "Root node_modules/next: $(ls -la ../../node_modules/next 2>&1)"
-              echo "Root .pnpm next: $(find ../../node_modules/.pnpm -maxdepth 3 -name next -type d 2>/dev/null | head -3)"
-              echo "=== Creating node_modules/next for Amplify ==="
               mkdir -p node_modules
               NEXT_REAL=$(find ../../node_modules/.pnpm -maxdepth 3 -path "*/node_modules/next" -type d 2>/dev/null | head -1)
+              echo "Found next at: $NEXT_REAL"
               if [ -n "$NEXT_REAL" ]; then
-                echo "Found next at: $NEXT_REAL"
                 cp -r "$NEXT_REAL" node_modules/next
-                echo "Copied next to node_modules/next"
+                echo "SUCCESS: node_modules/next copied"
               else
-                echo "ERROR: Could not find next in pnpm store"
+                echo "ERROR: next not found in .pnpm store"
+                ls ../../node_modules/ 2>&1 | head -20
                 exit 1
               fi
-              ls -la node_modules/ | head -5
-              echo "=== Done ==="
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
