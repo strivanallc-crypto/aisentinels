@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Shield,
@@ -97,6 +99,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (status === 'authenticated') router.replace('/dashboard');
+  }, [status, router]);
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-inter, Inter, sans-serif)' }}>
