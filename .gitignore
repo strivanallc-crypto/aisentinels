@@ -27,6 +27,12 @@ desktop.ini
 # Turbo
 .turbo/
 
+# Claude Code local settings (contains credentials)
+.claude/settings.local.json
+
+# Windows reserved names
+nul
+
 # Misc
 *.tsbuildinfo
 npm-debug.log*

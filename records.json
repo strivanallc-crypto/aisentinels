@@ -1,0 +1,62 @@
+﻿{
+    "ResourceRecordSets": [
+        {
+            "Name": "aisentinels.io.",
+            "Type": "A",
+            "AliasTarget": {
+                "HostedZoneId": "Z2FDTNDATAQYW2",
+                "DNSName": "d1hlm4n6eyvgd4.cloudfront.net.",
+                "EvaluateTargetHealth": false
+            }
+        },
+        {
+            "Name": "aisentinels.io.",
+            "Type": "NS",
+            "TTL": 172800,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-832.awsdns-40.net."
+                },
+                {
+                    "Value": "ns-87.awsdns-10.com."
+                },
+                {
+                    "Value": "ns-1105.awsdns-10.org."
+                },
+                {
+                    "Value": "ns-1979.awsdns-55.co.uk."
+                }
+            ]
+        },
+        {
+            "Name": "aisentinels.io.",
+            "Type": "SOA",
+            "TTL": 900,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-832.awsdns-40.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+                }
+            ]
+        },
+        {
+            "Name": "_07018f3a8b277b0ad4b97d27ddzztszm.aisentinels.io.",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "_069df0125a07c39750cf39572421293a.mhbtsbpdnt.acm-validations.aws."
+                }
+            ]
+        },
+        {
+            "Name": "_07018f3a8b277b0ad4b97d27ddzztszm.aisentinels.io.aisentinels.io.",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "_069df0125a07c39750cf39572421293a.mhbtsbpdnt.acm-validations.aws."
+                }
+            ]
+        }
+    ]
+}

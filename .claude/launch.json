@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aisentinels-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pnpm", "--filter", "@aisentinels/web", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "aisentinels-backend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pnpm", "--filter", "@aisentinels/web", "dev"],
+      "port": 3000
+    }
+  ]
+}

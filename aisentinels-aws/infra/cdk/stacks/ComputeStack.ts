@@ -189,6 +189,35 @@ export class ComputeStack extends cdk.Stack {
     });
 
     // ══════════════════════════════════════════════════════════════════════════
+    // Security group egress rules for sg-lambda
+    //
+    // NetworkStack creates sg-lambda with allowAllOutbound: false (locked down).
+    // VPC-attached Lambdas and VpcLink ENIs (both use sg-lambda) need outbound
+    // to: RDS Proxy (5432 via sg-aurora), VPC endpoints (443), and internet (443
+    // via NAT for AWS SDK calls, Cognito token fetch, etc.).
+    // ══════════════════════════════════════════════════════════════════════════
+
+    // PostgreSQL to RDS Proxy via sg-aurora
+    new ec2.CfnSecurityGroupEgress(this, 'LambdaToAurora', {
+      groupId: props.sgLambda.securityGroupId,
+      ipProtocol: 'tcp',
+      fromPort: 5432,
+      toPort: 5432,
+      destinationSecurityGroupId: props.sgAurora.securityGroupId,
+      description: 'PostgreSQL to RDS Proxy via sg-aurora',
+    });
+
+    // HTTPS to VPC endpoints + internet via NAT (STS, Cognito, CW Logs, etc.)
+    new ec2.CfnSecurityGroupEgress(this, 'LambdaToHttps', {
+      groupId: props.sgLambda.securityGroupId,
+      ipProtocol: 'tcp',
+      fromPort: 443,
+      toPort: 443,
+      cidrIp: '0.0.0.0/0',
+      description: 'HTTPS to VPC endpoints and internet via NAT',
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
     // ECR Repositories — one per service
     // AWS-managed encryption (no CMK here — add in hardening epic).
     // Stored in a map so the services loop can reference them by service id.

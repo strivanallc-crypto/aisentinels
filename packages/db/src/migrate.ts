@@ -40,7 +40,7 @@ const DB_NAME = process.env.AURORA_DB_NAME ?? 'aisentinels';
 const AUDIT_TABLE = process.env.DYNAMODB_AUDIT_TABLE ?? `aisentinels-audit-events-${ENV_NAME}`;
 const FORCE = process.argv.includes('--force');
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = join(__dirname, '..', '..', 'drizzle');
+const MIGRATIONS_DIR = join(__dirname, '..', 'drizzle');
 const RLS_SQL_PATH = join(__dirname, 'rls.sql');
 
 // ── Snapshot safety check ─────────────────────────────────────────────────────

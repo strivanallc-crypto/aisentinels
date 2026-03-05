@@ -376,3 +376,87 @@ export const PLAN_VARIANT: Record<PlanType, BadgeVariant> = {
   professional: 'default',
   enterprise:   'success',
 };
+
+// ==================== Settings ====================
+export interface OrgContext {
+  tenantId: string;
+  companyName: string | null;
+  industry: string | null;
+  country: string | null;
+  employeeCount: number | null;
+  imsScope: string | null;
+  certificationTargets: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrgRole {
+  id: string;
+  tenantId: string;
+  roleName: string;
+  permissions: Record<string, boolean>;
+  isSystemRole: boolean;
+  createdAt: string;
+}
+
+export interface OrgUser {
+  id: string;
+  tenantId: string;
+  cognitoSub: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
+  orgRoles: { roleId: string; roleName: string; assignedAt: string }[];
+}
+
+export interface OrgStandard {
+  id: string;
+  tenantId: string;
+  standardCode: string;
+  activatedAt: string;
+  activatedBy: string | null;
+}
+
+// ==================== Brain ====================
+export type BrainProcessingStatus = 'pending' | 'chunking' | 'ready' | 'failed';
+
+export interface BrainDocument {
+  id: string;
+  tenantId: string;
+  fileName: string;
+  s3Key: string;
+  fileType: string;
+  docCategory: string;
+  relatedStandard: string | null;
+  processingStatus: BrainProcessingStatus;
+  chunkCount: number;
+  uploadedBy: string | null;
+  uploadedAt: string;
+}
+
+export const BRAIN_STATUS_LABELS: Record<BrainProcessingStatus, string> = {
+  pending:  'Pending',
+  chunking: 'Processing',
+  ready:    'Ready',
+  failed:   'Failed',
+};
+
+export const BRAIN_STATUS_VARIANT: Record<BrainProcessingStatus, BadgeVariant> = {
+  pending:  'secondary',
+  chunking: 'warning',
+  ready:    'success',
+  failed:   'destructive',
+};
+
+export const DOC_CATEGORY_LABELS: Record<string, string> = {
+  policy:    'Policy',
+  procedure: 'Procedure',
+  manual:    'Manual',
+  form:      'Form',
+  record:    'Record',
+  external:  'External',
+  other:     'Other',
+};

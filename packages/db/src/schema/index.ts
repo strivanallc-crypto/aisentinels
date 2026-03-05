@@ -38,3 +38,6 @@ export * from './compliance-records.ts';
 
 // ── Risk management ───────────────────────────────────────────────────────────
 export * from './risks.ts';
+
+// ── Settings + Brain (Phase 3) ──────────────────────────────────────────────
+export * from './settings.ts';

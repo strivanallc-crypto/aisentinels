@@ -127,3 +127,27 @@ export const billingApi = {
   getUsage:        ()             => api.get('/api/v1/billing/usage'),
   upgrade:         (data: object) => api.post('/api/v1/billing/upgrade', data),
 };
+
+// ==================== Settings ====================
+export const settingsApi = {
+  getOrg:             ()                         => api.get('/api/v1/settings/org'),
+  updateOrg:          (data: object)             => api.put('/api/v1/settings/org', data),
+  activateStandard:   (code: string)             => api.post('/api/v1/settings/standards/activate', { standardCode: code }),
+  deactivateStandard: (code: string)             => api.delete(`/api/v1/settings/standards/${encodeURIComponent(code)}`),
+  getRoles:           ()                         => api.get('/api/v1/settings/roles'),
+  getUsers:           ()                         => api.get('/api/v1/settings/users'),
+  inviteUser:         (data: { email: string; roleId?: string }) =>
+    api.post('/api/v1/settings/users/invite', data),
+  updateUserRole:     (userId: string, roleId: string) =>
+    api.put(`/api/v1/settings/users/${userId}/role`, { roleId }),
+};
+
+// ==================== Brain ====================
+export const brainApi = {
+  getUploadUrl: (data: {
+    fileName: string; fileType: string; docCategory: string; relatedStandard?: string;
+  }) => api.post('/api/v1/brain/upload-url', data),
+  process:        (orgDocumentId: string) => api.post('/api/v1/brain/process', { orgDocumentId }),
+  listDocuments:  ()                      => api.get('/api/v1/brain/documents'),
+  deleteDocument: (id: string)            => api.delete(`/api/v1/brain/documents/${id}`),
+};

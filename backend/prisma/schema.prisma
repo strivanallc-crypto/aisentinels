@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== MULTI-TENANCY ====================
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("starter") // starter / professional / enterprise
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  documentTemplates DocumentTemplate[]
+  documents         Document[]
+  records           Record[]
+  capaRecords       CapaRecord[]
+  riskRegisters     RiskRegister[]
+  legalRegisters    LegalRegister[]
+  hazardRegisters   HazardRegister[]
+  auditProgrammes   AuditProgramme[]
+  managementReviews ManagementReview[]
+}
+
+// ==================== USERS & AUTH ====================
+model User {
+  id         String   @id @default(cuid())
+  tenantId   String
+  cognitoSub String   @unique  // Cognito user sub
+  email      String
+  firstName  String
+  lastName   String
+  role       String   @default("Viewer") // Admin / Manager / Auditor / Viewer
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  documentApprovals   DocumentApproval[]
+  electronicSignatures ElectronicSignature[]
+}
+
+// ==================== DOCUMENT STUDIO (Phase 1) ====================
+model DocumentTemplate {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String
+  description    String?
+  type           String   // policy / procedure / form / record
+  standard       String   // ISO9001 / ISO14001 / ISO45001 / Integrated
+  clauseMappings String[] // e.g. ["9001:8.1", "9001:8.2"]
+  content        String   // HTML/JSON document content
+  variables      Json     @default("{}")
+  approvalChain  Json     @default("[]") // [{userId, role, order}]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  documents Document[]
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  tenantId   String
+  templateId String?
+  title      String
+  content    String
+  version    String   @default("1.0.0") // semantic versioning
+  status     String   @default("DRAFT") // DRAFT/UNDER_REVIEW/APPROVED/EFFECTIVE/OBSOLETE
+  standard   String
+  createdBy  String   // userId
+  updatedBy  String?
+  approvedBy String?
+  approvedAt DateTime?
+  effectiveAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  template DocumentTemplate? @relation(fields: [templateId], references: [id])
+  versions DocumentVersion[]
+  approvals DocumentApproval[]
+  signatures ElectronicSignature[]
+  distributions DocumentDistribution[]
+}
+
+model DocumentVersion {
+  id         String   @id @default(cuid())
+  documentId String
+  version    String
+  content    String
+  changedBy  String
+  changeNote String?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id])
+}
+
+model DocumentApproval {
+  id         String    @id @default(cuid())
+  documentId String
+  approverId String
+  order      Int
+  status     String    @default("PENDING") // PENDING/APPROVED/REJECTED
+  comments   String?
+  decidedAt  DateTime?
+  dueAt      DateTime?
+  createdAt  DateTime  @default(now())
+
+  document Document @relation(fields: [documentId], references: [id])
+  approver User     @relation(fields: [approverId], references: [id])
+}
+
+model ElectronicSignature {
+  id           String   @id @default(cuid())
+  documentId   String
+  signerId     String
+  signedAt     DateTime @default(now())
+  ipAddress    String
+  userAgent    String?
+  documentHash String   // SHA-256 of document content at time of signing
+  meaning      String   // "I approve" / "I reviewed" / custom
+
+  document Document @relation(fields: [documentId], references: [id])
+  signer   User     @relation(fields: [signerId], references: [id])
+}
+
+model DocumentDistribution {
+  id             String    @id @default(cuid())
+  documentId     String
+  recipientEmail String
+  sentAt         DateTime  @default(now())
+  acknowledgedAt DateTime?
+
+  document Document @relation(fields: [documentId], references: [id])
+}
+
+// ==================== RECORDS VAULT (Phase 1) ====================
+model Record {
+  id                String    @id @default(cuid())
+  tenantId          String
+  recordType        String    // incident / capa / audit / meeting / inspection
+  classification    String    // QMS / EMS / OHS / Integrated
+  title             String
+  contentSummary    String?
+  fileStoragePath   String?   // S3 key
+  fileHashSHA256    String?
+  hashVerifiedAt    DateTime?
+  hashStatus        String    @default("pending") // valid / invalid / pending
+  retentionCategory String    @default("B") // A / B / C / Permanent
+  retentionUntil    DateTime?
+  dispositionAction String?   // Destroy / Archive / Transfer
+  dispositionStatus String    @default("active")
+  legalHold         Boolean   @default(false)
+  legalHoldReason   String?
+  legalHoldBy       String?
+  legalHoldDate     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model RetentionSchedule {
+  id                String   @id @default(cuid())
+  tenantId          String
+  name              String
+  recordType        String
+  retentionYears    Int
+  dispositionAction String
+  legalBasis        String?
+  createdAt         DateTime @default(now())
+}
+
+// ==================== CAPA HUB (Phase 2) ====================
+model CapaRecord {
+  id             String    @id @default(cuid())
+  tenantId       String
+  capaNumber     String    @unique
+  title          String
+  description    String
+  source         String    // audit / complaint / nonconformity / near-miss / self-identified
+  severity       String    // critical / major / minor
+  status         String    @default("Open") // Open/Investigating/Implementing/Verifying/Closed
+  assignedTo     String?
+  dueDate        DateTime?
+  closedAt       DateTime?
+  rootCauseMethod String?  // 5Why / Fishbone / FTA
+  rootCauseSummary String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id])
+  actions CapaAction[]
+}
+
+model CapaAction {
+  id          String    @id @default(cuid())
+  capaId      String
+  description String
+  actionType  String    // corrective / preventive / containment
+  assignedTo  String
+  dueDate     DateTime
+  completedAt DateTime?
+  verifiedAt  DateTime?
+  evidence    String?
+  status      String    @default("Open")
+
+  capa CapaRecord @relation(fields: [capaId], references: [id])
+}
+
+// ==================== RISK NAVIGATOR (Phase 2) ====================
+model RiskRegister {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  referenceCode       String
+  registerType        String   // QMS_Risk / EMS_Aspect / OHS_Hazard
+  description         String
+  likelihood          Int      // 1-5
+  severity            Int      // 1-5
+  riskScore           Int      // likelihood * severity
+  residualRiskScore   Int?
+  treatmentRequired   Boolean  @default(false)
+  treatmentActions    Json     @default("[]")
+  reviewDate          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ==================== LEGAL REGISTER (Phase 2) ====================
+model LegalRegister {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  standard            String   // 14001 / 45001
+  regulationName      String
+  jurisdiction        String
+  requirementSummary  String
+  applicableProcesses String[]
+  complianceStatus    String   @default("Pending") // Compliant / Non-Compliant / Pending
+  nextEvaluationDate  DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ==================== HAZARD REGISTER (Phase 2) ====================
+model HazardRegister {
+  id              String   @id @default(cuid())
+  tenantId        String
+  description     String
+  category        String   // Physical / Chemical / Biological / Ergonomic / Psychosocial
+  likelihood      Int      // 1-5
+  severity        Int      // 1-5
+  riskScore       Int
+  controlLevel    String?  // Elimination / Substitution / Engineering / Administrative / PPE
+  residualScore   Int?
+  reviewDate      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ==================== AUDIT (Phase 3) ====================
+model AuditProgramme {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  standard    String
+  auditType   String   // Internal / Surveillance / Certification
+  plannedDate DateTime
+  actualDate  DateTime?
+  auditor     String
+  status      String   @default("Planned") // Planned/InProgress/Completed/Cancelled
+  findings    Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ==================== MANAGEMENT REVIEW (Phase 3) ====================
+model ManagementReview {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  reviewDate  DateTime
+  reviewType  String   @default("Scheduled") // Scheduled / Special / Extraordinary
+  attendees   String[]
+  agenda      Json     @default("[]")
+  inputs      Json     @default("{}")
+  decisions   Json     @default("[]")
+  actions     Json     @default("[]")
+  minutesPath String?  // S3 key to minutes PDF
+  status      String   @default("Planned")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ==================== AI SENTINEL ACTIVITY LOG ====================
+model SentinelActivity {
+  id           String   @id @default(cuid())
+  tenantId     String
+  sentinelType String   // QMS / EMS / OHS / Audit / Records
+  action       String   // analyzeDocument / identifyHazards / etc.
+  inputSummary String
+  confidence   Float    // 0-100
+  status       String   // completed / review_required / rejected
+  findings     Json     @default("[]")
+  citations    Json     @default("[]")
+  createdAt    DateTime @default(now())
+}

@@ -1,0 +1,142 @@
+﻿{
+    "CallerReference":  "cli-1771444989-973956",
+    "Aliases":  {
+                    "Quantity":  1,
+                    "Items":  [
+                                  "aisentinels.io"
+                              ]
+                },
+    "DefaultRootObject":  "",
+    "Origins":  {
+                    "Quantity":  1,
+                    "Items":  [
+                                  {
+                                      "Id":  "aisentinels-alb-291158148.us-east-1.elb.amazonaws.com-1771444989-131999",
+                                      "DomainName":  "aisentinels-alb-291158148.us-east-1.elb.amazonaws.com",
+                                      "OriginPath":  "",
+                                      "CustomHeaders":  {
+                                                            "Quantity":  0
+                                                        },
+                                      "CustomOriginConfig":  {
+                                                                 "HTTPPort":  80,
+                                                                 "HTTPSPort":  443,
+                                                                 "OriginProtocolPolicy":  "http-only",
+                                                                 "OriginSslProtocols":  {
+                                                                                            "Quantity":  3,
+                                                                                            "Items":  [
+                                                                                                          "TLSv1",
+                                                                                                          "TLSv1.1",
+                                                                                                          "TLSv1.2"
+                                                                                                      ]
+                                                                                        },
+                                                                 "OriginReadTimeout":  30,
+                                                                 "OriginKeepaliveTimeout":  5
+                                                             },
+                                      "ConnectionAttempts":  3,
+                                      "ConnectionTimeout":  10,
+                                      "OriginShield":  {
+                                                           "Enabled":  false
+                                                       },
+                                      "OriginAccessControlId":  ""
+                                  }
+                              ]
+                },
+    "OriginGroups":  {
+                         "Quantity":  0
+                     },
+    "DefaultCacheBehavior":  {
+                                 "TargetOriginId":  "aisentinels-alb-291158148.us-east-1.elb.amazonaws.com-1771444989-131999",
+                                 "TrustedSigners":  {
+                                                        "Enabled":  false,
+                                                        "Quantity":  0
+                                                    },
+                                 "TrustedKeyGroups":  {
+                                                          "Enabled":  false,
+                                                          "Quantity":  0
+                                                      },
+                                 "ViewerProtocolPolicy":  "allow-all",
+                                 "AllowedMethods":  {
+                                                        "Quantity":  7,
+                                                        "Items":  [
+                                                                      "HEAD",
+                                                                      "DELETE",
+                                                                      "POST",
+                                                                      "GET",
+                                                                      "OPTIONS",
+                                                                      "PUT",
+                                                                      "PATCH"
+                                                                  ],
+                                                        "CachedMethods":  {
+                                                                              "Quantity":  2,
+                                                                              "Items":  [
+                                                                                            "HEAD",
+                                                                                            "GET"
+                                                                                        ]
+                                                                          }
+                                                    },
+                                 "SmoothStreaming":  false,
+                                 "Compress":  false,
+                                 "LambdaFunctionAssociations":  {
+                                                                    "Quantity":  0
+                                                                },
+                                 "FunctionAssociations":  {
+                                                              "Quantity":  0
+                                                          },
+                                 "FieldLevelEncryptionId":  "",
+                                 "GrpcConfig":  {
+                                                    "Enabled":  false
+                                                },
+                                 "ForwardedValues":  {
+                                                         "QueryString":  true,
+                                                         "Cookies":  {
+                                                                         "Forward":  "all"
+                                                                     },
+                                                         "Headers":  {
+                                                                         "Quantity":  1,
+                                                                         "Items":  [
+                                                                                       "*"
+                                                                                   ]
+                                                                     },
+                                                         "QueryStringCacheKeys":  {
+                                                                                      "Quantity":  0
+                                                                                  }
+                                                     },
+                                 "MinTTL":  0,
+                                 "DefaultTTL":  86400,
+                                 "MaxTTL":  31536000
+                             },
+    "CacheBehaviors":  {
+                           "Quantity":  0
+                       },
+    "CustomErrorResponses":  {
+                                 "Quantity":  0
+                             },
+    "Comment":  "",
+    "Logging":  {
+                    "Enabled":  false,
+                    "IncludeCookies":  false,
+                    "Bucket":  "",
+                    "Prefix":  ""
+                },
+    "PriceClass":  "PriceClass_All",
+    "Enabled":  false,
+    "ViewerCertificate":  {
+                              "CloudFrontDefaultCertificate":  false,
+                              "ACMCertificateArn":  "arn:aws:acm:us-east-1:304242047817:certificate/b3abc21d-1408-42fc-80d2-cb40190c83bc",
+                              "SSLSupportMethod":  "sni-only",
+                              "MinimumProtocolVersion":  "TLSv1.2_2021",
+                              "Certificate":  "arn:aws:acm:us-east-1:304242047817:certificate/b3abc21d-1408-42fc-80d2-cb40190c83bc",
+                              "CertificateSource":  "acm"
+                          },
+    "Restrictions":  {
+                         "GeoRestriction":  {
+                                                "RestrictionType":  "none",
+                                                "Quantity":  0
+                                            }
+                     },
+    "WebACLId":  "",
+    "HttpVersion":  "http2",
+    "IsIPV6Enabled":  true,
+    "ContinuousDeploymentPolicyId":  "",
+    "Staging":  false
+}

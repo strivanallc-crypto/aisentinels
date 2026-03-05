@@ -78,6 +78,26 @@ export class ApiStack extends cdk.Stack {
     // ── Monorepo root is 4 levels up from stacks/ ────────────────────────────
     const repoRoot = path.join(__dirname, '../../../../');
 
+    // ── postgres install hook ──────────────────────────────────────────────────
+    // postgres.js is ESM-first. Both esbuild CJS bundling AND the package's own
+    // cjs/ build suffer a module init-order bug where `parsers` is undefined.
+    //
+    // Fix: use OutputFormat.ESM so esbuild emits `import postgres from 'postgres'`
+    // which naturally resolves to the working ESM entry point. The afterBundling
+    // hook installs the npm package and sets `"type": "module"` in package.json
+    // so Lambda treats the .js file as ESM.
+    const postgresInstallHook = {
+      beforeBundling(): string[] { return []; },
+      beforeInstall(): string[] { return []; },
+      afterBundling(_inputDir: string, outputDir: string): string[] {
+        const dir = outputDir.replace(/\\/g, '/');
+        return [
+          `cd "${outputDir}" && npm init -y --silent 2>nul && npm install postgres@3.4.8 --save --silent`,
+          `node -e "var f=require('fs'),p=JSON.parse(f.readFileSync('${dir}/package.json','utf8'));p.type='module';f.writeFileSync('${dir}/package.json',JSON.stringify(p,null,2))"`,
+        ];
+      },
+    };
+
     // ══════════════════════════════════════════════════════════════════════════
     // Cognito JWT Authorizer
     // Validates the Cognito access token on every request.
@@ -153,8 +173,9 @@ export class ApiStack extends cdk.Stack {
       bundling: {
         minify: true,
         target: 'node22',
-        format: OutputFormat.CJS,
-        externalModules: ['@aws-sdk/*'],
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*', 'postgres'],
+        commandHooks: postgresInstallHook,
       },
     });
     tag(provisionFn);
@@ -225,8 +246,9 @@ export class ApiStack extends cdk.Stack {
     const businessLambdaBundling = {
       minify: true,
       target: 'node22',
-      format: OutputFormat.CJS,
-      externalModules: ['@aws-sdk/*'] as string[],
+      format: OutputFormat.ESM,
+      externalModules: ['@aws-sdk/*', 'postgres'] as string[],
+      commandHooks: postgresInstallHook,
     };
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -358,6 +380,77 @@ export class ApiStack extends cdk.Stack {
       sid: 'ReadBillingSecrets',
       actions: ['ssm:GetParameter'],
       resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/billing/*`],
+    }));
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Settings — /api/v1/settings/* routes (P3)
+    // Manages org context, standards, roles, users. Requires Cognito admin.
+    // ══════════════════════════════════════════════════════════════════════════
+    const settingsLogGroup = new logs.LogGroup(this, 'SettingsFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-settings-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(settingsLogGroup);
+
+    const settingsFn = new NodejsFunction(this, 'SettingsFn', {
+      functionName: `aisentinels-api-settings-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/settings/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        COGNITO_USER_POOL_ID: props.userPoolId,
+      },
+      logGroup: settingsLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(settingsFn);
+    // Allow settingsFn to create Cognito users (invite-user handler)
+    settingsFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowCognitoAdminCreateUser',
+      actions: ['cognito-idp:AdminCreateUser'],
+      resources: [props.userPoolArn],
+    }));
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Brain — /api/v1/brain/* routes (P3)
+    // Document upload, text extraction (PDF/DOCX), chunking for RAG pipeline.
+    // Higher memory for PDF processing, S3 access for working-files bucket.
+    // ══════════════════════════════════════════════════════════════════════════
+    const brainLogGroup = new logs.LogGroup(this, 'BrainFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-brain-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(brainLogGroup);
+
+    const workingFilesBucketName = `aisentinels-working-files-${this.region}`;
+
+    const brainFn = new NodejsFunction(this, 'BrainFn', {
+      functionName: `aisentinels-api-brain-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/brain/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1024,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        WORKING_FILES_BUCKET: workingFilesBucketName,
+      },
+      logGroup: brainLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(brainFn);
+    // Allow brainFn to read/write/delete objects in the working-files bucket
+    brainFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowS3WorkingFiles',
+      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: [`arn:aws:s3:::${workingFilesBucketName}/*`],
     }));
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -650,6 +743,69 @@ export class ApiStack extends cdk.Stack {
       integration: aiIntegration,
     });
 
+    // ── Settings routes (P3) ──────────────────────────────────────────────────
+    const settingsIntegration = new HttpLambdaIntegration('SettingsIntegration', settingsFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/org',
+      methods: [HttpMethod.GET, HttpMethod.PUT],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/standards/activate',
+      methods: [HttpMethod.POST],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/standards/{code}',
+      methods: [HttpMethod.DELETE],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/roles',
+      methods: [HttpMethod.GET],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/users',
+      methods: [HttpMethod.GET],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/users/invite',
+      methods: [HttpMethod.POST],
+      integration: settingsIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/users/{userId}/role',
+      methods: [HttpMethod.PUT],
+      integration: settingsIntegration,
+    });
+
+    // ── Brain routes (P3) ─────────────────────────────────────────────────────
+    const brainIntegration = new HttpLambdaIntegration('BrainIntegration', brainFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/brain/upload-url',
+      methods: [HttpMethod.POST],
+      integration: brainIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/brain/process',
+      methods: [HttpMethod.POST],
+      integration: brainIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/brain/documents',
+      methods: [HttpMethod.GET],
+      integration: brainIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/brain/documents/{id}',
+      methods: [HttpMethod.DELETE],
+      integration: brainIntegration,
+    });
+
     // ANY /api/v1/{proxy+} — catch-all route to internal ALB via VpcLink
     // API Gateway evaluates more-specific routes first:
     //   POST /api/v1/tenants/provision → Lambda (matched above)
@@ -657,6 +813,7 @@ export class ApiStack extends cdk.Stack {
     //   E8 CAPA + records routes → Lambda (matched above)
     //   E9 billing routes → Lambda (matched above)
     //   Phase 1 AI routes → Lambda (matched above)
+    //   P3 settings + brain routes → Lambda (matched above)
     //   Everything else → ALB → Fargate service (path-based routing on ALB)
     this.httpApi.addRoutes({
       path: '/api/v1/{proxy+}',

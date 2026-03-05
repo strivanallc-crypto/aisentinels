@@ -1,0 +1,1 @@
+{"errorType":"TypeError","errorMessage":"Cannot read properties of undefined (reading 'method')","trace":["TypeError: Cannot read properties of undefined (reading 'method')","    at Runtime.Pu [as handler] (/var/task/index.js:8:120422)","    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1306:29)"]}

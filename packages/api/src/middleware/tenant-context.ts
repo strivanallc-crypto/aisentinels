@@ -37,6 +37,18 @@ export async function withTenantContext<T>(
   return sql.begin(async (txSql) => {
     const tx = txSql as unknown as postgres.Sql;
 
+    // Drizzle-orm's construct() accesses client.options.parsers/serializers
+    // to override date/JSON type handling. TransactionSql inherits the parent
+    // connection but doesn't expose .options. Copy from the parent sql client
+    // so drizzle() can configure its transparent parsers without crashing.
+    if (!(tx as any).options?.parsers) {
+      (tx as any).options = {
+        ...(tx as any).options,
+        parsers: (sql as any).options?.parsers ?? {},
+        serializers: (sql as any).options?.serializers ?? {},
+      };
+    }
+
     // true = transaction-local (SET LOCAL) — never leaks across RDS Proxy pool connections
     await tx`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
 

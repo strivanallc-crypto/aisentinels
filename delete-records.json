@@ -1,0 +1,42 @@
+{
+  "Changes": [
+    {
+      "Action": "DELETE",
+      "ResourceRecordSet": {
+        "Name": "aisentinels.io.",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "Z2FDTNDATAQYW2",
+          "DNSName": "d1hlm4n6eyvgd4.cloudfront.net.",
+          "EvaluateTargetHealth": false
+        }
+      }
+    },
+    {
+      "Action": "DELETE",
+      "ResourceRecordSet": {
+        "Name": "_07018f3a8b277b0ad4b97d27ddzztszm.aisentinels.io.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_069df0125a07c39750cf39572421293a.mhbtsbpdnt.acm-validations.aws."
+          }
+        ]
+      }
+    },
+    {
+      "Action": "DELETE",
+      "ResourceRecordSet": {
+        "Name": "_07018f3a8b277b0ad4b97d27ddzztszm.aisentinels.io.aisentinels.io.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_069df0125a07c39750cf39572421293a.mhbtsbpdnt.acm-validations.aws."
+          }
+        ]
+      }
+    }
+  ]
+}

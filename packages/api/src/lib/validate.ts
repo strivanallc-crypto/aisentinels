@@ -87,6 +87,50 @@ export const CreateRecordSchema = z.object({
   contentText:    z.string().max(100_000).optional(),
 });
 
+// ── Settings schemas (Phase 3) ───────────────────────────────────────────────
+
+const STANDARD_CODES = ['ISO 9001', 'ISO 14001', 'ISO 45001'] as const;
+const INDUSTRIES = ['manufacturing', 'construction', 'food', 'energy', 'other'] as const;
+const DOC_CATEGORIES = [
+  'qms_manual', 'ems_manual', 'ohs_manual', 'procedure', 'policy', 'other',
+] as const;
+const FILE_TYPES = ['pdf', 'docx', 'txt'] as const;
+
+export const UpdateOrgSchema = z.object({
+  companyName:          z.string().min(1).max(200).transform((s) => s.trim()),
+  industry:             z.enum(INDUSTRIES).optional(),
+  country:              z.string().max(100).optional(),
+  employeeCount:        z.number().int().min(1).max(1_000_000).optional(),
+  imsScope:             z.string().max(5000).optional(),
+  certificationTargets: z.array(z.enum(STANDARD_CODES)).max(3).optional(),
+});
+
+export const ActivateStandardSchema = z.object({
+  standardCode: z.enum(STANDARD_CODES),
+});
+
+export const InviteUserSchema = z.object({
+  email:  z.string().email().max(254),
+  roleId: z.string().uuid(),
+});
+
+export const UpdateUserRoleSchema = z.object({
+  roleId: z.string().uuid(),
+});
+
+// ── Brain schemas (Phase 3) ──────────────────────────────────────────────────
+
+export const UploadUrlSchema = z.object({
+  fileName:        z.string().min(1).max(500).transform((s) => s.trim()),
+  fileType:        z.enum(FILE_TYPES),
+  docCategory:     z.enum(DOC_CATEGORIES),
+  relatedStandard: z.enum(STANDARD_CODES).optional(),
+});
+
+export const ProcessDocumentSchema = z.object({
+  orgDocumentId: z.string().uuid(),
+});
+
 // ── parseBody helper ──────────────────────────────────────────────────────────
 
 type HttpResponse = { statusCode: number; headers: { 'Content-Type': string }; body: string };

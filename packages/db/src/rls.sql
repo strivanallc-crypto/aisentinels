@@ -221,6 +221,112 @@ BEGIN
 END $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE risks TO app_role;
 
+-- =============================================================================
+-- Settings + Brain tables (Phase 3) — 6 new tenant-scoped tables
+-- =============================================================================
+
+-- ── org_context ─────────────────────────────────────────────────────────────
+ALTER TABLE org_context ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_context FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'org_context' AND policyname = 'org_context_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY org_context_tenant_isolation ON org_context
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_context TO app_role;
+
+-- ── org_standards ───────────────────────────────────────────────────────────
+ALTER TABLE org_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_standards FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'org_standards' AND policyname = 'org_standards_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY org_standards_tenant_isolation ON org_standards
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_standards TO app_role;
+
+-- ── org_roles ───────────────────────────────────────────────────────────────
+ALTER TABLE org_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_roles FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'org_roles' AND policyname = 'org_roles_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY org_roles_tenant_isolation ON org_roles
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_roles TO app_role;
+
+-- ── user_roles ──────────────────────────────────────────────────────────────
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'user_roles' AND policyname = 'user_roles_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY user_roles_tenant_isolation ON user_roles
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_roles TO app_role;
+
+-- ── org_documents ───────────────────────────────────────────────────────────
+ALTER TABLE org_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_documents FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'org_documents' AND policyname = 'org_documents_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY org_documents_tenant_isolation ON org_documents
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_documents TO app_role;
+
+-- ── org_knowledge_chunks ────────────────────────────────────────────────────
+ALTER TABLE org_knowledge_chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_knowledge_chunks FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'org_knowledge_chunks' AND policyname = 'org_knowledge_chunks_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY org_knowledge_chunks_tenant_isolation ON org_knowledge_chunks
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_knowledge_chunks TO app_role;
+
 -- ── Sequence grants ───────────────────────────────────────────────────────────
 -- app_role needs USAGE on sequences to generate UUIDs via gen_random_uuid()
 -- (pgcrypto sequences, not serial sequences — but safe to grant proactively)
@@ -232,5 +338,5 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_role;
 -- FROM pg_tables t JOIN pg_class c ON c.relname = t.tablename
 -- WHERE schemaname = 'public' AND tablename != 'iso_clauses'
 -- ORDER BY tablename;
--- Expected: rowsecurity = true, forcerowsecurity = true for all 11 tables
+-- Expected: rowsecurity = true, forcerowsecurity = true for all 17 tables
 -- =============================================================================
