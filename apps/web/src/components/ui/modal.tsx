@@ -20,15 +20,16 @@ export function Modal({ open, onOpenChange, title, children, className }: ModalP
         <Dialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2',
-            'rounded-2xl bg-white p-6 shadow-2xl focus:outline-none',
+            'rounded-2xl p-6 shadow-2xl focus:outline-none',
             className,
           )}
+          style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)', color: 'var(--content-text)' }}
         >
           <div className="mb-5 flex items-center justify-between">
-            <Dialog.Title className="text-lg font-semibold text-gray-900">
+            <Dialog.Title className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>
               {title}
             </Dialog.Title>
-            <Dialog.Close className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600">
+            <Dialog.Close className="rounded p-1 text-gray-500 transition-colors hover:text-gray-300">
               <X className="h-4 w-4" />
             </Dialog.Close>
           </div>

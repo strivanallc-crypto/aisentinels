@@ -90,7 +90,7 @@ export function CommandPalette() {
             {/* Footer hint */}
             <div
               className="flex items-center gap-4 px-4 py-2.5"
-              style={{ borderTop: '1px solid var(--content-border)', background: '#fafafa' }}
+              style={{ borderTop: '1px solid var(--content-border)', background: 'var(--content-surface)' }}
             >
               <span className="text-[11px]" style={{ color: 'var(--content-text-dim)' }}>
                 <kbd className="font-mono">↑↓</kbd> navigate &nbsp;·&nbsp; <kbd className="font-mono">↵</kbd> select &nbsp;·&nbsp; <kbd className="font-mono">esc</kbd> close

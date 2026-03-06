@@ -1,21 +1,47 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
-import { LogOut, Shield, ChevronRight } from 'lucide-react';
+import { LogOut, Shield, ChevronRight, Lock } from 'lucide-react';
 import { NAV_ITEMS } from './nav-items';
 import { Qualy } from '@/components/sentinels/qualy';
+import { billingApi } from '@/lib/api';
+import type { PlanType } from '@/lib/types';
+
+const PLAN_ORDER: PlanType[] = ['starter', 'professional', 'enterprise'];
 
 interface SidebarProps {
   session: Session;
+  currentPlan?: PlanType;
 }
 
-export function Sidebar({ session }: SidebarProps) {
+export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
   const pathname = usePathname();
   const email   = session.user?.email ?? '';
   const initial = email.charAt(0).toUpperCase();
+  const planIdx = PLAN_ORDER.indexOf(currentPlan);
+
+  // Actions remaining
+  const [actionsRemaining, setActionsRemaining] = useState(100);
+  const [actionsLimit, setActionsLimit] = useState(100);
+
+  useEffect(() => {
+    billingApi
+      .getUsage()
+      .then((res) => {
+        const d = res.data as { creditsRemaining?: number; aiCreditsLimit?: number } | null;
+        if (d) {
+          setActionsRemaining(d.creditsRemaining ?? 100);
+          setActionsLimit(d.aiCreditsLimit ?? 100);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const actionsLow = actionsLimit > 0 && actionsRemaining / actionsLimit < 0.2;
 
   return (
     <aside
@@ -63,11 +89,63 @@ export function Sidebar({ session }: SidebarProps) {
         </span>
       </div>
 
+      {/* ── Onboarding Progress (Zeigarnik / Loss Aversion) ── */}
+      <div
+        className="mx-3 mt-2 mb-1 rounded-md px-3 py-2.5"
+        style={{ background: 'var(--sidebar-surface)' }}
+      >
+        <p className="text-[10px] mb-1.5 leading-relaxed" style={{ color: 'var(--sidebar-text)' }}>
+          You're 20% there — complete setup to unlock full compliance coverage
+        </p>
+        <div className="flex items-center justify-between mb-1">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: 'var(--sidebar-text-muted)' }}
+          >
+            Setup
+          </span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--sentinel-accent)' }}>
+            1 of 5
+          </span>
+        </div>
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full"
+          style={{ background: 'var(--sidebar-border)' }}
+        >
+          <div
+            className="h-1.5 rounded-full transition-all duration-500"
+            style={{ width: '20%', background: 'var(--sentinel-accent)' }}
+          />
+        </div>
+      </div>
+
       {/* ── Nav ── */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const { href, label, icon: Icon } = item;
           const active = pathname === href;
+          const isLocked =
+            item.requiredPlan
+              ? PLAN_ORDER.indexOf(item.requiredPlan) > planIdx
+              : false;
+
+          if (isLocked) {
+            return (
+              <div
+                key={href}
+                title="Unlock with Professional — used by 73% of manufacturing clients"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-[13px] opacity-50 cursor-not-allowed select-none"
+                style={{ color: 'var(--sidebar-text-dim)' }}
+              >
+                <div className="relative flex-shrink-0">
+                  <Icon className="h-4 w-4" style={{ color: 'var(--sidebar-text-muted)' }} />
+                </div>
+                <span className="truncate flex-1">{label}</span>
+                <Lock className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--sidebar-text-muted)' }} />
+              </div>
+            );
+          }
+
           return (
             <Link
               key={href}
@@ -90,11 +168,15 @@ export function Sidebar({ session }: SidebarProps) {
                     color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-muted)',
                   }}
                 />
-                {'sentinelColor' in item && item.sentinelColor && (
+                {item.sentinelColor && item.sentinelInitial && (
                   <span
-                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full"
+                    className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-sm"
                     style={{ backgroundColor: item.sentinelColor }}
-                  />
+                  >
+                    <span className="text-[7px] font-bold text-white leading-none">
+                      {item.sentinelInitial}
+                    </span>
+                  </span>
                 )}
               </div>
               <span className="truncate flex-1">{label}</span>
@@ -108,6 +190,39 @@ export function Sidebar({ session }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* ── Actions Remaining ── */}
+      <div
+        className="mx-3 mb-2 rounded-md px-3 py-2.5"
+        style={{ background: 'var(--sidebar-surface)' }}
+      >
+        {actionsLow ? (
+          <p className="text-[10px] mb-1.5 leading-relaxed" style={{ color: '#F59E0B' }}>
+            Only {actionsRemaining} actions left this month — upgrade for 5x more
+          </p>
+        ) : (
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--sidebar-text-muted)' }}>
+              Actions remaining
+            </span>
+            <span className="text-[10px] font-bold" style={{ color: 'var(--sidebar-text)' }}>
+              {actionsRemaining} of {actionsLimit}
+            </span>
+          </div>
+        )}
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full"
+          style={{ background: 'var(--sidebar-border)' }}
+        >
+          <div
+            className="h-1.5 rounded-full transition-all duration-500"
+            style={{
+              width: `${actionsLimit > 0 ? (actionsRemaining / actionsLimit) * 100 : 100}%`,
+              background: actionsLow ? '#F59E0B' : 'var(--sentinel-accent)',
+            }}
+          />
+        </div>
+      </div>
 
       {/* ── Sentinels Status ── */}
       <div

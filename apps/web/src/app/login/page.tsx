@@ -26,7 +26,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
-      <div className="w-full max-w-sm rounded-2xl bg-white px-10 py-10 shadow-2xl">
+      <div
+        className="w-full max-w-sm rounded-2xl px-10 py-10 shadow-2xl"
+        style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
+      >
 
         {/* Character + title */}
         <div className="mb-8 flex flex-col items-center gap-4">

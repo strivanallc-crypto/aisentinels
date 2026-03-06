@@ -352,7 +352,7 @@ export interface BillingUsage {
 export const PLAN_LABELS: Record<PlanType, string> = {
   starter:      'Starter',
   professional: 'Professional',
-  enterprise:   'Enterprise',
+  enterprise:   'Scale',
 };
 
 export const SUB_STATUS_LABELS: Record<SubStatus, string> = {
