@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 interface Review {
   id: string;
@@ -130,14 +131,17 @@ export default function ManagementReviewPage() {
     <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-            ISO Platform › Management Review
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Management Review</h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-            ISO Clause 9.3 — Leadership management review meetings
-          </p>
+        <div className="flex items-center gap-3">
+          <SentinelAvatar sentinelId="qualy" size={36} />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+              ISO Platform › Management Review
+            </p>
+            <h1 className="mt-1 text-2xl font-bold">Management Review</h1>
+            <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
+              ISO Clause 9.3 — Leadership management review meetings
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleAiReview} disabled={aiLoading}>
@@ -153,7 +157,7 @@ export default function ManagementReviewPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
@@ -173,13 +177,14 @@ export default function ManagementReviewPage() {
                 key={tab.value}
                 onClick={() => setStatusFilter(tab.value)}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  active ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-500 hover:bg-gray-100'
+                  active ? 'bg-purple-500/15 text-purple-300 font-medium' : 'hover:bg-white/5'
                 }`}
+                style={active ? undefined : { color: 'var(--content-text-dim)' }}
               >
                 {tab.label}
                 {count > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    active ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-600'
+                    active ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-gray-400'
                   }`}>
                     {count}
                   </span>
@@ -189,13 +194,14 @@ export default function ManagementReviewPage() {
           })}
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search reviews…"
-            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 w-60"
+            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-white/20 w-60"
+            style={{ color: 'var(--content-text)' }}
           />
         </div>
       </div>
@@ -227,7 +233,7 @@ export default function ManagementReviewPage() {
             {filtered.map((rev) => {
               const cfg = STATUS_CONFIG[rev.status] ?? { label: rev.status, variant: 'secondary' as const };
               return (
-                <div key={rev.id} className="flex items-start justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                <div key={rev.id} className="flex items-start justify-between px-5 py-4 hover:bg-white/5 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5">
                       {rev.status.toLowerCase() === 'completed' ? (
@@ -266,42 +272,46 @@ export default function ManagementReviewPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Title *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Title *</label>
             <input
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Q1 2026 Management Review"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Date *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Date *</label>
             <input
               type="date"
               required
               value={form.scheduledDate}
               onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Agenda</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Agenda</label>
             <textarea
               rows={3}
               value={form.agenda}
               onChange={(e) => setForm({ ...form, agenda: e.target.value })}
               placeholder="Agenda items for the review…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Attendees</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Attendees</label>
             <input
               value={form.attendees}
               onChange={(e) => setForm({ ...form, attendees: e.target.value })}
               placeholder="Comma-separated names or IDs"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

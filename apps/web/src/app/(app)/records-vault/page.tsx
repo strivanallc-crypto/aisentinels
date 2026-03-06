@@ -22,6 +22,7 @@ import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 const CATEGORIES = Object.entries(RECORD_CATEGORY_LABELS) as [RecordCategory, string][];
 
@@ -142,14 +143,17 @@ export default function RecordsVaultPage() {
     <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-            ISO Platform › Records Vault
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Records Vault</h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-            Immutable records with integrity verification — ISO 9001 Clause 7.5.3
-          </p>
+        <div className="flex items-center gap-3">
+          <SentinelAvatar sentinelId="doki" size={36} />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+              ISO Platform › Records Vault
+            </p>
+            <h1 className="mt-1 text-2xl font-bold">Records Vault</h1>
+            <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
+              Immutable records with integrity verification — ISO 9001 Clause 7.5.3
+            </p>
+          </div>
         </div>
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="mr-1.5 h-4 w-4" />
@@ -159,7 +163,7 @@ export default function RecordsVaultPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
@@ -179,13 +183,14 @@ export default function RecordsVaultPage() {
                 key={tab.value}
                 onClick={() => setCategoryFilter(tab.value)}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
-                  active ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-100'
+                  active ? 'bg-blue-500/15 text-blue-300 font-medium' : 'hover:bg-white/5'
                 }`}
+                style={active ? undefined : { color: 'var(--content-text-dim)' }}
               >
                 {tab.label}
                 {count > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    active ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-600'
+                    active ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-gray-400'
                   }`}>
                     {count}
                   </span>
@@ -195,13 +200,14 @@ export default function RecordsVaultPage() {
           })}
         </div>
         <div className="relative flex-shrink-0">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search records…"
-            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 w-60"
+            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-white/20 w-60"
+            style={{ color: 'var(--content-text)' }}
           />
         </div>
       </div>
@@ -215,7 +221,7 @@ export default function RecordsVaultPage() {
           <TableSkeleton rows={5} cols={6} />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
               <Archive className="h-7 w-7 text-purple-500" />
             </div>
             <div>
@@ -251,7 +257,7 @@ export default function RecordsVaultPage() {
               {filtered.map((r, i) => (
                 <tr
                   key={r.id}
-                  className="transition-colors hover:bg-gray-50"
+                  className="transition-colors hover:bg-white/5"
                   style={{ borderTop: i > 0 ? '1px solid var(--content-border)' : undefined }}
                 >
                   <td className="px-4 py-3">
@@ -329,24 +335,26 @@ export default function RecordsVaultPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Title *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Title *</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Supplier Qualification Record Q-2024-001"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Category *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Category *</label>
               <select
                 required
                 value={form.category}
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as RecordCategory }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
               >
                 {CATEGORIES.map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -354,19 +362,20 @@ export default function RecordsVaultPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Retention (years)</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Retention (years)</label>
               <input
                 type="number"
                 min={1}
                 max={99}
                 value={form.retentionYears}
                 onChange={(e) => setForm((f) => ({ ...f, retentionYears: Number(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
               Content <span className="font-normal text-gray-400">(optional — stored for integrity hashing)</span>
             </label>
             <textarea
@@ -374,7 +383,8 @@ export default function RecordsVaultPage() {
               value={form.contentText}
               onChange={(e) => setForm((f) => ({ ...f, contentText: e.target.value }))}
               placeholder="Record content…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">
@@ -395,17 +405,18 @@ export default function RecordsVaultPage() {
         title="Apply Legal Hold"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm" style={{ color: 'var(--content-text-muted)' }}>
             A legal hold prevents this record from being modified or deleted until released.
           </p>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Reason *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Reason *</label>
             <textarea
               rows={2}
               value={holdReason}
               onChange={(e) => setHoldReason(e.target.value)}
               placeholder="Reason for legal hold…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3">

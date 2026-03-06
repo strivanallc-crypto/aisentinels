@@ -22,7 +22,7 @@ import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Doki } from '@/components/sentinels/doki';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiGenerateWizard } from '@/components/document-studio/ai-generate-wizard';
 import { UploadClassifyModal } from '@/components/document-studio/upload-classify-modal';
 
@@ -112,7 +112,7 @@ export default function DocumentStudioPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Doki size={36} />
+          <SentinelAvatar sentinelId="doki" size={36} />
           <div>
             <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
               ISO Platform › Document Studio
@@ -141,7 +141,7 @@ export default function DocumentStudioPage() {
 
       {/* ── Error banner ── */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.2)' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
@@ -162,14 +162,15 @@ export default function DocumentStudioPage() {
                 onClick={() => setStatusFilter(tab.value)}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                   active
-                    ? 'bg-indigo-50 text-indigo-700 font-medium'
-                    : 'text-gray-500 hover:bg-gray-100'
+                    ? 'bg-indigo-500/15 text-indigo-300 font-medium'
+                    : 'hover:bg-white/5'
                 }`}
+                style={!active ? { color: 'var(--content-text-dim)' } : undefined}
               >
                 {tab.label}
                 {count > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    active ? 'bg-indigo-200 text-indigo-800' : 'bg-gray-200 text-gray-600'
+                    active ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/10 text-gray-400'
                   }`}>
                     {count}
                   </span>
@@ -179,13 +180,14 @@ export default function DocumentStudioPage() {
           })}
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search documents…"
-            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 w-60"
+            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-white/20 w-60"
+            style={{ color: 'var(--content-text)' }}
           />
         </div>
       </div>
@@ -199,8 +201,8 @@ export default function DocumentStudioPage() {
           <TableSkeleton rows={5} cols={6} />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
-              <Doki size={32} />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10">
+              <SentinelAvatar sentinelId="doki" size={32} />
             </div>
             <div>
               <p className="font-semibold">
@@ -243,7 +245,7 @@ export default function DocumentStudioPage() {
                 <tr
                   key={doc.id}
                   onClick={() => router.push(`/document-studio/${doc.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-gray-50"
+                  className="cursor-pointer transition-colors hover:bg-white/5"
                   style={{ borderTop: i > 0 ? '1px solid var(--content-border)' : undefined }}
                 >
                   <td className="px-4 py-3">
@@ -265,7 +267,7 @@ export default function DocumentStudioPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-400">
                       v{doc.version}
                     </span>
                   </td>
@@ -279,7 +281,7 @@ export default function DocumentStudioPage() {
                       <span className="text-xs" style={{ color: 'var(--content-text-muted)' }}>
                         {new Date(doc.updatedAt).toLocaleDateString()}
                       </span>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <ChevronRight className="h-3.5 w-3.5" style={{ color: 'var(--content-text-dim)' }} />
                     </div>
                   </td>
                 </tr>
@@ -297,7 +299,7 @@ export default function DocumentStudioPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
               Document Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -306,18 +308,20 @@ export default function DocumentStudioPage() {
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Supplier Qualification Procedure"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
               Document Type <span className="text-red-500">*</span>
             </label>
             <select
               required
               value={form.docType}
               onChange={(e) => setForm((f) => ({ ...f, docType: e.target.value as DocType }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             >
               {DOC_TYPES.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
@@ -325,15 +329,16 @@ export default function DocumentStudioPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Content <span className="font-normal text-gray-400">(optional)</span>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
+              Content <span className="font-normal" style={{ color: 'var(--content-text-dim)' }}>(optional)</span>
             </label>
             <textarea
               rows={4}
               value={form.content}
               onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
               placeholder="Enter document content or leave blank to add later…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

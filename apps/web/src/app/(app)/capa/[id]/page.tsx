@@ -27,7 +27,7 @@ import type { IsoStandard, RootCauseMethod } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
-import { Nexus } from '@/components/sentinels/nexus';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiRcaPanel } from '@/components/capa/ai-rca-panel';
 
 const STATUS_TRANSITIONS: Partial<Record<CapaStatus, { next: CapaStatus; label: string }[]>> = {
@@ -117,10 +117,10 @@ export default function CapaDetailPage() {
   if (error || !capa) {
     return (
       <div className="p-6">
-        <button onClick={() => router.push('/capa')} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+        <button onClick={() => router.push('/capa')} className="mb-4 flex items-center gap-1 text-sm" style={{ color: 'var(--content-text-dim)' }}>
           <ChevronLeft className="h-4 w-4" /> Back to CAPAs
         </button>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error ?? 'CAPA not found'}
         </div>
@@ -145,7 +145,7 @@ export default function CapaDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <Nexus size={40} className="flex-shrink-0 mt-0.5" />
+          <SentinelAvatar sentinelId="nexus" size={40} className="flex-shrink-0 mt-0.5" />
           <div>
             <h1 className="text-xl font-bold line-clamp-2">{capa.problemDescription}</h1>
             <div className="mt-1 flex items-center gap-2 flex-wrap">
@@ -356,24 +356,26 @@ export default function CapaDetailPage() {
       >
         <form onSubmit={handleAddAction} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Description *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Description *</label>
             <textarea
               required
               rows={3}
               value={actionForm.description}
               onChange={(e) => setActionForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Describe the corrective or preventive action…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Due Date *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Due Date *</label>
             <input
               type="date"
               required
               value={actionForm.dueDate}
               onChange={(e) => setActionForm((f) => ({ ...f, dueDate: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

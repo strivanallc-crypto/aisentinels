@@ -25,7 +25,7 @@ import {
 import type { IsoStandard } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Doki } from '@/components/sentinels/doki';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 const STATUS_ICON: Record<DocStatus, React.ReactNode> = {
   draft: <FileText className="h-4 w-4" />,
@@ -118,7 +118,7 @@ export default function DocumentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--content-text-dim)' }} />
       </div>
     );
   }
@@ -126,10 +126,10 @@ export default function DocumentDetailPage() {
   if (error || !doc) {
     return (
       <div className="p-6">
-        <button onClick={() => router.push('/document-studio')} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+        <button onClick={() => router.push('/document-studio')} className="mb-4 flex items-center gap-1 text-sm" style={{ color: 'var(--content-text-muted)' }}>
           <ChevronLeft className="h-4 w-4" /> Back to Documents
         </button>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error ?? 'Document not found'}
         </div>
@@ -151,7 +151,7 @@ export default function DocumentDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 flex-shrink-0 mt-0.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 flex-shrink-0 mt-0.5">
             {STATUS_ICON[doc.status]}
           </div>
           <div>
@@ -163,7 +163,7 @@ export default function DocumentDetailPage() {
               <span className="text-xs" style={{ color: 'var(--content-text-muted)' }}>
                 {DOC_TYPE_LABELS[doc.docType]}
               </span>
-              <span className="text-xs rounded bg-gray-100 px-1.5 py-0.5 font-mono text-gray-600">
+              <span className="text-xs rounded bg-white/10 px-1.5 py-0.5 font-mono" style={{ color: 'var(--content-text-dim)' }}>
                 v{doc.version}
               </span>
             </div>
@@ -234,7 +234,7 @@ export default function DocumentDetailPage() {
               </pre>
             ) : (
               <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <Doki size={48} className="opacity-50" />
+                <SentinelAvatar sentinelId="doki" size={48} className="opacity-50" />
                 <p className="text-sm" style={{ color: 'var(--content-text-muted)' }}>
                   No content yet. Edit this document or use Doki to generate content.
                 </p>

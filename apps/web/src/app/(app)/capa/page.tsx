@@ -30,7 +30,7 @@ import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Nexus } from '@/components/sentinels/nexus';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 const SOURCE_TYPES = Object.entries(CAPA_SOURCE_TYPE_LABELS) as [CapaSourceType, string][];
 const SEVERITIES = Object.entries(FINDING_SEVERITY_LABELS) as [FindingSeverity, string][];
@@ -136,7 +136,7 @@ export default function CapaPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Nexus size={36} />
+          <SentinelAvatar sentinelId="nexus" size={36} />
           <div>
             <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
               ISO Platform › CAPA Engine
@@ -155,7 +155,7 @@ export default function CapaPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
@@ -175,13 +175,14 @@ export default function CapaPage() {
                 key={tab.value}
                 onClick={() => setStatusFilter(tab.value)}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  active ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-500 hover:bg-gray-100'
+                  active ? 'bg-purple-500/15 text-purple-300 font-medium' : 'hover:bg-white/5'
                 }`}
+                style={!active ? { color: 'var(--content-text-dim)' } : undefined}
               >
                 {tab.label}
                 {count > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    active ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-600'
+                    active ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-gray-400'
                   }`}>
                     {count}
                   </span>
@@ -191,13 +192,14 @@ export default function CapaPage() {
           })}
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search CAPAs…"
-            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 w-60"
+            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-white/20 w-60"
+            style={{ color: 'var(--content-text)' }}
           />
         </div>
       </div>
@@ -211,8 +213,8 @@ export default function CapaPage() {
           <TableSkeleton rows={5} cols={5} />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
-              <Nexus size={32} />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
+              <SentinelAvatar sentinelId="nexus" size={32} />
             </div>
             <div>
               <p className="font-semibold">
@@ -250,7 +252,7 @@ export default function CapaPage() {
                 <tr
                   key={c.id}
                   onClick={() => router.push(`/capa/${c.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-gray-50"
+                  className="cursor-pointer transition-colors hover:bg-white/5"
                   style={{ borderTop: i > 0 ? '1px solid var(--content-border)' : undefined }}
                 >
                   <td className="max-w-[300px] px-4 py-3">
@@ -277,12 +279,12 @@ export default function CapaPage() {
                       }}>
                         {new Date(c.dueDate).toLocaleDateString()}
                         {isOverdue(c) && (
-                          <span className="ml-1 rounded bg-red-50 px-1 py-0.5 text-[10px] text-red-600">
+                          <span className="ml-1 rounded bg-red-500/10 px-1 py-0.5 text-[10px] text-red-400">
                             Overdue
                           </span>
                         )}
                       </span>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <ChevronRight className="h-3.5 w-3.5" style={{ color: 'var(--content-text-dim)' }} />
                     </div>
                   </td>
                 </tr>
@@ -300,7 +302,7 @@ export default function CapaPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
               Problem Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -309,17 +311,19 @@ export default function CapaPage() {
               value={form.problemDescription}
               onChange={(e) => setForm((f) => ({ ...f, problemDescription: e.target.value }))}
               placeholder="Describe the nonconformity or issue…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Source *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Source *</label>
               <select
                 required
                 value={form.sourceType}
                 onChange={(e) => setForm((f) => ({ ...f, sourceType: e.target.value as CapaSourceType }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               >
                 {SOURCE_TYPES.map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -327,12 +331,13 @@ export default function CapaPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Severity *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Severity *</label>
               <select
                 required
                 value={form.severity}
                 onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value as FindingSeverity }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               >
                 {SEVERITIES.map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -342,12 +347,13 @@ export default function CapaPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Standard *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Standard *</label>
               <select
                 required
                 value={form.standard}
                 onChange={(e) => setForm((f) => ({ ...f, standard: e.target.value as IsoStandard }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               >
                 {ISO_STANDARDS.map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -355,23 +361,25 @@ export default function CapaPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Clause Ref</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Clause Ref</label>
               <input
                 type="text"
                 value={form.clauseRef}
                 onChange={(e) => setForm((f) => ({ ...f, clauseRef: e.target.value }))}
                 placeholder="e.g. 8.4.1"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">RCA Method</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>RCA Method</label>
               <select
                 value={form.rootCauseMethod}
                 onChange={(e) => setForm((f) => ({ ...f, rootCauseMethod: e.target.value as RootCauseMethod }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               >
                 {ROOT_METHODS.map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -379,13 +387,14 @@ export default function CapaPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Due Date *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Due Date *</label>
               <input
                 type="date"
                 required
                 value={form.dueDate}
                 onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               />
             </div>
           </div>

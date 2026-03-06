@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { TableSkeleton } from '@/components/ui/skeleton';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 interface Risk {
   id: string;
@@ -84,14 +85,17 @@ export default function RiskPage() {
     <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-            ISO Platform › Risk Navigator
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Risk Navigator</h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-            Risk register and heat-map management
-          </p>
+        <div className="flex items-center gap-3">
+          <SentinelAvatar sentinelId="saffy" size={36} />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+              ISO Platform › Risk Navigator
+            </p>
+            <h1 className="mt-1 text-2xl font-bold">Risk Navigator</h1>
+            <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
+              Risk register and heat-map management
+            </p>
+          </div>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="mr-1.5 h-4 w-4" />
@@ -101,7 +105,7 @@ export default function RiskPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
@@ -116,13 +120,14 @@ export default function RiskPage() {
           {risks.length} risk{risks.length !== 1 ? 's' : ''} in register
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search risks…"
-            className="rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 w-60"
+            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-white/20 w-60"
+            style={{ color: 'var(--content-text)' }}
           />
         </div>
       </div>
@@ -170,7 +175,7 @@ export default function RiskPage() {
                 return (
                   <tr
                     key={r.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-white/5 transition-colors"
                     style={{ borderTop: i > 0 ? '1px solid var(--content-border)' : undefined }}
                   >
                     <td className="px-4 py-3 font-medium">{r.title}</td>
@@ -197,31 +202,34 @@ export default function RiskPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Risk Title *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Risk Title *</label>
             <input
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Supplier quality variance"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Description</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Describe the risk…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Category</label>
             <select
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
@@ -230,7 +238,7 @@ export default function RiskPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
                 Likelihood: {form.likelihood}
               </label>
               <input
@@ -243,7 +251,7 @@ export default function RiskPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
                 Impact: {form.impact}
               </label>
               <input
@@ -263,13 +271,14 @@ export default function RiskPage() {
             </Badge>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Mitigation Plan</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Mitigation Plan</label>
             <textarea
               rows={2}
               value={form.mitigationPlan}
               onChange={(e) => setForm({ ...form, mitigationPlan: e.target.value })}
               placeholder="Describe mitigation strategy…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

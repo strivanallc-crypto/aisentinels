@@ -3,7 +3,7 @@
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Qualy } from '@/components/sentinels/qualy';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 
 export default function LoginPage() {
   const { status } = useSession();
@@ -33,7 +33,7 @@ export default function LoginPage() {
 
         {/* Character + title */}
         <div className="mb-8 flex flex-col items-center gap-4">
-          <Qualy size={72} />
+          <SentinelAvatar sentinelId="qualy" size={72} ring />
           <div className="text-center">
             <h1 className="text-2xl font-bold" style={{ color: 'var(--content-text)' }}>
               AI Sentinels

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, CheckCircle2, AlertTriangle, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Nexus } from '@/components/sentinels/nexus';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { aiApi } from '@/lib/api';
 
 interface Props {
@@ -106,18 +106,18 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
 
   if (!started) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-8">
-        <Nexus size={48} />
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-8">
+        <SentinelAvatar sentinelId="nexus" size={48} />
         <div className="text-center">
-          <p className="font-semibold text-gray-800">
+          <p className="font-semibold" style={{ color: 'var(--content-text)' }}>
             {METHOD_LABELS[method]} with Nexus
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm" style={{ color: 'var(--content-text-dim)' }}>
             Nexus will guide you through root cause analysis one question at a time
           </p>
         </div>
-        <div className="rounded-lg bg-purple-50 border border-purple-100 px-4 py-2 text-sm text-gray-700 max-w-md">
-          <p className="font-medium text-purple-700 text-xs mb-1">Finding:</p>
+        <div className="rounded-lg bg-purple-500/10 border border-purple-500/20 px-4 py-2 text-sm max-w-md" style={{ color: 'var(--content-text)' }}>
+          <p className="font-medium text-purple-400 text-xs mb-1">Finding:</p>
           <p className="text-xs">{findingDescription}</p>
         </div>
         <Button onClick={handleStart}>
@@ -129,15 +129,15 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-gray-200 bg-white">
+    <div className="flex flex-col rounded-xl border border-white/10" style={{ background: 'var(--content-surface)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
-        <Nexus size={24} />
+      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+        <SentinelAvatar sentinelId="nexus" size={24} />
         <div className="flex-1">
-          <span className="text-sm font-medium text-gray-800">
+          <span className="text-sm font-medium" style={{ color: 'var(--content-text)' }}>
             {METHOD_LABELS[method]}
           </span>
-          <span className="ml-2 text-xs text-gray-400">
+          <span className="ml-2 text-xs" style={{ color: 'var(--content-text-dim)' }}>
             {standard.replace('_', ' ').toUpperCase()} {clauseRef}
           </span>
         </div>
@@ -156,9 +156,10 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
             <div
               className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                 msg.role === 'nexus'
-                  ? 'bg-purple-50 text-gray-800 border border-purple-100'
-                  : 'bg-blue-50 text-gray-800 border border-blue-100'
+                  ? 'bg-purple-500/10 border border-purple-500/20'
+                  : 'bg-blue-500/10 border border-blue-500/20'
               }`}
+              style={{ color: 'var(--content-text)' }}
             >
               {msg.role === 'nexus' && (
                 <span className="block text-[10px] font-semibold text-purple-400 mb-0.5">Nexus</span>
@@ -171,7 +172,7 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
           </div>
         ))}
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--content-text-dim)' }}>
             <Loader2 className="h-4 w-4 animate-spin" />
             Nexus is analysing…
           </div>
@@ -180,16 +181,16 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
 
       {/* Root cause result */}
       {complete && rootCause && (
-        <div className="mx-4 mb-2 rounded-lg border border-green-200 bg-green-50 p-3">
+        <div className="mx-4 mb-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-semibold text-green-800">Root Cause</span>
+            <CheckCircle2 className="h-4 w-4 text-green-400" />
+            <span className="text-sm font-semibold text-green-300">Root Cause</span>
           </div>
-          <p className="text-sm text-green-900">{rootCause}</p>
+          <p className="text-sm text-green-200">{rootCause}</p>
 
           {actions.length > 0 && (
             <div className="mt-3 space-y-1.5">
-              <p className="text-xs font-semibold text-green-700 uppercase">Recommended Actions</p>
+              <p className="text-xs font-semibold text-green-400 uppercase">Recommended Actions</p>
               {actions.map((a, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
                   <Badge
@@ -199,7 +200,7 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
                     {a.priority}
                   </Badge>
                   <Badge variant="outline" className="text-[10px] flex-shrink-0 mt-0.5">{a.type}</Badge>
-                  <span className="text-gray-700">{a.description}</span>
+                  <span style={{ color: 'var(--content-text)' }}>{a.description}</span>
                 </div>
               ))}
             </div>
@@ -208,7 +209,7 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
       )}
 
       {error && (
-        <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }}>
           <AlertTriangle className="h-3.5 w-3.5" />
           {error}
         </div>
@@ -216,14 +217,15 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
 
       {/* Input */}
       {!complete && (
-        <form onSubmit={handleSubmit} className="flex gap-2 border-t border-gray-200 p-3">
+        <form onSubmit={handleSubmit} className="flex gap-2 border-t border-white/10 p-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Answer Nexus's question…"
             disabled={loading}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20 disabled:opacity-50"
+            style={{ color: 'var(--content-text)' }}
           />
           <Button type="submit" disabled={loading || !input.trim()} size="sm">
             <Send className="h-4 w-4" />

@@ -5,7 +5,7 @@ import { Sparkles, Loader2, CheckCircle2, Copy, Check, ChevronLeft } from 'lucid
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Audie } from '@/components/sentinels/audie';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { aiApi } from '@/lib/api';
 import type { IsoStandard } from '@/lib/types';
 import { ISO_STANDARD_LABELS } from '@/lib/types';
@@ -98,10 +98,10 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
       className="max-w-2xl"
     >
       <div className="mb-5 flex items-center gap-3 -mt-2">
-        <Audie size={36} />
+        <SentinelAvatar sentinelId="audie" size={36} />
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Audie — AI Audit Planner</h2>
-          <p className="text-xs text-gray-500">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>Audie — AI Audit Planner</h2>
+          <p className="text-xs" style={{ color: 'var(--content-text-dim)' }}>
             {step === 'config' && 'Configure audit plan per ISO 19011:6.3'}
             {step === 'generating' && 'Generating audit plan…'}
             {step === 'result' && 'Review your audit plan'}
@@ -110,7 +110,7 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border px-4 py-2 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }}>
           {error}
         </div>
       )}
@@ -119,7 +119,7 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
       {step === 'config' && (
         <div className="flex flex-col gap-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">ISO Standards</label>
+            <label className="mb-2 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>ISO Standards</label>
             <div className="flex gap-2">
               {STANDARDS.map((s) => (
                 <button
@@ -128,9 +128,10 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
                   onClick={() => toggleStandard(s.value)}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
                     standards.includes(s.value)
-                      ? 'border-rose-300 bg-rose-50 text-rose-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-rose-500/30 bg-rose-500/15 text-rose-300'
+                      : 'border-white/10 hover:border-white/20'
                   }`}
+                  style={!standards.includes(s.value) ? { color: 'var(--content-text-dim)' } : undefined}
                 >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                   {s.label}
@@ -141,11 +142,12 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Audit Type</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Audit Type</label>
               <select
                 value={auditType}
                 onChange={(e) => setAuditType(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-1 focus:ring-white/20"
+                style={{ color: 'var(--content-text)' }}
               >
                 {AUDIT_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
@@ -155,26 +157,28 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Audit Scope</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Audit Scope</label>
             <textarea
               rows={2}
               value={scope}
               onChange={(e) => setScope(e.target.value)}
               placeholder="Define the scope of the audit…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Organisation Context <span className="text-xs font-normal text-gray-400">(optional)</span>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
+              Organisation Context <span className="text-xs font-normal" style={{ color: 'var(--content-text-dim)' }}>(optional)</span>
             </label>
             <textarea
               rows={2}
               value={orgContext}
               onChange={(e) => setOrgContext(e.target.value)}
               placeholder="Industry, size, key processes…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
 
@@ -191,12 +195,12 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
       {step === 'generating' && (
         <div className="flex flex-col items-center gap-4 py-12">
           <div className="relative">
-            <Audie size={64} className="animate-pulse" />
+            <SentinelAvatar sentinelId="audie" size={64} className="animate-pulse" />
             <Loader2 className="absolute -bottom-1 -right-1 h-6 w-6 text-rose-500 animate-spin" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-gray-800">Audie is planning your audit…</p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="font-semibold" style={{ color: 'var(--content-text)' }}>Audie is planning your audit…</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--content-text-dim)' }}>
               Per ISO 19011:6.3 for {standards.map((s) => ISO_STANDARD_LABELS[s]).join(', ')}
             </p>
           </div>
@@ -220,24 +224,24 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
           {/* Clause checklist */}
           {clauseChecklist.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              <span className="text-xs font-semibold text-gray-500 mr-1">Clauses:</span>
+              <span className="text-xs font-semibold mr-1" style={{ color: 'var(--content-text-dim)' }}>Clauses:</span>
               {clauseChecklist.slice(0, 15).map((c) => (
                 <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
               ))}
               {clauseChecklist.length > 15 && (
-                <span className="text-xs text-gray-400">+{clauseChecklist.length - 15}</span>
+                <span className="text-xs" style={{ color: 'var(--content-text-dim)' }}>+{clauseChecklist.length - 15}</span>
               )}
             </div>
           )}
 
           {/* Evidence requirements */}
           {evidenceReqs.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Evidence Required</p>
-              <ul className="space-y-0.5 text-xs text-gray-600">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--content-text-dim)' }}>Evidence Required</p>
+              <ul className="space-y-0.5 text-xs" style={{ color: 'var(--content-text-muted)' }}>
                 {evidenceReqs.slice(0, 8).map((r, i) => (
                   <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-gray-400 mt-0.5">•</span>
+                    <span className="mt-0.5" style={{ color: 'var(--content-text-dim)' }}>•</span>
                     {r}
                   </li>
                 ))}
@@ -246,8 +250,8 @@ export function AiPlanModal({ open, onOpenChange }: Props) {
           )}
 
           {/* Plan content */}
-          <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
+          <div className="max-h-72 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-4">
+            <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed" style={{ color: 'var(--content-text)' }}>
               {plan}
             </pre>
           </div>

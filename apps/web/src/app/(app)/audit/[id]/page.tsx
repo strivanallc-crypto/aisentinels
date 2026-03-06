@@ -25,7 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
-import { Audie } from '@/components/sentinels/audie';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiExaminePanel } from '@/components/audit/ai-examine-panel';
 
 const SEVERITIES = Object.entries(FINDING_SEVERITY_LABELS) as [FindingSeverity, string][];
@@ -153,10 +153,10 @@ export default function AuditDetailPage() {
   if (error || !session) {
     return (
       <div className="p-6">
-        <button onClick={() => router.push('/audit')} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+        <button onClick={() => router.push('/audit')} className="mb-4 flex items-center gap-1 text-sm" style={{ color: 'var(--content-text-dim)' }}>
           <ChevronLeft className="h-4 w-4" /> Back to Audits
         </button>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error ?? 'Audit not found'}
         </div>
@@ -183,7 +183,7 @@ export default function AuditDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <Audie size={40} className="flex-shrink-0 mt-0.5" />
+          <SentinelAvatar sentinelId="audie" size={40} className="flex-shrink-0 mt-0.5" />
           <div>
             <h1 className="text-xl font-bold">{session.title}</h1>
             <div className="mt-1 flex items-center gap-2 flex-wrap">
@@ -231,8 +231,8 @@ export default function AuditDetailPage() {
           </h3>
           <div className="grid grid-cols-2 gap-2">
             {SEVERITIES.map(([sev, label]) => (
-              <div key={sev} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-1.5">
-                <span className="text-xs text-gray-600">{label}</span>
+              <div key={sev} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-1.5">
+                <span className="text-xs" style={{ color: 'var(--content-text-dim)' }}>{label}</span>
                 <span className="text-sm font-bold">{findingSummary[sev] ?? 0}</span>
               </div>
             ))}
@@ -258,12 +258,14 @@ export default function AuditDetailPage() {
               value={examineClause}
               onChange={(e) => setExamineClause(e.target.value)}
               placeholder="Clause (e.g. 8.4.1)"
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 w-32"
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-1 focus:ring-white/20 w-32"
+              style={{ color: 'var(--content-text)' }}
             />
             <select
               value={examineStandard}
               onChange={(e) => setExamineStandard(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             >
               <option value="iso_9001">ISO 9001</option>
               <option value="iso_14001">ISO 14001</option>
@@ -346,23 +348,25 @@ export default function AuditDetailPage() {
         <form onSubmit={handleAddFinding} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Clause Ref *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Clause Ref *</label>
               <input
                 type="text"
                 required
                 value={findingForm.clauseRef}
                 onChange={(e) => setFindingForm((f) => ({ ...f, clauseRef: e.target.value }))}
                 placeholder="e.g. 8.4.1"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-white/20"
+                style={{ color: 'var(--content-text)' }}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Standard *</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Standard *</label>
               <select
                 required
                 value={findingForm.standard}
                 onChange={(e) => setFindingForm((f) => ({ ...f, standard: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                style={{ color: 'var(--content-text)' }}
               >
                 <option value="iso_9001">ISO 9001</option>
                 <option value="iso_14001">ISO 14001</option>
@@ -371,12 +375,13 @@ export default function AuditDetailPage() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Severity *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Severity *</label>
             <select
               required
               value={findingForm.severity}
               onChange={(e) => setFindingForm((f) => ({ ...f, severity: e.target.value as FindingSeverity }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+              style={{ color: 'var(--content-text)' }}
             >
               {SEVERITIES.map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
@@ -384,14 +389,15 @@ export default function AuditDetailPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Description *</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Description *</label>
             <textarea
               required
               rows={3}
               value={findingForm.description}
               onChange={(e) => setFindingForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Describe the finding…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">
@@ -412,16 +418,16 @@ export default function AuditDetailPage() {
       >
         <div className="mb-4 flex items-center justify-between -mt-2">
           <div className="flex items-center gap-3">
-            <Audie size={32} />
-            <h2 className="text-lg font-semibold text-gray-900">Audit Report — ISO 19011:6.5</h2>
+            <SentinelAvatar sentinelId="audie" size={32} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--content-text)' }}>Audit Report — ISO 19011:6.5</h2>
           </div>
           <Button variant="outline" size="sm" onClick={handleCopyReport}>
             {copiedReport ? <Check className="mr-1 h-3.5 w-3.5" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
             {copiedReport ? 'Copied' : 'Copy'}
           </Button>
         </div>
-        <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
+        <div className="max-h-96 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-4">
+          <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed" style={{ color: 'var(--content-text)' }}>
             {reportMarkdown}
           </pre>
         </div>

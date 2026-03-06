@@ -225,7 +225,7 @@ export function UsersTab() {
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
               Email Address
             </label>
             <input
@@ -233,19 +233,21 @@ export function UsersTab() {
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@company.com"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+              style={{ color: 'var(--content-text)' }}
             />
           </div>
 
           {roles.length > 0 && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>
                 Role
               </label>
               <select
                 value={inviteRoleId}
                 onChange={(e) => setInviteRoleId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
+                style={{ color: 'var(--content-text)' }}
               >
                 <option value="">No role assigned</option>
                 {roles.map((r) => (

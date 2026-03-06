@@ -5,6 +5,8 @@ import Link from 'next/link';
 import {
   capaApi, sentinelsApi, auditApi, riskApi, billingApi, documentsApi,
 } from '@/lib/api';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
+import { SENTINEL_LIST } from '@/lib/sentinels';
 import {
   Wrench, Bot, ClipboardCheck, AlertTriangle, CreditCard,
   FileText, Archive, BookOpen, TrendingUp, ArrowUpRight,
@@ -35,15 +37,6 @@ const ONBOARDING_STEPS = [
   { label: 'Upload your first document',    href: '/document-studio' },
   { label: 'Run your first AI audit',       href: '/audit' },
   { label: 'Complete a management review',  href: '/management-review' },
-];
-
-const SENTINELS = [
-  { name: 'Qualy',  initial: 'Q', role: 'ISO 9001 Quality',    color: '#3B82F6' },
-  { name: 'Envi',   initial: 'E', role: 'ISO 14001 Env',       color: '#22C55E' },
-  { name: 'Saffy',  initial: 'S', role: 'ISO 45001 Safety',    color: '#F59E0B' },
-  { name: 'Doki',   initial: 'D', role: 'Document Studio',     color: '#6366F1' },
-  { name: 'Audie',  initial: 'A', role: 'Audit Room',          color: '#F43F5E' },
-  { name: 'Nexus',  initial: 'N', role: 'CAPA Engine',         color: '#8B5CF6' },
 ];
 
 const QUICK_LINKS = [
@@ -290,19 +283,13 @@ export default function DashboardPage() {
           </span>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          {SENTINELS.map((s) => (
+          {SENTINEL_LIST.map((s) => (
             <div
               key={s.name}
               className="flex items-center gap-3 rounded-lg border px-3 py-3"
               style={{ borderColor: 'var(--content-border)' }}
             >
-              {/* Shield icon */}
-              <div
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md"
-                style={{ background: `${s.color}1f` }}
-              >
-                <Shield className="h-4 w-4" style={{ color: s.color }} />
-              </div>
+              <SentinelAvatar sentinelId={s.id} size={32} pulse />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="text-xs font-semibold truncate" style={{ color: 'var(--content-text)' }}>

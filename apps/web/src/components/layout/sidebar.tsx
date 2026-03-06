@@ -7,7 +7,8 @@ import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { LogOut, Shield, ChevronRight, Lock } from 'lucide-react';
 import { NAV_ITEMS } from './nav-items';
-import { Qualy } from '@/components/sentinels/qualy';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
+import { SENTINELS, SENTINEL_LIST } from '@/lib/sentinels';
 import { billingApi } from '@/lib/api';
 import type { PlanType } from '@/lib/types';
 
@@ -65,7 +66,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
             ISO Compliance
           </p>
         </div>
-        <Qualy size={22} className="flex-shrink-0 opacity-75" />
+        <SentinelAvatar sentinelId="qualy" size={22} className="opacity-75" />
       </div>
 
       {/* ── Cmd+K hint ── */}
@@ -168,13 +169,13 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                     color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-muted)',
                   }}
                 />
-                {item.sentinelColor && item.sentinelInitial && (
+                {item.sentinelId && (
                   <span
-                    className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-sm"
-                    style={{ backgroundColor: item.sentinelColor }}
+                    className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full overflow-hidden"
+                    style={{ backgroundColor: SENTINELS[item.sentinelId].color }}
                   >
                     <span className="text-[7px] font-bold text-white leading-none">
-                      {item.sentinelInitial}
+                      {SENTINELS[item.sentinelId].initial}
                     </span>
                   </span>
                 )}
@@ -230,8 +231,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
         style={{ background: 'var(--sidebar-surface)' }}
       >
         <div className="flex items-center gap-1">
-          {['#3B82F6','#22C55E','#F59E0B','#6366F1','#F43F5E','#8B5CF6'].map((c) => (
-            <span key={c} className="h-2 w-2 rounded-full" style={{ backgroundColor: c }} />
+          {SENTINEL_LIST.map((s) => (
+            <SentinelAvatar key={s.id} sentinelId={s.id} size={14} />
           ))}
         </div>
         <span className="text-[10px]" style={{ color: 'var(--sidebar-text-muted)' }}>

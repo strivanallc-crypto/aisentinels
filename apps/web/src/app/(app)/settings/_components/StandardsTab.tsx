@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { settingsApi } from '@/lib/api';
+import { SentinelAvatar } from '@/components/SentinelAvatar';
+import type { SentinelId } from '@/lib/sentinels';
 
 const STANDARDS = [
   {
@@ -13,6 +15,7 @@ const STANDARDS = [
     label: 'ISO 9001:2015',
     subtitle: 'Quality Management System',
     sentinel: 'Qualy',
+    sentinelId: 'qualy' as SentinelId,
     color: '#3B82F6',
     description:
       'Requirements for a quality management system to consistently provide products and services that meet customer and regulatory requirements.',
@@ -22,6 +25,7 @@ const STANDARDS = [
     label: 'ISO 14001:2015',
     subtitle: 'Environmental Management System',
     sentinel: 'Envi',
+    sentinelId: 'envi' as SentinelId,
     color: '#22C55E',
     description:
       'Framework for an environmental management system to enhance environmental performance and manage environmental responsibilities.',
@@ -31,6 +35,7 @@ const STANDARDS = [
     label: 'ISO 45001:2018',
     subtitle: 'OH&S Management System',
     sentinel: 'Saffy',
+    sentinelId: 'saffy' as SentinelId,
     color: '#F59E0B',
     description:
       'Requirements for occupational health and safety management to prevent work-related injury and ill health.',
@@ -92,7 +97,7 @@ export function StandardsTab() {
 
   return (
     <div className="max-w-3xl">
-      <p className="text-sm text-gray-400 mb-5">
+      <p className="text-sm mb-5" style={{ color: 'var(--content-text-dim)' }}>
         Activate the ISO standards your organisation is certified against or working towards.
         Each standard is powered by a dedicated AI Sentinel.
       </p>
@@ -113,12 +118,7 @@ export function StandardsTab() {
             >
               <div className="flex items-start gap-4">
                 {/* Avatar */}
-                <div
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-white text-sm font-bold"
-                  style={{ backgroundColor: s.color }}
-                >
-                  {s.sentinel[0]}
-                </div>
+                <SentinelAvatar sentinelId={s.sentinelId} size={44} ring />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
