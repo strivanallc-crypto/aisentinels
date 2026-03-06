@@ -50,6 +50,8 @@ export interface ApiStackProps extends cdk.StackProps {
   userPoolArn: string;
   /** Web SPA app client ID (used as JWT audience) */
   webClientId: string;
+  /** NextAuth app client ID (also accepted as JWT audience) */
+  nextAuthClientId: string;
   /** RDS Proxy hostname — from DataStack.auroraProxy.endpoint */
   auroraProxyEndpoint: string;
   /** DynamoDB audit events table ARN — from DataStack.auditEventsTable.tableArn */
@@ -107,7 +109,7 @@ export class ApiStack extends cdk.Stack {
 
     const jwtAuthorizer = new HttpJwtAuthorizer('CognitoJwtAuthorizer', jwtIssuer, {
       authorizerName: `aisentinels-cognito-jwt-${envName}`,
-      jwtAudience: [props.webClientId],
+      jwtAudience: [props.webClientId, props.nextAuthClientId],
     });
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -806,7 +808,7 @@ export class ApiStack extends cdk.Stack {
       integration: brainIntegration,
     });
 
-    // ANY /api/v1/{proxy+} — catch-all route to internal ALB via VpcLink
+    // Catch-all routes to internal ALB via VpcLink
     // API Gateway evaluates more-specific routes first:
     //   POST /api/v1/tenants/provision → Lambda (matched above)
     //   E7 document-studio + audit routes → Lambda (matched above)
@@ -815,9 +817,14 @@ export class ApiStack extends cdk.Stack {
     //   Phase 1 AI routes → Lambda (matched above)
     //   P3 settings + brain routes → Lambda (matched above)
     //   Everything else → ALB → Fargate service (path-based routing on ALB)
+    //
+    // IMPORTANT: Uses explicit methods instead of HttpMethod.ANY to avoid
+    // catching OPTIONS preflight requests. HTTP API auto-CORS only responds
+    // to OPTIONS when no route matches — ANY would hijack preflights and
+    // send them through the JWT authorizer, causing 401 on CORS preflight.
     this.httpApi.addRoutes({
       path: '/api/v1/{proxy+}',
-      methods: [HttpMethod.ANY],
+      methods: [HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH],
       integration: new HttpAlbIntegration('AlbProxyIntegration', props.albListener, {
         vpcLink: props.vpcLink,
       }),

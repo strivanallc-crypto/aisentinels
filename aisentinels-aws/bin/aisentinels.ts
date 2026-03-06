@@ -151,6 +151,7 @@ const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
   userPoolId: cognitoStack.userPool.userPoolId,
   userPoolArn: cognitoStack.userPool.userPoolArn,
   webClientId: cognitoStack.webAppClient.userPoolClientId,
+  nextAuthClientId: '2osgds469cgdss3facqigvr7b7', // aisentinels-web-nextauth (created outside CDK for NextAuth server-side auth)
   auroraProxyEndpoint: dataStack.auroraProxy.endpoint,
   auditEventsTableArn: dataStack.auditEventsTable.tableArn,
   albListener: computeStack.albListener,
