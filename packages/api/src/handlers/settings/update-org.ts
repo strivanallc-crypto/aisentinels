@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { UpdateOrgSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -13,7 +14,7 @@ async function getDb() {
 }
 
 export async function updateOrg(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   const parsed = parseBody(UpdateOrgSchema, event.body);
   if ('statusCode' in parsed) return parsed;
@@ -55,6 +56,17 @@ export async function updateOrg(event: APIGatewayProxyEventV2WithJWTAuthorizer) 
         certificationTargets: certificationTargets ?? [],
       })
       .returning();
+  });
+
+  logAuditEvent({
+    eventType:  'org.updated',
+    entityType: 'org',
+    entityId:   tenantId,
+    actorId:    sub,
+    tenantId,
+    action:     'UPDATE',
+    detail:     { companyName, industry, country },
+    severity:   'info',
   });
 
   return {

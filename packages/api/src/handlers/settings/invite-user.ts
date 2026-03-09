@@ -1,10 +1,12 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
 import { createDb } from '@aisentinels/db';
 import { users, userRoles, orgRoles } from '@aisentinels/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne, count } from 'drizzle-orm';
+import { subscriptions } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { InviteUserSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
@@ -30,7 +32,39 @@ export async function inviteUser(event: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   const { client } = await getDb();
 
+  // Seat limits per plan (locked pricing spec)
+  const SEAT_LIMITS: Record<string, number> = {
+    starter:      3,
+    professional: 10,
+    enterprise:   25,
+  };
+
   const result = await withTenantContext(client, tenantId, async (txDb) => {
+    // ── Seat limit check ────────────────────────────────────────────────────
+    const [tenantSub] = await txDb
+      .select({ plan: subscriptions.plan })
+      .from(subscriptions)
+      .where(eq(subscriptions.tenantId, tenantId))
+      .limit(1);
+
+    const seatLimit = SEAT_LIMITS[tenantSub?.plan ?? 'starter'] ?? 3;
+
+    const seatRows = await txDb
+      .select({ value: count() })
+      .from(users)
+      .where(and(eq(users.tenantId, tenantId), ne(users.status, 'suspended')));
+    const currentSeats = seatRows[0]?.value ?? 0;
+
+    if (currentSeats >= seatLimit) {
+      return {
+        error: 'SEAT_LIMIT_REACHED',
+        statusCode: 403,
+        current: currentSeats,
+        limit: seatLimit,
+        upgradeUrl: '/billing',
+      };
+    }
+
     // Verify role exists for this tenant
     const [role] = await txDb
       .select()
@@ -99,12 +133,24 @@ export async function inviteUser(event: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 
   if (result && 'error' in result) {
+    const { statusCode, ...payload } = result as { statusCode: number; error: string; [k: string]: unknown };
     return {
-      statusCode: (result as { statusCode: number }).statusCode,
+      statusCode,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: (result as { error: string }).error }),
+      body: JSON.stringify(payload),
     };
   }
+
+  logAuditEvent({
+    eventType:  'user.invited',
+    entityType: 'user',
+    entityId:   (result as { user?: { id?: string } }).user?.id ?? email,
+    actorId:    sub,
+    tenantId,
+    action:     'INVITE',
+    detail:     { email, roleId },
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

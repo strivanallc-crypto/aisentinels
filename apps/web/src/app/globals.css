@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ── Sentinel Design Tokens ─────────────────────────────────────────────────── */
 @layer base {

@@ -20,6 +20,7 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as ses from 'aws-cdk-lib/aws-ses';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
 import {
@@ -33,6 +34,9 @@ import {
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpAlbIntegration, HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { Construct } from 'constructs';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as evtTargets from 'aws-cdk-lib/aws-events-targets';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as path from 'path';
 
 export interface ApiStackProps extends cdk.StackProps {
@@ -79,6 +83,9 @@ export class ApiStack extends cdk.Stack {
 
     // ── Monorepo root is 4 levels up from stacks/ ────────────────────────────
     const repoRoot = path.join(__dirname, '../../../../');
+
+    // ── DynamoDB audit events table name (shared by all Lambdas) ─────────────
+    const auditEventsTableName = `aisentinels-audit-events-${envName}`;
 
     // ── postgres install hook ──────────────────────────────────────────────────
     // postgres.js is ESM-first. Both esbuild CJS bundling AND the package's own
@@ -170,6 +177,7 @@ export class ApiStack extends cdk.Stack {
         AURORA_DB_USER: 'postgres', // TODO: replace with dedicated IAM user post-E1-deploy
         AURORA_DB_NAME: 'aisentinels',
         AURORA_IAM_AUTH: 'true',
+        AUDIT_EVENTS_TABLE_NAME: auditEventsTableName,
       },
       logGroup: provisionLogGroup,
       bundling: {
@@ -238,11 +246,12 @@ export class ApiStack extends cdk.Stack {
     };
 
     const businessLambdaEnv = {
-      ENV_NAME:             envName,
-      AURORA_PROXY_ENDPOINT: props.auroraProxyEndpoint,
-      AURORA_DB_USER:        'postgres',
-      AURORA_DB_NAME:        'aisentinels',
-      AURORA_IAM_AUTH:       'true',
+      ENV_NAME:                  envName,
+      AURORA_PROXY_ENDPOINT:     props.auroraProxyEndpoint,
+      AURORA_DB_USER:            'postgres',
+      AURORA_DB_NAME:            'aisentinels',
+      AURORA_IAM_AUTH:           'true',
+      AUDIT_EVENTS_TABLE_NAME:   auditEventsTableName,
     };
 
     const businessLambdaBundling = {
@@ -372,17 +381,69 @@ export class ApiStack extends cdk.Stack {
         WISE_WEBHOOK_SECRET: ssm.StringParameter.valueForStringParameter(
           this, `/aisentinels/${envName}/billing/wise-webhook-secret`,
         ),
+        // Wise API key for fetching transfer details on payment events
+        WISE_API_KEY: ssm.StringParameter.valueForStringParameter(
+          this, `/aisentinels/${envName}/billing/wise-api-key`,
+        ),
+        NOTIFICATIONS_FROM_EMAIL: 'notifications@aisentinels.io',
+        SES_REGION: 'us-east-1',
       },
       logGroup: billingLogGroup,
       bundling: businessLambdaBundling,
     });
     grantBusinessLambda(billingFn);
-    // Allow billingFn to read the Wise webhook secret SSM parameter at runtime
+    // Allow billingFn to read Wise SSM parameters at runtime (covers both
+    // wise-webhook-secret and wise-api-key under the billing/* path)
     billingFn.addToRolePolicy(new iam.PolicyStatement({
       sid: 'ReadBillingSecrets',
       actions: ['ssm:GetParameter'],
       resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/billing/*`],
     }));
+    // SES: send subscription upgrade notification emails (Phase 10)
+    billingFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BillingSESSend',
+      effect: iam.Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: [
+        `arn:aws:ses:us-east-1:${this.account}:identity/aisentinels.io`,
+        `arn:aws:ses:us-east-1:${this.account}:identity/*@aisentinels.io`,
+      ],
+    }));
+
+    // Allow billingFn to emit CloudWatch metrics for unmatched payment alerts
+    billingFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'EmitBillingMetrics',
+      actions: ['cloudwatch:PutMetricData'],
+      resources: ['*'],
+      conditions: {
+        StringEquals: { 'cloudwatch:namespace': 'AiSentinels/Billing' },
+      },
+    }));
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Admin — POST /api/v1/admin/billing/activate
+    // Manual activation of tenant subscriptions. JWT + admin role enforced.
+    // ══════════════════════════════════════════════════════════════════════════
+    const adminLogGroup = new logs.LogGroup(this, 'AdminFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-admin-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(adminLogGroup);
+
+    const adminFn = new NodejsFunction(this, 'AdminFn', {
+      functionName: `aisentinels-api-admin-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/admin/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      ...businessLambdaVpcConfig,
+      environment: businessLambdaEnv,
+      logGroup: adminLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(adminFn);
 
     // ══════════════════════════════════════════════════════════════════════════
     // Lambda: Settings — /api/v1/settings/* routes (P3)
@@ -701,6 +762,15 @@ export class ApiStack extends cdk.Stack {
       authorizer: new HttpNoneAuthorizer(),
     });
 
+    // ── Admin routes ────────────────────────────────────────────────────────
+    const adminIntegration = new HttpLambdaIntegration('AdminIntegration', adminFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/admin/billing/activate',
+      methods: [HttpMethod.POST],
+      integration: adminIntegration,
+    });
+
     // ── AI Sentinel routes (Phase 1) ─────────────────────────────────────────
     const aiIntegration = new HttpLambdaIntegration('AiIntegration', aiFn);
 
@@ -743,6 +813,116 @@ export class ApiStack extends cdk.Stack {
       path: '/api/v1/ai/management-review',
       methods: [HttpMethod.POST],
       integration: aiIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SES Domain Identity — Omni's email identity (Phase 5)
+    // DKIM verification — Julio must add the 3 CNAME records to aisentinels.io DNS
+    // ══════════════════════════════════════════════════════════════════════════
+    const domainIdentity = new ses.EmailIdentity(this, 'OmniEmailIdentity', {
+      identity: ses.Identity.domain('aisentinels.io'),
+      mailFromDomain: 'mail.aisentinels.io',
+    });
+    tag(domainIdentity);
+
+    new cdk.CfnOutput(this, 'SesDkimRecord1', {
+      value: domainIdentity.dkimRecords[0]?.name ?? 'check SES console',
+      description: 'Add this CNAME to aisentinels.io DNS (DKIM 1)',
+    });
+    new cdk.CfnOutput(this, 'SesDkimRecord2', {
+      value: domainIdentity.dkimRecords[1]?.name ?? 'check SES console',
+      description: 'Add this CNAME to aisentinels.io DNS (DKIM 2)',
+    });
+    new cdk.CfnOutput(this, 'SesDkimRecord3', {
+      value: domainIdentity.dkimRecords[2]?.name ?? 'check SES console',
+      description: 'Add this CNAME to aisentinels.io DNS (DKIM 3)',
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Omni Orchestrator — POST /api/v1/omni/orchestrate (Claude Sonnet)
+    // Multi-sentinel workflow orchestrator. Higher timeout (120s) for sequential
+    // Claude + Gemini calls. SSM access for Anthropic + Gemini API keys.
+    // SES email for Omni communications (Phase 5).
+    // ══════════════════════════════════════════════════════════════════════════
+    const omniLogGroup = new logs.LogGroup(this, 'OmniFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-omni-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(omniLogGroup);
+
+    const omniFn = new NodejsFunction(this, 'OmniFn', {
+      functionName: `aisentinels-api-omni-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/omni/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 1024,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        ANTHROPIC_API_KEY_SSM_PATH: `/aisentinels/${envName}/ai/anthropic-api-key`,
+        SENTINEL_EVENT_BUS_NAME: 'aisentinels-sentinel-bus',
+        OMNI_FROM_EMAIL: 'omni@aisentinels.io',
+        OMNI_REPLY_TO: 'support@aisentinels.io',
+        SES_REGION: 'us-east-1',
+        APPROVAL_TOKEN_SECRET_SSM_PATH: `/aisentinels/${envName}/auth/approval-token-secret`,
+      },
+      logGroup: omniLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(omniFn);
+    // Allow omniFn to send email via SES (Phase 5)
+    omniFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowOmniSESSend',
+      effect: iam.Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: [
+        `arn:aws:ses:us-east-1:${this.account}:identity/aisentinels.io`,
+        `arn:aws:ses:us-east-1:${this.account}:identity/*@aisentinels.io`,
+      ],
+    }));
+    // Allow omniFn to read approval token secret from SSM (Phase 5)
+    omniFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'ReadApprovalTokenSecret',
+      actions: ['ssm:GetParameter'],
+      resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/auth/*`],
+    }));
+    // Allow omniFn to read AI API keys (Anthropic + Gemini) from SSM
+    omniFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'ReadAiSecrets',
+      actions: ['ssm:GetParameter'],
+      resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/ai/*`],
+    }));
+    omniFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'DecryptAiSecrets',
+      actions: ['kms:Decrypt'],
+      resources: ['*'],
+      conditions: {
+        StringEquals: { 'kms:ViaService': `ssm.${this.region}.amazonaws.com` },
+      },
+    }));
+    // Allow omniFn to emit events to the Sentinel event bus (Phase 3)
+    omniFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowEventBridgePutEvents',
+      actions: ['events:PutEvents'],
+      resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/aisentinels-sentinel-bus`],
+    }));
+
+    // ── Omni Orchestrator routes (Phase 2) ──────────────────────────────────
+    const omniIntegration = new HttpLambdaIntegration('OmniIntegration', omniFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/omni/orchestrate',
+      methods: [HttpMethod.POST],
+      integration: omniIntegration,
+    });
+    // POST /api/v1/omni/approve — token-based auth (no JWT)
+    this.httpApi.addRoutes({
+      path: '/api/v1/omni/approve',
+      methods: [HttpMethod.POST],
+      integration: omniIntegration,
+      authorizer: new HttpNoneAuthorizer(),
     });
 
     // ── Settings routes (P3) ──────────────────────────────────────────────────
@@ -808,6 +988,366 @@ export class ApiStack extends cdk.Stack {
       integration: brainIntegration,
     });
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Audit Trail — GET /api/v1/audit-trail (DynamoDB query only)
+    // Non-VPC for faster cold start — only needs DynamoDB access via Gateway endpoint.
+    // ══════════════════════════════════════════════════════════════════════════
+    const auditTrailLogGroup = new logs.LogGroup(this, 'AuditTrailFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-audit-trail-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(auditTrailLogGroup);
+
+    const auditTrailFn = new NodejsFunction(this, 'AuditTrailFn', {
+      functionName: `aisentinels-api-audit-trail-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/audit-trail/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
+      environment: {
+        ENV_NAME: envName,
+        AUDIT_EVENTS_TABLE_NAME: auditEventsTableName,
+      },
+      logGroup: auditTrailLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*'],
+      },
+    });
+    tag(auditTrailFn);
+    // Allow auditTrailFn to query the DynamoDB audit events table + GSIs
+    auditTrailFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamoQuery',
+        actions: ['dynamodb:Query'],
+        resources: [
+          props.auditEventsTableArn,
+          `${props.auditEventsTableArn}/index/*`,
+        ],
+      }),
+    );
+
+    // ── Audit Trail route (Phase 3) ────────────────────────────────────────
+    const auditTrailIntegration = new HttpLambdaIntegration('AuditTrailIntegration', auditTrailFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/audit-trail',
+      methods: [HttpMethod.GET],
+      integration: auditTrailIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Ghost Trigger — POST /api/v1/ghost/trigger (P6-D)
+    // Admin-only endpoint to manually invoke the Ghost Lambda (async).
+    // Lightweight — only needs Lambda invoke + DynamoDB audit + JWT.
+    // ══════════════════════════════════════════════════════════════════════════
+    const ghostTriggerLogGroup = new logs.LogGroup(this, 'GhostTriggerFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-ghost-trigger-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(ghostTriggerLogGroup);
+
+    const ghostFnArn = `arn:aws:lambda:${this.region}:${this.account}:function:aisentinels-ghost-${envName}`;
+
+    const ghostTriggerFn = new NodejsFunction(this, 'GhostTriggerFn', {
+      functionName: `aisentinels-api-ghost-trigger-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/ghost/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        GHOST_LAMBDA_FN_NAME: `aisentinels-ghost-${envName}`,
+      },
+      logGroup: ghostTriggerLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(ghostTriggerFn);
+    // Allow ghostTriggerFn to invoke the Ghost Lambda (async trigger)
+    ghostTriggerFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowInvokeGhostFn',
+      effect: iam.Effect.ALLOW,
+      actions: ['lambda:InvokeFunction'],
+      resources: [ghostFnArn],
+    }));
+
+    // ── Ghost Trigger route (P6-D) ──────────────────────────────────────────
+    const ghostTriggerIntegration = new HttpLambdaIntegration('GhostTriggerIntegration', ghostTriggerFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/ghost/trigger',
+      methods: [HttpMethod.POST],
+      integration: ghostTriggerIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Bulk Upload — POST /api/v1/bulk-upload/* (P8-B)
+    // Presigned S3 URLs + parallel processing + Omni triage.
+    // Needs S3 PutObject/HeadObject/GetObject on working-files bulk/* prefix,
+    // plus RDS Proxy + DynamoDB (via grantBusinessLambda), plus Gemini SSM key.
+    // ══════════════════════════════════════════════════════════════════════════
+    const bulkUploadLogGroup = new logs.LogGroup(this, 'BulkUploadFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-bulk-upload-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(bulkUploadLogGroup);
+
+    const bulkUploadFn = new NodejsFunction(this, 'BulkUploadFn', {
+      functionName: `aisentinels-api-bulk-upload-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/bulk-upload/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 512,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        WORKING_FILES_BUCKET: `aisentinels-working-files-${this.region}`,
+      },
+      logGroup: bulkUploadLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(bulkUploadFn);
+
+    // S3 presigned URL generation + file verification + text extraction
+    bulkUploadFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BulkUploadS3Access',
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:PutObject', 's3:HeadObject', 's3:GetObject'],
+      resources: [
+        `arn:aws:s3:::aisentinels-working-files-${this.region}/bulk/*`,
+      ],
+    }));
+
+    // SSM read for Gemini API key (needed by Omni triage classification)
+    bulkUploadFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BulkUploadSsmRead',
+      effect: iam.Effect.ALLOW,
+      actions: ['ssm:GetParameter'],
+      resources: [
+        `arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/ai/*`,
+      ],
+    }));
+
+    // ── Bulk Upload routes (P8-B) ────────────────────────────────────────────
+    const bulkUploadIntegration = new HttpLambdaIntegration('BulkUploadIntegration', bulkUploadFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/bulk-upload/initiate',
+      methods: [HttpMethod.POST],
+      integration: bulkUploadIntegration,
+    });
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/bulk-upload/process',
+      methods: [HttpMethod.POST],
+      integration: bulkUploadIntegration,
+    });
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/bulk-upload/batch/{batchId}',
+      methods: [HttpMethod.GET],
+      integration: bulkUploadIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Board Report — POST /api/v1/board-report/* (P9-B)
+    // Isolated Lambda for Chromium/puppeteer PDF generation.
+    // Higher memory (2048MB) for headless Chrome + 120s timeout.
+    // Needs: S3 exports bucket, SSM Anthropic key, DynamoDB audit query, RDS Proxy.
+    // ══════════════════════════════════════════════════════════════════════════
+    const boardReportLogGroup = new logs.LogGroup(this, 'BoardReportFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-board-report-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(boardReportLogGroup);
+
+    const boardReportFn = new NodejsFunction(this, 'BoardReportFn', {
+      functionName: `aisentinels-api-board-report-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/board-report/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 2048,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        EXPORTS_BUCKET: `aisentinels-exports-${this.region}`,
+        NOTIFICATIONS_FROM_EMAIL: 'notifications@aisentinels.io',
+        SES_REGION: 'us-east-1',
+      },
+      logGroup: boardReportLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*', 'postgres', '@sparticuz/chromium'],
+        commandHooks: {
+          beforeBundling(): string[] { return []; },
+          beforeInstall(): string[] { return []; },
+          afterBundling(_inputDir: string, outputDir: string): string[] {
+            const dir = outputDir.replace(/\\/g, '/');
+            return [
+              `cd "${outputDir}" && npm init -y --silent 2>nul && npm install postgres@3.4.8 @sparticuz/chromium@143 --save --silent`,
+              `node -e "var f=require('fs'),p=JSON.parse(f.readFileSync('${dir}/package.json','utf8'));p.type='module';f.writeFileSync('${dir}/package.json',JSON.stringify(p,null,2))"`,
+            ];
+          },
+        },
+      },
+    });
+    grantBusinessLambda(boardReportFn);
+
+    // S3: PutObject + GetObject on exports bucket board-reports/* prefix
+    boardReportFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BoardReportS3Access',
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:PutObject', 's3:GetObject'],
+      resources: [
+        `arn:aws:s3:::aisentinels-exports-${this.region}/board-reports/*`,
+      ],
+    }));
+
+    // SSM: read Anthropic API key (needed by Claude executive summary)
+    boardReportFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BoardReportSsmRead',
+      effect: iam.Effect.ALLOW,
+      actions: ['ssm:GetParameter'],
+      resources: [
+        `arn:aws:ssm:${this.region}:${this.account}:parameter/aisentinels/${envName}/ai/*`,
+      ],
+    }));
+
+    // KMS: decrypt SSM SecureString (Anthropic key)
+    boardReportFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BoardReportKmsDecrypt',
+      actions: ['kms:Decrypt'],
+      resources: ['*'],
+      conditions: {
+        StringEquals: { 'kms:ViaService': `ssm.${this.region}.amazonaws.com` },
+      },
+    }));
+
+    // SES: send board-report-ready notification emails (Phase 10)
+    boardReportFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'BoardReportSESSend',
+      effect: iam.Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: [
+        `arn:aws:ses:us-east-1:${this.account}:identity/aisentinels.io`,
+        `arn:aws:ses:us-east-1:${this.account}:identity/*@aisentinels.io`,
+      ],
+    }));
+
+    // ── Board Report routes (P9-B) ──────────────────────────────────────────
+    const boardReportIntegration = new HttpLambdaIntegration('BoardReportIntegration', boardReportFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/board-report/generate',
+      methods: [HttpMethod.POST],
+      integration: boardReportIntegration,
+    });
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/board-report/list',
+      methods: [HttpMethod.GET],
+      integration: boardReportIntegration,
+    });
+
+    // ── EventBridge: Monthly board report cron (P9-B) ───────────────────────
+    // 1st of every month at 08:00 UTC. Invokes boardReportFn directly.
+    // EventBridge passes a minimal event — the scheduled handler queries all
+    // active tenants and generates reports for each.
+    const boardReportDlq = new sqs.Queue(this, 'BoardReportDLQ', {
+      queueName: `aisentinels-board-report-dlq-${envName}`,
+      retentionPeriod: cdk.Duration.days(14),
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    tag(boardReportDlq);
+
+    const boardReportRule = new events.Rule(this, 'BoardReportMonthlyRule', {
+      ruleName: `aisentinels-board-report-monthly-${envName}`,
+      description: 'Board Report — monthly generation on 1st at 08:00 UTC',
+      enabled: true,
+      schedule: events.Schedule.cron({
+        minute: '0',
+        hour: '8',
+        day: '1',
+        month: '*',
+        year: '*',
+      }),
+    });
+    tag(boardReportRule);
+
+    boardReportRule.addTarget(new evtTargets.LambdaFunction(boardReportFn, {
+      retryAttempts: 1,
+      deadLetterQueue: boardReportDlq,
+    }));
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Legal — POST /api/v1/legal/accept, GET /api/v1/legal/status (P10)
+    // Handles legal acceptance recording + status queries. VPC-attached (Aurora).
+    // SES for confirmation emails. DynamoDB audit logging.
+    // ══════════════════════════════════════════════════════════════════════════
+    const legalLogGroup = new logs.LogGroup(this, 'LegalFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-legal-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(legalLogGroup);
+
+    const legalFn = new NodejsFunction(this, 'LegalFn', {
+      functionName: `aisentinels-api-legal-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/legal/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      ...businessLambdaVpcConfig,
+      environment: {
+        ...businessLambdaEnv,
+        LEGAL_FROM_EMAIL: 'legal@aisentinels.io',
+        SES_REGION: 'us-east-1',
+      },
+      logGroup: legalLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(legalFn);
+
+    // SES: send legal acceptance confirmation emails (Phase 10)
+    legalFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'LegalSESSend',
+      effect: iam.Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: [
+        `arn:aws:ses:us-east-1:${this.account}:identity/aisentinels.io`,
+        `arn:aws:ses:us-east-1:${this.account}:identity/*@aisentinels.io`,
+      ],
+    }));
+
+    // ── Legal routes (Phase 10) ─────────────────────────────────────────────
+    const legalIntegration = new HttpLambdaIntegration('LegalIntegration', legalFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/legal/accept',
+      methods: [HttpMethod.POST],
+      integration: legalIntegration,
+    });
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/legal/status',
+      methods: [HttpMethod.GET],
+      integration: legalIntegration,
+    });
+
     // Catch-all routes to internal ALB via VpcLink
     // API Gateway evaluates more-specific routes first:
     //   POST /api/v1/tenants/provision → Lambda (matched above)
@@ -816,6 +1356,10 @@ export class ApiStack extends cdk.Stack {
     //   E9 billing routes → Lambda (matched above)
     //   Phase 1 AI routes → Lambda (matched above)
     //   P3 settings + brain routes → Lambda (matched above)
+    //   P6-D ghost trigger → Lambda (matched above)
+    //   P8-B bulk upload → Lambda (matched above)
+    //   P9-B board report → Lambda (matched above)
+    //   P10 legal routes → Lambda (matched above)
     //   Everything else → ALB → Fargate service (path-based routing on ALB)
     //
     // IMPORTANT: Uses explicit methods instead of HttpMethod.ANY to avoid

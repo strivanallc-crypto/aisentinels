@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiGenerateWizard } from '@/components/document-studio/ai-generate-wizard';
 import { UploadClassifyModal } from '@/components/document-studio/upload-classify-modal';
+import { BulkUploadModal } from '@/components/document-studio/bulk-upload-modal';
 
 const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
 
@@ -53,6 +54,7 @@ export default function DocumentStudioPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showAiWizard, setShowAiWizard] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState<DocStatus | 'all'>('all');
@@ -124,6 +126,10 @@ export default function DocumentStudioPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowBulk(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Bulk Import
+          </Button>
           <Button variant="outline" onClick={() => setShowUpload(true)}>
             <Upload className="mr-1.5 h-4 w-4" />
             Upload
@@ -364,6 +370,16 @@ export default function DocumentStudioPage() {
         open={showUpload}
         onOpenChange={setShowUpload}
         onCreated={load}
+      />
+
+      {/* ── Bulk Upload Modal ── */}
+      <BulkUploadModal
+        open={showBulk}
+        onClose={() => setShowBulk(false)}
+        onComplete={() => {
+          setShowBulk(false);
+          load();
+        }}
       />
     </div>
   );

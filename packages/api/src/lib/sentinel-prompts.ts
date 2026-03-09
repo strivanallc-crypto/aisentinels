@@ -81,3 +81,7 @@ export function composeSentinelPrompt(modulePrompt: string, standards: string[])
 
   return `${modulePrompt}\n\n--- DOMAIN EXPERTISE ---\n${domainPrompts.join('\n\n')}`;
 }
+
+// ── Omni (Virtual Quality Manager) ──────────────────────────────────────────
+
+export { OMNI_SYSTEM_PROMPT as OMNI_CONTEXT } from './omni-prompt.ts';

@@ -1,0 +1,603 @@
+Bundling asset AiSentinels-Cognito-Prod/PostConfirmationFn/Code/Stage...
+
+  ...33b92d31306d2f30479da06d285f42f2860495648c1b0ede-building\index.js  1.0kb
+
+Done in 18ms
+Bundling asset AiSentinels-Cognito-Prod/PreTokenGenerationFn/Code/Stage...
+
+  ...fcf91316227cefce51971575dbff490568f32e98f85e70ef-building\index.js  786b 
+
+Done in 18ms
+Bundling asset AiSentinels-Api-Prod/HealthFn/Code/Stage...
+
+  ...705e72b12d9fe40c8af20cb26c4b7b409dd68ce827e32953-building\index.js  663b 
+
+Done in 15ms
+Bundling asset AiSentinels-Api-Prod/TenantProvisionFn/Code/Stage...
+
+  ...7a9ce221847b08c014e27d961cf264389dd748e9605d7-building\index.mjs  105.0kb
+
+Done in 168ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-e9575be62df7166437b7a9ce221847b08c014e27d961cf264389dd748e9605d7-building\package.json:
+
+{
+  "name": "bundling-temp-e9575be62df7166437b7a9ce221847b08c014e27d961cf264389dd748e9605d7-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/DocumentsFn/Code/Stage...
+
+  ...1e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building\index.mjs  172.4kb
+
+Done in 141ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-3f6d77fdc7c944490d41e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building\package.json:
+
+{
+  "name": "bundling-temp-3f6d77fdc7c944490d41e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AuditsFn/Code/Stage...
+
+  ...864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building\index.mjs  171.1kb
+
+Done in 169ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-cc6e19e391462435fed864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building\package.json:
+
+{
+  "name": "bundling-temp-cc6e19e391462435fed864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/CapaFn/Code/Stage...
+
+  ...836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building\index.mjs  171.2kb
+
+Done in 134ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-93ee1353f2fe14a850a836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building\package.json:
+
+{
+  "name": "bundling-temp-93ee1353f2fe14a850a836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/RecordsFn/Code/Stage...
+
+  ...1ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building\index.mjs  171.1kb
+
+Done in 136ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-d7abafa924ffe05b8301ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building\package.json:
+
+{
+  "name": "bundling-temp-d7abafa924ffe05b8301ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/BillingFn/Code/Stage...
+
+  ...2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building\index.mjs  175.9kb
+
+Done in 147ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-6c0b5c012b63ae67cbd2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building\package.json:
+
+{
+  "name": "bundling-temp-6c0b5c012b63ae67cbd2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AdminFn/Code/Stage...
+
+  ...ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building\index.mjs  170.7kb
+
+Done in 144ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-9bd60a11d50d42a8f35ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building\package.json:
+
+{
+  "name": "bundling-temp-9bd60a11d50d42a8f35ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/SettingsFn/Code/Stage...
+
+  ...e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building\index.mjs  175.9kb
+
+Done in 142ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-fe88e39c5ae629864c8e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building\package.json:
+
+{
+  "name": "bundling-temp-fe88e39c5ae629864c8e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/BrainFn/Code/Stage...
+
+  ...317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building\index.mjs  1.1mb
+
+Done in 510ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-bdd2cbe7a02c5a2f1cf317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building\package.json:
+
+{
+  "name": "bundling-temp-bdd2cbe7a02c5a2f1cf317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AiFn/Code/Stage...
+
+  ...2a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building\index.mjs  208.5kb
+
+Done in 134ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-09266eba8919b78d5012a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building\package.json:
+
+{
+  "name": "bundling-temp-09266eba8919b78d5012a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/OmniFn/Code/Stage...
+
+  ...ec316c1ea92867d9869996c117f83247814e94f245d63-building\index.mjs  184.2kb
+
+Done in 87ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-c46d17d5edc47bed646ec316c1ea92867d9869996c117f83247814e94f245d63-building\package.json:
+
+{
+  "name": "bundling-temp-c46d17d5edc47bed646ec316c1ea92867d9869996c117f83247814e94f245d63-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AuditTrailFn/Code/Stage...
+
+  ...f3d1f7db2a118215273ead15544b3fb54f565e79a40503-building\index.mjs  62.2kb
+
+Done in 59ms
+(node:153844) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+✨  Synthesis time: 87.89s
+
+AiSentinels-Network-Prod
+AiSentinels-Network-Prod: deploying... [1/10]
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+AiSentinels-Api-Prod: start: Building DocumentsFn/Code
+AiSentinels-Api-Prod: success: Built DocumentsFn/Code
+AiSentinels-Api-Prod: start: Building AuditsFn/Code
+AiSentinels-Api-Prod: success: Built AuditsFn/Code
+AiSentinels-Api-Prod: start: Building CapaFn/Code
+AiSentinels-Api-Prod: success: Built CapaFn/Code
+AiSentinels-Api-Prod: start: Building RecordsFn/Code
+AiSentinels-Api-Prod: success: Built RecordsFn/Code
+AiSentinels-Api-Prod: start: Building BillingFn/Code
+AiSentinels-Api-Prod: success: Built BillingFn/Code
+AiSentinels-Api-Prod: start: Building AdminFn/Code
+AiSentinels-Api-Prod: success: Built AdminFn/Code
+AiSentinels-Api-Prod: start: Building SettingsFn/Code
+AiSentinels-Api-Prod: success: Built SettingsFn/Code
+AiSentinels-Api-Prod: start: Building BrainFn/Code
+AiSentinels-Api-Prod: success: Built BrainFn/Code
+AiSentinels-Api-Prod: start: Building AiFn/Code
+AiSentinels-Api-Prod: success: Built AiFn/Code
+AiSentinels-Api-Prod: start: Building OmniFn/Code
+AiSentinels-Api-Prod: success: Built OmniFn/Code
+AiSentinels-Api-Prod: start: Building AuditTrailFn/Code
+AiSentinels-Api-Prod: success: Built AuditTrailFn/Code
+AiSentinels-Api-Prod: start: Building AiSentinels-Api-Prod Template
+AiSentinels-Api-Prod: success: Built AiSentinels-Api-Prod Template
+AiSentinels-Network-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Network-Prod (no changes)
+
+✨  Deployment time: 2.16s
+
+Outputs:
+AiSentinels-Network-Prod.AppSubnetId0 = subnet-0d7c280d123282cf1
+AiSentinels-Network-Prod.AppSubnetId1 = subnet-02fb61081fff6d017
+AiSentinels-Network-Prod.AppSubnetId2 = subnet-06c63fe41db713965
+AiSentinels-Network-Prod.DataSubnetId0 = subnet-0082ed0191fd42384
+AiSentinels-Network-Prod.DataSubnetId1 = subnet-0cd7d31cbde077fd9
+AiSentinels-Network-Prod.DataSubnetId2 = subnet-0f407ce28880912a1
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgAlbEA3AC417GroupId6CDB1929 = sg-01aa8232c51157235
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgFargateB5F998B7GroupId58365FB1 = sg-07faac2aad6f94c98
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgLambda8961DF47GroupIdD6A19374 = sg-0d26ec0b3169fc518
+AiSentinels-Network-Prod.ExportsOutputRefVpc8378EB38272D6E3A = vpc-097d4314ee9780546
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet1Subnet7D2CF347EF8F3244 = subnet-0d7c280d123282cf1
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet2Subnet8D65443B8D3841EA = subnet-02fb61081fff6d017
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet3SubnetBA2B220EF49D73AC = subnet-06c63fe41db713965
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet1Subnet8E3CA4EDBB6D2B2E = subnet-0082ed0191fd42384
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet2Subnet25D1B0F65BC21239 = subnet-0cd7d31cbde077fd9
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet3Subnet56FCDCE8AF9F43FD = subnet-0f407ce28880912a1
+AiSentinels-Network-Prod.PublicSubnetId0 = subnet-06afae421b744a53b
+AiSentinels-Network-Prod.PublicSubnetId1 = subnet-0eafd32bb22fd561c
+AiSentinels-Network-Prod.PublicSubnetId2 = subnet-00b432758d7184c39
+AiSentinels-Network-Prod.SgAlbId = sg-01aa8232c51157235
+AiSentinels-Network-Prod.SgFargateId = sg-07faac2aad6f94c98
+AiSentinels-Network-Prod.SgLambdaId = sg-0d26ec0b3169fc518
+AiSentinels-Network-Prod.SgOpenSearchId = sg-0618bbd9868bf688e
+AiSentinels-Network-Prod.VpcId = vpc-097d4314ee9780546
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Network-Prod/9425a390-1677-11f1-ba06-0affed9a6e7d
+
+✨  Total time: 90.05s
+
+AiSentinels-Security-Prod
+AiSentinels-Security-Prod: deploying... [2/10]
+AiSentinels-Security-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Security-Prod (no changes)
+
+✨  Deployment time: 1.48s
+
+Outputs:
+AiSentinels-Security-Prod.AuroraKeyArn = arn:aws:kms:us-east-1:304242047817:key/0aeaf6a4-4bdd-4b84-8570-6ec10a1f1150
+AiSentinels-Security-Prod.CloudTrailKeyArn = arn:aws:kms:us-east-1:304242047817:key/44f8fba5-186c-47c1-91b8-647355b82ac9
+AiSentinels-Security-Prod.DynamoDbKeyArn = arn:aws:kms:us-east-1:304242047817:key/eedf0ca2-58c7-4642-8be8-5bc1e05c4d60
+AiSentinels-Security-Prod.ExportsOutputFnGetAttAuroraKey1CBB37BCArnC7AAD920 = arn:aws:kms:us-east-1:304242047817:key/0aeaf6a4-4bdd-4b84-8570-6ec10a1f1150
+AiSentinels-Security-Prod.ExportsOutputFnGetAttDynamoDbKey90E87944Arn58C9F73D = arn:aws:kms:us-east-1:304242047817:key/eedf0ca2-58c7-4642-8be8-5bc1e05c4d60
+AiSentinels-Security-Prod.ExportsOutputRefPermissionBoundary66882DF6CEA7A7AF = arn:aws:iam::304242047817:policy/aisentinels-permission-boundary-prod
+AiSentinels-Security-Prod.GuardDutyDetectorId = 90d824ce8da943f2b2103bc56c19724b
+AiSentinels-Security-Prod.PermissionBoundaryArn = arn:aws:iam::304242047817:policy/aisentinels-permission-boundary-prod
+AiSentinels-Security-Prod.SigningKeyArn = arn:aws:kms:us-east-1:304242047817:key/38dde670-f8c2-4ecf-a9d2-544e6e189386
+AiSentinels-Security-Prod.TrailBucketName = aisentinels-cloudtrail-304242047817-us-east-1
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Security-Prod/5797aa80-1678-11f1-a4e5-0eef73d613d5
+
+✨  Total time: 89.37s
+
+AiSentinels-Storage-Replication-Prod
+AiSentinels-Storage-Replication-Prod: deploying... [3/10]
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-eu-west-1', but are for the right account. Proceeding anyway.
+AiSentinels-Storage-Replication-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Storage-Replication-Prod (no changes)
+
+✨  Deployment time: 4.15s
+
+Outputs:
+AiSentinels-Storage-Replication-Prod.DestinationBucketArn = arn:aws:s3:::aisentinels-compliance-evidence-eu-west-1
+AiSentinels-Storage-Replication-Prod.DestinationBucketName = aisentinels-compliance-evidence-eu-west-1
+Stack ARN:
+arn:aws:cloudformation:eu-west-1:304242047817:stack/AiSentinels-Storage-Replication-Prod/c174b0a0-1679-11f1-9c5d-0aac8e6717eb
+
+✨  Total time: 92.04s
+
+AiSentinels-Cognito-Prod
+AiSentinels-Cognito-Prod: deploying... [6/10]
+AiSentinels-Cognito-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Cognito-Prod (no changes)
+
+✨  Deployment time: 1.46s
+
+Outputs:
+AiSentinels-Cognito-Prod.ExportsOutputFnGetAttUserPool6BA7E5F2Arn686ACC00 = arn:aws:cognito-idp:us-east-1:304242047817:userpool/us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.ExportsOutputRefUserPool6BA7E5F296FD7236 = us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.ExportsOutputRefUserPoolWebAppClientCD2D5CB13BAB4F14 = 796tnh57vdbrnsln665bcsn11u
+AiSentinels-Cognito-Prod.HostedUiBaseUrl = https://aisentinels-prod-304242047817.auth.us-east-1.amazoncognito.com
+AiSentinels-Cognito-Prod.M2mClientId = 7deps3co3ag2hrs8rhvfhvrr3d
+AiSentinels-Cognito-Prod.PostConfirmFnArn = arn:aws:lambda:us-east-1:304242047817:function:aisentinels-cognito-post-confirm-prod
+AiSentinels-Cognito-Prod.PreTokenFnArn = arn:aws:lambda:us-east-1:304242047817:function:aisentinels-cognito-pre-token-prod
+AiSentinels-Cognito-Prod.UserPoolArn = arn:aws:cognito-idp:us-east-1:304242047817:userpool/us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.UserPoolDomain = aisentinels-prod-304242047817
+AiSentinels-Cognito-Prod.UserPoolId = us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.WebClientId = 796tnh57vdbrnsln665bcsn11u
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Cognito-Prod/089138c0-1691-11f1-90fa-1214db599741
+
+✨  Total time: 89.35s
+
+AiSentinels-Storage-Prod
+AiSentinels-Storage-Prod: deploying... [4/10]
+AiSentinels-Storage-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Storage-Prod (no changes)
+
+✨  Deployment time: 1.55s
+
+Outputs:
+AiSentinels-Storage-Prod.ComplianceBucketArn = arn:aws:s3:::aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ComplianceBucketName = aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ExportsBucketArn = arn:aws:s3:::aisentinels-exports-us-east-1
+AiSentinels-Storage-Prod.ExportsBucketName = aisentinels-exports-us-east-1
+AiSentinels-Storage-Prod.ExportsOutputFnGetAttComplianceBucketC4CB6538Arn8D06156C = arn:aws:s3:::aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ExportsOutputFnGetAttWorkingFilesBucketEC011B53Arn39B7DF47 = arn:aws:s3:::aisentinels-working-files-us-east-1
+AiSentinels-Storage-Prod.LogsBucketName = aisentinels-s3-logs-304242047817-us-east-1
+AiSentinels-Storage-Prod.WorkingFilesBucketArn = arn:aws:s3:::aisentinels-working-files-us-east-1
+AiSentinels-Storage-Prod.WorkingFilesBucketName = aisentinels-working-files-us-east-1
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Storage-Prod/cce532b0-167a-11f1-971e-0affffc23bff
+
+✨  Total time: 89.44s
+
+AiSentinels-Data-Prod
+AiSentinels-Data-Prod: deploying... [5/10]
+AiSentinels-Data-Prod: creating CloudFormation changeset...
+AiSentinels-Data-Prod | 0/4 | 5:52:03 PM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod User Initiated
+AiSentinels-Data-Prod | 0/4 | 5:52:08 PM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 0/4 | 5:52:08 PM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU User Initiated
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 0/4 | 5:52:11 PM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU Transformation succeeded
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 1/4 | 5:52:13 PM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU 
+AiSentinels-Data-Prod | 2/4 | 5:52:19 PM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod | 3/4 | 5:52:23 PM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod 
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 4/4 | 5:52:25 PM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU 
+AiSentinels-Data-Prod | 3/4 | 5:52:34 PM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod | 4/4 | 5:52:34 PM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod 
+
+ ✅  AiSentinels-Data-Prod
+
+✨  Deployment time: 58.88s
+
+Outputs:
+AiSentinels-Data-Prod.AuditEventsTableArn = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-audit-events-prod
+AiSentinels-Data-Prod.AuroraClusterEndpoint = aisentinels-aurora-cluster-prod.cluster-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.AuroraProxyEndpoint = aisentinels-aurora-proxy-prod.proxy-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.AuroraSecretArn = arn:aws:secretsmanager:us-east-1:304242047817:secret:AuroraClusterSecret8E4F2BC8-Ra0rZ7iPmSCS-Tn1rPl
+AiSentinels-Data-Prod.ExportsOutputFnGetAttAuditEventsTable0723963EArn8F8FCDEF = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-audit-events-prod
+AiSentinels-Data-Prod.ExportsOutputFnGetAttAuroraProxy1E1757CCEndpointB9C5AF11 = aisentinels-aurora-proxy-prod.proxy-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.ExportsOutputFnGetAttSessionsTable7C302024Arn24FF8012 = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-sessions-prod
+AiSentinels-Data-Prod.ExportsOutputFnGetAttSgAurora26A4AFA6GroupId3899A53F = sg-07ed21c6deb4d4f32
+AiSentinels-Data-Prod.RedisPrimaryEndpoint = master.aisentinels-redis-prod.howkbo.use1.cache.amazonaws.com
+AiSentinels-Data-Prod.SessionsTableArn = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-sessions-prod
+AiSentinels-Data-Prod.SgAuroraId = sg-07ed21c6deb4d4f32
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Data-Prod/16978840-168f-11f1-9ba9-12ae3fa04949
+
+✨  Total time: 146.77s
+
+AiSentinels-Compute-Prod
+AiSentinels-Compute-Prod: deploying... [7/10]
+AiSentinels-Compute-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Compute-Prod (no changes)
+
+✨  Deployment time: 1.6s
+
+Outputs:
+AiSentinels-Compute-Prod.AlbDns = internal-aisentinels-alb-prod-1897455637.us-east-1.elb.amazonaws.com
+AiSentinels-Compute-Prod.ClusterName = aisentinels-prod
+AiSentinels-Compute-Prod.ExportsOutputRefAlbHttpListener00C8B33EB501C1D0 = arn:aws:elasticloadbalancing:us-east-1:304242047817:listener/app/aisentinels-alb-prod/78d169e839d1bb37/86c54d4190e80bab
+AiSentinels-Compute-Prod.ExportsOutputRefVpcLink42ED6FF0DCEB9DB7 = ecsvtd
+AiSentinels-Compute-Prod.VpcLinkId = ecsvtd
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Compute-Prod/92482e90-1707-11f1-bec8-0eccd7b2612d
+
+✨  Total time: 89.49s
+
+AiSentinels-Event-Prod
+AiSentinels-Event-Prod: deploying... [8/10]
+AiSentinels-Api-Prod: start: Publishing RecordsFn/Code (304242047817-us-east-1-525316a9)
+AiSentinels-Api-Prod: start: Publishing SettingsFn/Code (304242047817-us-east-1-149e479d)
+AiSentinels-Api-Prod: start: Publishing BillingFn/Code (304242047817-us-east-1-61f71602)
+AiSentinels-Api-Prod: start: Publishing DocumentsFn/Code (304242047817-us-east-1-177e2bda)
+AiSentinels-Api-Prod: start: Publishing AuditsFn/Code (304242047817-us-east-1-ded366fb)
+AiSentinels-Api-Prod: start: Publishing CapaFn/Code (304242047817-us-east-1-efce4b3c)
+AiSentinels-Api-Prod: start: Publishing AdminFn/Code (304242047817-us-east-1-9d446576)
+AiSentinels-Api-Prod: start: Publishing BrainFn/Code (304242047817-us-east-1-64de43f4)
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+AiSentinels-Event-Prod: creating CloudFormation changeset...
+AiSentinels-Api-Prod: success: Published DocumentsFn/Code (304242047817-us-east-1-177e2bda)
+AiSentinels-Api-Prod: start: Publishing AiFn/Code (304242047817-us-east-1-57289ffa)
+AiSentinels-Api-Prod: success: Published AuditsFn/Code (304242047817-us-east-1-ded366fb)
+AiSentinels-Api-Prod: start: Publishing OmniFn/Code (304242047817-us-east-1-22a3df35)
+AiSentinels-Api-Prod: success: Published AdminFn/Code (304242047817-us-east-1-9d446576)
+AiSentinels-Api-Prod: start: Publishing AuditTrailFn/Code (304242047817-us-east-1-3faf99f6)
+AiSentinels-Api-Prod: success: Published RecordsFn/Code (304242047817-us-east-1-525316a9)
+AiSentinels-Api-Prod: start: Publishing AiSentinels-Api-Prod Template (304242047817-us-east-1-7ba015cf)
+AiSentinels-Api-Prod: success: Published CapaFn/Code (304242047817-us-east-1-efce4b3c)
+AiSentinels-Api-Prod: success: Published SettingsFn/Code (304242047817-us-east-1-149e479d)
+AiSentinels-Api-Prod: success: Published BillingFn/Code (304242047817-us-east-1-61f71602)
+AiSentinels-Api-Prod: success: Published BrainFn/Code (304242047817-us-east-1-64de43f4)
+
+ ✅  AiSentinels-Event-Prod (no changes)
+
+✨  Deployment time: 1.89s
+
+Outputs:
+AiSentinels-Event-Prod.SentinelEventBusArn = arn:aws:events:us-east-1:304242047817:event-bus/aisentinels-sentinel-bus
+AiSentinels-Event-Prod.SentinelEventBusName = aisentinels-sentinel-bus
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Event-Prod/8c90ce60-1a42-11f1-bbca-123c460468a9
+
+✨  Total time: 89.78s
+
+AiSentinels-Api-Prod: success: Published AuditTrailFn/Code (304242047817-us-east-1-3faf99f6)
+AiSentinels-Api-Prod: success: Published AiSentinels-Api-Prod Template (304242047817-us-east-1-7ba015cf)
+AiSentinels-Api-Prod: success: Published AiFn/Code (304242047817-us-east-1-57289ffa)
+AiSentinels-Api-Prod: success: Published OmniFn/Code (304242047817-us-east-1-22a3df35)
+AiSentinels-Api-Prod
+AiSentinels-Api-Prod: deploying... [9/10]
+AiSentinels-Api-Prod: creating CloudFormation changeset...
+AiSentinels-Api-Prod |  0/75 | 5:53:11 PM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack     | AiSentinels-Api-Prod User Initiated
+AiSentinels-Api-Prod |  0/75 | 5:53:18 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup            | AuditTrailFnLogGroup (AuditTrailFnLogGroupD800CFF2) 
+AiSentinels-Api-Prod |  0/75 | 5:53:18 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                 | AuditTrailFn/ServiceRole (AuditTrailFnServiceRole0CE0D9B1) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup            | AuditTrailFnLogGroup (AuditTrailFnLogGroupD800CFF2) Resource creation Initiated
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                 | AuditTrailFn/ServiceRole (AuditTrailFnServiceRole0CE0D9B1) Resource creation Initiated
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | SettingsFn (SettingsFnD135AF6D) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | BrainFn (BrainFn2FE2475D) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | AdminFn (AdminFn81E922BC) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | AiFn (AiFn7EDE3E84) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | OmniFn (OmniFn9FDF9D51) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | CapaFn (CapaFn93EB6A02) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | RecordsFn (RecordsFnC0A0B281) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | BillingFn (BillingFnBAE8FE0F) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | TenantProvisionFn (TenantProvisionFn072A2020) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | DocumentsFn (DocumentsFn6DC7BD5F) 
+AiSentinels-Api-Prod |  0/75 | 5:53:19 PM | UPDATE_IN_PROGRESS   | AWS::Lambda::Function          | AuditsFn (AuditsFnB82F22E1) 
+AiSentinels-Api-Prod |  1/75 | 5:53:27 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | TenantProvisionFn (TenantProvisionFn072A2020) 
+AiSentinels-Api-Prod |  2/75 | 5:53:28 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup            | AuditTrailFnLogGroup (AuditTrailFnLogGroupD800CFF2) 
+AiSentinels-Api-Prod |  3/75 | 5:53:32 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | AdminFn (AdminFn81E922BC) 
+AiSentinels-Api-Prod |  4/75 | 5:53:32 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | RecordsFn (RecordsFnC0A0B281) 
+AiSentinels-Api-Prod |  5/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | BrainFn (BrainFn2FE2475D) 
+AiSentinels-Api-Prod |  6/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | AiFn (AiFn7EDE3E84) 
+AiSentinels-Api-Prod |  7/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | OmniFn (OmniFn9FDF9D51) 
+AiSentinels-Api-Prod |  8/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | CapaFn (CapaFn93EB6A02) 
+AiSentinels-Api-Prod |  9/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | BillingFn (BillingFnBAE8FE0F) 
+AiSentinels-Api-Prod | 10/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | DocumentsFn (DocumentsFn6DC7BD5F) 
+AiSentinels-Api-Prod | 11/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | AuditsFn (AuditsFnB82F22E1) 
+AiSentinels-Api-Prod | 12/75 | 5:53:33 PM | UPDATE_COMPLETE      | AWS::Lambda::Function          | SettingsFn (SettingsFnD135AF6D) 
+AiSentinels-Api-Prod | 13/75 | 5:53:35 PM | CREATE_COMPLETE      | AWS::IAM::Role                 | AuditTrailFn/ServiceRole (AuditTrailFnServiceRole0CE0D9B1) 
+AiSentinels-Api-Prod | 13/75 | 5:53:36 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy               | AuditTrailFn/ServiceRole/DefaultPolicy (AuditTrailFnServiceRoleDefaultPolicy9A6EC667) 
+AiSentinels-Api-Prod | 13/75 | 5:53:37 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy               | AuditTrailFn/ServiceRole/DefaultPolicy (AuditTrailFnServiceRoleDefaultPolicy9A6EC667) Resource creation Initiated
+AiSentinels-Api-Prod | 14/75 | 5:53:52 PM | CREATE_COMPLETE      | AWS::IAM::Policy               | AuditTrailFn/ServiceRole/DefaultPolicy (AuditTrailFnServiceRoleDefaultPolicy9A6EC667) 
+AiSentinels-Api-Prod | 14/75 | 5:53:53 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function          | AuditTrailFn (AuditTrailFnFD11FB22) 
+AiSentinels-Api-Prod | 14/75 | 5:53:54 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function          | AuditTrailFn (AuditTrailFnFD11FB22) Resource creation Initiated
+AiSentinels-Api-Prod | 15/75 | 5:54:02 PM | CREATE_COMPLETE      | AWS::Lambda::Function          | AuditTrailFn (AuditTrailFnFD11FB22) 
+AiSentinels-Api-Prod | 15/75 | 5:54:03 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission        | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration-Permission (HttpApiGETapiv1audittrailAuditTrailIntegrationPermission808C8C2F) 
+AiSentinels-Api-Prod | 15/75 | 5:54:03 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration (HttpApiGETapiv1audittrailAuditTrailIntegration5C5FFB1C) 
+AiSentinels-Api-Prod | 15/75 | 5:54:04 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission        | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration-Permission (HttpApiGETapiv1audittrailAuditTrailIntegrationPermission808C8C2F) Resource creation Initiated
+AiSentinels-Api-Prod | 15/75 | 5:54:04 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration (HttpApiGETapiv1audittrailAuditTrailIntegration5C5FFB1C) Resource creation Initiated
+AiSentinels-Api-Prod | 16/75 | 5:54:05 PM | CREATE_COMPLETE      | AWS::Lambda::Permission        | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration-Permission (HttpApiGETapiv1audittrailAuditTrailIntegrationPermission808C8C2F) 
+AiSentinels-Api-Prod | 17/75 | 5:54:05 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Integration | HttpApi/GET--api--v1--audit-trail/AuditTrailIntegration (HttpApiGETapiv1audittrailAuditTrailIntegration5C5FFB1C) 
+AiSentinels-Api-Prod | 17/75 | 5:54:05 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route       | HttpApi/GET--api--v1--audit-trail (HttpApiGETapiv1audittrailF43A1DA9) 
+AiSentinels-Api-Prod | 17/75 | 5:54:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route       | HttpApi/GET--api--v1--audit-trail (HttpApiGETapiv1audittrailF43A1DA9) Resource creation Initiated
+AiSentinels-Api-Prod | 18/75 | 5:54:07 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Route       | HttpApi/GET--api--v1--audit-trail (HttpApiGETapiv1audittrailF43A1DA9) 
+AiSentinels-Api-Prod | 19/75 | 5:54:09 PM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack     | AiSentinels-Api-Prod 
+AiSentinels-Api-Prod | 20/75 | 5:54:11 PM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack     | AiSentinels-Api-Prod 
+
+ ✅  AiSentinels-Api-Prod
+
+✨  Deployment time: 89.78s
+
+Outputs:
+AiSentinels-Api-Prod.ApiEndpoint = https://4w9qshl20f.execute-api.us-east-1.amazonaws.com
+AiSentinels-Api-Prod.ApiId = 4w9qshl20f
+AiSentinels-Api-Prod.ProvisionFnArn = arn:aws:lambda:us-east-1:304242047817:function:aisentinels-api-provision-prod
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Api-Prod/cc2b5520-1715-11f1-82ae-127b1af8a1b3
+
+✨  Total time: 177.67s
+
+AiSentinels-Amplify-Prod
+AiSentinels-Amplify-Prod: deploying... [10/10]
+AiSentinels-Amplify-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Amplify-Prod (no changes)
+
+✨  Deployment time: 1.4s
+
+Outputs:
+AiSentinels-Amplify-Prod.AmplifyAppId = d26m90c7eyszn3
+AiSentinels-Amplify-Prod.AmplifyDnsVerificationNote = After deploy: check Amplify Console ? Domain Management for CNAME/ALIAS records to add at registrar
+AiSentinels-Amplify-Prod.AmplifyUrl = https://main.d26m90c7eyszn3.amplifyapp.com
+AiSentinels-Amplify-Prod.ProductionDomain = https://aisentinels.io
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Amplify-Prod/6a96d8f0-171c-11f1-bbba-0e1e319c78fb
+
+✨  Total time: 89.29s
+

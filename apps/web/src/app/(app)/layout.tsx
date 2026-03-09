@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { CommandPalette } from '@/components/layout/command-palette';
 import { ToastProvider } from '@/components/ui/toast';
-import { billingApi } from '@/lib/api';
+import { billingApi, api } from '@/lib/api';
 import type { PlanType } from '@/lib/types';
+import { hasAcceptedAllCurrentVersions } from '@/lib/legal-versions';
 
 function LoadingScreen() {
   return (
@@ -29,6 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<PlanType>('starter');
+  const [legalChecked, setLegalChecked] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/login');
@@ -41,8 +43,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  // ── Legal acceptance gate (Phase 10) ──────────────────────────────────────
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    api
+      .get('/api/v1/legal/status')
+      .then((res) => {
+        const data = res.data as { accepted: Array<{ documentType: string; version: string }> };
+        if (!hasAcceptedAllCurrentVersions(data.accepted)) {
+          router.replace('/onboarding/legal');
+        } else {
+          setLegalChecked(true);
+        }
+      })
+      .catch(() => {
+        // If legal check fails (e.g. 404 before deploy), allow through
+        setLegalChecked(true);
+      });
+  }, [status, router]);
+
   if (status === 'loading') return <LoadingScreen />;
   if (!session) return null;
+  if (!legalChecked) return <LoadingScreen />;
 
   return (
     <ToastProvider>

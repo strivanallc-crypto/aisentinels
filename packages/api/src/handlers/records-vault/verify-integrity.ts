@@ -5,6 +5,7 @@ import { vaultRecords } from '@aisentinels/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -13,7 +14,7 @@ async function getDb() {
 }
 
 export async function verifyIntegrity(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   // Path: /api/v1/records-vault/records/{id}/verify-integrity
   // Second-to-last segment is the record id
@@ -76,6 +77,17 @@ export async function verifyIntegrity(event: APIGatewayProxyEventV2WithJWTAuthor
       .where(and(eq(vaultRecords.id, id), eq(vaultRecords.tenantId, tenantId)))
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'record.integrity.verified',
+    entityType: 'record',
+    entityId:   id,
+    actorId:    sub,
+    tenantId,
+    action:     'VERIFY',
+    detail:     { verified: true },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

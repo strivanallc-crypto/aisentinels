@@ -5,6 +5,7 @@ import { vaultRecords } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateRecordSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -49,6 +50,17 @@ export async function createRecord(event: APIGatewayProxyEventV2WithJWTAuthorize
       })
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'record.created',
+    entityType: 'record',
+    entityId:   record!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'CREATE',
+    detail:     { title, category, retentionYears },
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

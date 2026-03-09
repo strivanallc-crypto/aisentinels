@@ -29,6 +29,100 @@ import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiRcaPanel } from '@/components/capa/ai-rca-panel';
+import dynamic from 'next/dynamic';
+import type { IshikawaCause } from '@/components/capa/ishikawa-diagram';
+
+const IshikawaDiagram = dynamic(
+  () => import('@/components/capa/ishikawa-diagram').then((m) => m.IshikawaDiagram),
+  { ssr: false },
+);
+
+/**
+ * Parse root cause analysis text/JSON into 6M Ishikawa categories.
+ * Handles both structured JSON from Nexus and free-text RCA content.
+ * Returns empty array on any failure — diagram shows empty state (never crashes).
+ */
+function parseCausesFromRCA(rca: string | object | null | undefined): IshikawaCause[] {
+  if (!rca) return [];
+
+  try {
+    const text = typeof rca === 'string' ? rca : JSON.stringify(rca);
+
+    // Try parsing as JSON first (Nexus structured output)
+    try {
+      const parsed = JSON.parse(text);
+
+      // Format: { causes: [{ category, items }] }
+      if (Array.isArray(parsed.causes)) {
+        return parsed.causes
+          .filter((c: { category?: string; items?: string[] }) => c.category && Array.isArray(c.items))
+          .map((c: { category: string; items: string[] }) => ({
+            category: c.category,
+            items: c.items,
+          }));
+      }
+
+      // Format: { "Man": ["cause1"], "Method": ["cause2"] }
+      const KNOWN_CATEGORIES = ['Man', 'Machine', 'Method', 'Material', 'Measurement', 'Mother Nature'];
+      const mapped: IshikawaCause[] = [];
+      for (const cat of KNOWN_CATEGORIES) {
+        if (Array.isArray(parsed[cat]) && parsed[cat].length > 0) {
+          mapped.push({ category: cat, items: parsed[cat] });
+        }
+      }
+      if (mapped.length > 0) return mapped;
+    } catch {
+      // Not JSON — continue to text parsing
+    }
+
+    // Text heuristic: look for 6M category headers in the text
+    const CATEGORY_PATTERNS: [string, RegExp][] = [
+      ['Man',           /(?:^|\n)\s*\**\s*(?:man|people|personnel|human|staff)\s*[:—\-*]/im],
+      ['Machine',       /(?:^|\n)\s*\**\s*(?:machine|equipment|tool|system|technology)\s*[:—\-*]/im],
+      ['Method',        /(?:^|\n)\s*\**\s*(?:method|process|procedure|workflow)\s*[:—\-*]/im],
+      ['Material',      /(?:^|\n)\s*\**\s*(?:material|supply|resource|input)\s*[:—\-*]/im],
+      ['Measurement',   /(?:^|\n)\s*\**\s*(?:measurement|metric|monitoring|calibration|data)\s*[:—\-*]/im],
+      ['Mother Nature', /(?:^|\n)\s*\**\s*(?:environment|mother nature|external|condition)\s*[:—\-*]/im],
+    ];
+
+    const results: IshikawaCause[] = [];
+    for (const [category, pattern] of CATEGORY_PATTERNS) {
+      const match = pattern.exec(text);
+      if (match) {
+        // Extract bullet points after the header until next header or end
+        const startIdx = match.index + match[0].length;
+        const rest = text.slice(startIdx);
+        const nextHeader = /(?:^|\n)\s*\**\s*(?:man|machine|method|material|measurement|mother nature|environment|people|equipment|process|supply|metric)\s*[:—\-*]/im;
+        const endMatch = nextHeader.exec(rest);
+        const section = endMatch ? rest.slice(0, endMatch.index) : rest;
+
+        const items = section
+          .split(/\n/)
+          .map((l) => l.replace(/^\s*[-*\d.]+\s*/, '').trim())
+          .filter((l) => l.length > 2 && l.length < 200);
+
+        if (items.length > 0) {
+          results.push({ category, items: items.slice(0, 8) });
+        }
+      }
+    }
+    if (results.length > 0) return results;
+
+    // Last resort: if there's substantial text but no structure, put everything under "Method"
+    const lines = text
+      .split(/\n/)
+      .map((l) => l.replace(/^\s*[-*\d.]+\s*/, '').trim())
+      .filter((l) => l.length > 5 && l.length < 200);
+
+    if (lines.length >= 2) {
+      return [{ category: 'Method', items: lines.slice(0, 6) }];
+    }
+  } catch {
+    // Never crash — return empty
+  }
+
+  return [];
+}
 
 const STATUS_TRANSITIONS: Partial<Record<CapaStatus, { next: CapaStatus; label: string }[]>> = {
   open: [{ next: 'in_progress', label: 'Start Work' }],
@@ -235,6 +329,17 @@ export default function CapaDetailPage() {
               </p>
             )}
           </div>
+
+          {/* Ishikawa Diagram — additive, below RCA text */}
+          {(capa.rootCauseAnalysis || showRca) && (
+            <IshikawaDiagram
+              problem={capa.problemDescription}
+              causes={parseCausesFromRCA(capa.rootCauseAnalysis)}
+              capaId={capa.id}
+              standard={capa.standard}
+              clauseRef={capa.clauseRef}
+            />
+          )}
 
           {/* Actions */}
           <div

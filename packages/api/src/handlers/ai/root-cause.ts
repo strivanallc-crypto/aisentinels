@@ -10,6 +10,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { composeSentinelPrompt, NEXUS_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const HistoryMessage = z.object({
   role: z.enum(['nexus', 'user']),
@@ -37,7 +38,7 @@ D5: Corrective Actions, D6: Implementation, D7: Prevention, D8: Congratulations.
 };
 
 export async function rootCause(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { findingDescription, clauseRef, standard, method, history } = parsed.data;
@@ -79,6 +80,19 @@ Set isComplete=true and rootCause only when the root cause has been truly identi
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.root-cause.analysed',
+    entityType: 'sentinel',
+    entityId:   clauseRef,
+    actorId:    sub,
+    tenantId,
+    action:     'ANALYZE',
+    detail:     { method, standard, clauseRef },
+    clauseRef,
+    standard,
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

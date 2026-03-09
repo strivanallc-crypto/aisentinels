@@ -395,6 +395,13 @@ export class ComputeStack extends cdk.Stack {
         }));
       }
 
+      // EventBridge — allow sentinel services to emit events to the custom bus
+      taskRole.addToPolicy(new iam.PolicyStatement({
+        sid: 'AllowEventBridgePutEvents',
+        actions: ['events:PutEvents'],
+        resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/aisentinels-sentinel-bus`],
+      }));
+
       // Per-service S3 permissions
       if (svc.id === 'Docs') {
         taskRole.addToPolicy(new iam.PolicyStatement({
@@ -441,6 +448,7 @@ export class ComputeStack extends cdk.Stack {
         AURORA_DB_USER: 'postgres',   // TODO: tighten to per-service user post-E1-deploy
         AURORA_DB_NAME: 'aisentinels',
         AURORA_IAM_AUTH: 'true',
+        SENTINEL_EVENT_BUS_NAME: 'aisentinels-sentinel-bus',
       };
       if (svc.id === 'AiOrchestrator') {
         if (props.aossCollectionEndpoint) {

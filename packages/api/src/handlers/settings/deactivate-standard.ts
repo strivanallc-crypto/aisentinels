@@ -4,6 +4,7 @@ import { orgStandards } from '@aisentinels/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -12,7 +13,7 @@ async function getDb() {
 }
 
 export async function deactivateStandard(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const path = event.rawPath;
 
   // Extract standard code from path: /api/v1/settings/standards/ISO%209001
@@ -35,6 +36,18 @@ export async function deactivateStandard(event: APIGatewayProxyEventV2WithJWTAut
       .delete(orgStandards)
       .where(and(eq(orgStandards.tenantId, tenantId), eq(orgStandards.standardCode, standardCode))),
   );
+
+  logAuditEvent({
+    eventType:  'standard.deactivated',
+    entityType: 'standard',
+    entityId:   standardCode,
+    actorId:    sub,
+    tenantId,
+    action:     'DEACTIVATE',
+    detail:     { standardCode },
+    standard:   standardCode,
+    severity:   'warning',
+  });
 
   return {
     statusCode: 200,

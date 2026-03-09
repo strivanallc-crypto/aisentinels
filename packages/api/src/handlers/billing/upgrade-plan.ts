@@ -5,12 +5,15 @@ import { eq, desc } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { UpgradePlanSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
+import { sendEmail, TEAM_JULIO } from '../../lib/mailer.ts';
+import { subscriptionUpgradeTemplate } from '../../lib/email-templates.ts';
 
 // AI credit limits per plan
 const PLAN_LIMITS: Record<string, number> = {
-  starter:      100,
-  professional: 1000,
-  enterprise:   10000,
+  starter:      50,
+  professional: 200,
+  enterprise:   500,
 };
 
 // Upgrade-only order (cannot downgrade)
@@ -32,7 +35,7 @@ async function getDb() {
  * to generate a payment request before activating the new plan.
  */
 export async function upgradePlan(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   const parsed = parseBody(UpgradePlanSchema, event.body);
   if ('statusCode' in parsed) return parsed;
@@ -79,6 +82,26 @@ export async function upgradePlan(event: APIGatewayProxyEventV2WithJWTAuthorizer
       .where(eq(subscriptions.tenantId, tenantId))
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'billing.plan.upgraded',
+    entityType: 'billing',
+    entityId:   updated!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'UPGRADE',
+    detail:     { previousPlan: current.plan, newPlan },
+    severity:   'info',
+  });
+
+  // Fire-and-forget: subscription upgrade email
+  const emailData = subscriptionUpgradeTemplate({
+    previousTier: current.plan,
+    newTier: newPlan,
+    credits: PLAN_LIMITS[newPlan]!,
+    effectiveDate: new Date().toISOString().split('T')[0]!,
+  });
+  sendEmail({ ...emailData, to: sub, replyTo: TEAM_JULIO });
 
   return {
     statusCode: 200,

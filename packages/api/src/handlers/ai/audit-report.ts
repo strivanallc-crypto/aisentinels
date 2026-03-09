@@ -9,6 +9,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { composeSentinelPrompt, AUDIE_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const FindingSchema = z.object({
   clause: z.string(),
@@ -27,10 +28,10 @@ const Schema = z.object({
 });
 
 export async function auditReport(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
-  const { findings, scope, standards, auditDate } = parsed.data;
+  const { sessionId, findings, scope, standards, auditDate } = parsed.data;
 
   const systemPrompt = composeSentinelPrompt(AUDIE_CONTEXT, standards);
 
@@ -74,6 +75,17 @@ Return JSON:
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.audit.reported',
+    entityType: 'sentinel',
+    entityId:   sessionId,
+    actorId:    sub,
+    tenantId,
+    action:     'GENERATE',
+    detail:     { standards, findingsCount: findings.length, auditDate },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

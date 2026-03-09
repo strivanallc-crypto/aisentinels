@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Grid3X3,
   Sparkles,
@@ -9,6 +10,7 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +18,8 @@ import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { aiApi } from '@/lib/api';
 import type { IsoStandard } from '@/lib/types';
 import { ISO_STANDARD_LABELS } from '@/lib/types';
+import { ComplianceHeatmap, deriveStatus } from '@/components/compliance/compliance-heatmap';
+import type { HeatmapCell } from '@/components/compliance/compliance-heatmap';
 
 const STANDARDS: { value: IsoStandard; label: string; color: string }[] = [
   { value: 'iso_9001', label: 'ISO 9001', color: '#3B82F6' },
@@ -39,12 +43,73 @@ interface GapResult {
   coverageByStandard: Record<string, number>;
 }
 
+type ViewTab = 'matrix' | 'heatmap';
+
+// ── Adapter: GapResult → HeatmapCell[] ─────────────────────────
+function adaptMatrixToHeatmap(
+  gapResult: GapResult,
+  standards: IsoStandard[],
+): HeatmapCell[] {
+  const cells: HeatmapCell[] = [];
+
+  for (const clause of ANNEX_SL_CLAUSES) {
+    for (const sub of clause.subclauses) {
+      for (const std of standards) {
+        const gap = gapResult.gaps.find(
+          (g) => g.clause === sub && g.standard === std,
+        );
+        const overallCoverage = gapResult.coverageByStandard[std] ?? 0;
+
+        if (gap) {
+          // Map gap severity to a score
+          const score = gap.severity === 'high' ? 15 : gap.severity === 'medium' ? 35 : 50;
+          const isCritical = gap.severity === 'high';
+          cells.push({
+            clause: sub,
+            standard: std,
+            score,
+            status: deriveStatus(score, isCritical),
+            label: gap.description,
+          });
+        } else {
+          // No gap found → use overall coverage as base score, capped at 100
+          const score = Math.min(Math.round(overallCoverage), 100);
+          cells.push({
+            clause: sub,
+            standard: std,
+            score: Math.max(score, 80), // No gap = at least 80%
+            status: deriveStatus(Math.max(score, 80)),
+            label: 'No gaps detected',
+          });
+        }
+      }
+    }
+  }
+
+  return cells;
+}
+
 export default function ComplianceMatrixPage() {
+  const router = useRouter();
   const [selectedStandards, setSelectedStandards] = useState<IsoStandard[]>(['iso_9001']);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<GapResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<ViewTab>('matrix');
+
+  // Derive heatmap cells from gap analysis result
+  const heatmapCells = useMemo<HeatmapCell[]>(() => {
+    if (!result) return [];
+    return adaptMatrixToHeatmap(result, selectedStandards);
+  }, [result, selectedStandards]);
+
+  const handleCellClick = useCallback(
+    (clause: string, standard: IsoStandard) => {
+      router.push(`/capa?clause=${encodeURIComponent(clause)}&standard=${encodeURIComponent(standard)}`);
+    },
+    [router],
+  );
 
   const toggleStandard = (s: IsoStandard) => {
     setSelectedStandards((prev) =>
@@ -130,6 +195,32 @@ export default function ComplianceMatrixPage() {
         </Button>
       </div>
 
+      {/* View tabs */}
+      <div className="flex gap-1 rounded-lg border p-1" style={{ borderColor: 'var(--content-border)', width: 'fit-content' }}>
+        <button
+          onClick={() => setActiveTab('matrix')}
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            activeTab === 'matrix'
+              ? 'bg-white/10 text-white'
+              : 'text-white/50 hover:text-white/80'
+          }`}
+        >
+          <Grid3X3 className="h-3.5 w-3.5" />
+          Matrix
+        </button>
+        <button
+          onClick={() => setActiveTab('heatmap')}
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            activeTab === 'heatmap'
+              ? 'bg-white/10 text-white'
+              : 'text-white/50 hover:text-white/80'
+          }`}
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          Heat Map
+        </button>
+      </div>
+
       {error && (
         <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -137,6 +228,29 @@ export default function ComplianceMatrixPage() {
         </div>
       )}
 
+      {/* ── Heat Map tab ────────────────────────────────────── */}
+      {activeTab === 'heatmap' && (
+        result ? (
+          <ComplianceHeatmap
+            cells={heatmapCells}
+            standards={selectedStandards}
+            onCellClick={handleCellClick}
+          />
+        ) : (
+          <div
+            className="rounded-xl border p-8 text-center"
+            style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+          >
+            <BarChart3 className="mx-auto h-8 w-8 mb-3" style={{ color: 'var(--content-text-dim)' }} />
+            <p className="text-sm" style={{ color: 'var(--content-text-dim)' }}>
+              Run <strong>AI Gap Analysis</strong> first to generate the heat map.
+            </p>
+          </div>
+        )
+      )}
+
+      {/* ── Matrix tab (existing content) ───────────────────── */}
+      {activeTab === 'matrix' && <>
       {/* Coverage scores */}
       {result?.coverageByStandard && (
         <div className="grid grid-cols-3 gap-4">
@@ -292,6 +406,7 @@ export default function ComplianceMatrixPage() {
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

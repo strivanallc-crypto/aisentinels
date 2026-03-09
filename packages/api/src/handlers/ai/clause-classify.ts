@@ -9,6 +9,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { DOKI_CLASSIFIER_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const Schema = z.object({
   documentText: z.string().min(1).max(100_000),
@@ -16,7 +17,7 @@ const Schema = z.object({
 });
 
 export async function clauseClassify(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { documentText, fileName } = parsed.data;
@@ -49,6 +50,17 @@ Return ONLY valid JSON in this exact format:
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.clause.classified',
+    entityType: 'sentinel',
+    entityId:   fileName,
+    actorId:    sub,
+    tenantId,
+    action:     'CLASSIFY',
+    detail:     { fileName },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

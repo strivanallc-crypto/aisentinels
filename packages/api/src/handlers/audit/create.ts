@@ -4,6 +4,7 @@ import { auditSessions } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateAuditSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -12,7 +13,7 @@ async function getDb() {
 }
 
 export async function createAudit(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   const parsed = parseBody(CreateAuditSchema, event.body);
   if ('statusCode' in parsed) return parsed;
@@ -34,6 +35,17 @@ export async function createAudit(event: APIGatewayProxyEventV2WithJWTAuthorizer
       })
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'audit.session.created',
+    entityType: 'audit',
+    entityId:   session!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'CREATE',
+    detail:     { title, auditType, scope },
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

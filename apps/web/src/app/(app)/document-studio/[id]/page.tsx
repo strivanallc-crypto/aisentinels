@@ -11,8 +11,6 @@ import {
   XCircle,
   Clock,
   Loader2,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { documentsApi } from '@/lib/api';
 import type { Document, DocStatus } from '@/lib/types';
@@ -25,7 +23,7 @@ import {
 import type { IsoStandard } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SentinelAvatar } from '@/components/SentinelAvatar';
+import { TipTapEditor } from '@/components/document-studio/tiptap-editor';
 
 const STATUS_ICON: Record<DocStatus, React.ReactNode> = {
   draft: <FileText className="h-4 w-4" />,
@@ -34,25 +32,6 @@ const STATUS_ICON: Record<DocStatus, React.ReactNode> = {
   published: <CheckCircle className="h-4 w-4" />,
   archived: <XCircle className="h-4 w-4" />,
 };
-
-function extractText(body: unknown): string {
-  if (!body || typeof body !== 'object') return '';
-  const doc = body as { type?: string; content?: unknown[] };
-  if (doc.type !== 'doc' || !Array.isArray(doc.content)) return JSON.stringify(body, null, 2);
-
-  const lines: string[] = [];
-  for (const node of doc.content) {
-    const n = node as { type?: string; content?: { type?: string; text?: string }[] };
-    if (n.type === 'paragraph' && Array.isArray(n.content)) {
-      lines.push(n.content.map((c) => c.text ?? '').join(''));
-    } else if (n.type === 'heading' && Array.isArray(n.content)) {
-      lines.push(n.content.map((c) => c.text ?? '').join(''));
-    } else {
-      lines.push('');
-    }
-  }
-  return lines.join('\n');
-}
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -64,7 +43,6 @@ export default function DocumentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deciding, setDeciding] = useState<'APPROVED' | 'REJECTED' | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,14 +83,6 @@ export default function DocumentDetailPage() {
     } finally {
       setDeciding(null);
     }
-  };
-
-  const content = doc ? extractText(doc.bodyJsonb) : '';
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   if (loading) {
@@ -204,43 +174,15 @@ export default function DocumentDetailPage() {
 
       {/* Metadata panel + Content */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        {/* Content */}
+        {/* Content — TipTap Editor with Ribbon */}
         <div
           className="overflow-hidden rounded-xl border"
           style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
         >
-          <div
-            className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid var(--content-border)', background: 'var(--content-bg)' }}
-          >
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-              Document Content
-            </span>
-            {content && (
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1 text-xs transition-colors"
-                style={{ color: 'var(--content-text-muted)' }}
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            )}
-          </div>
-          <div className="p-6">
-            {content ? (
-              <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed" style={{ color: 'var(--content-text)' }}>
-                {content}
-              </pre>
-            ) : (
-              <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <SentinelAvatar sentinelId="doki" size={48} className="opacity-50" />
-                <p className="text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                  No content yet. Edit this document or use Doki to generate content.
-                </p>
-              </div>
-            )}
-          </div>
+          <TipTapEditor
+            content={doc.bodyJsonb as Record<string, unknown> | null | undefined}
+            editable={doc.status === 'draft'}
+          />
         </div>
 
         {/* Sidebar metadata */}

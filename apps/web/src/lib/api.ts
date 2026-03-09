@@ -142,6 +142,17 @@ export const settingsApi = {
     api.put(`/api/v1/settings/users/${userId}/role`, { roleId }),
 };
 
+// ==================== Audit Trail ====================
+export const auditTrailApi = {
+  query: (params?: {
+    entityId?: string;
+    entityType?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  }) => api.get('/api/v1/audit-trail', { params }),
+};
+
 // ==================== Brain ====================
 export const brainApi = {
   getUploadUrl: (data: {
@@ -150,4 +161,85 @@ export const brainApi = {
   process:        (orgDocumentId: string) => api.post('/api/v1/brain/process', { orgDocumentId }),
   listDocuments:  ()                      => api.get('/api/v1/brain/documents'),
   deleteDocument: (id: string)            => api.delete(`/api/v1/brain/documents/${id}`),
+};
+
+// ==================== Board Report ====================
+import type {
+  BoardReportListItem,
+  GenerateReportResponse,
+} from '@/types/board-report';
+
+export const boardReportApi = {
+  /** Generate a board report for a given period (or default: last month) */
+  generate: async (period?: string): Promise<GenerateReportResponse> => {
+    const res = await api.post('/api/v1/board-report/generate', period ? { period } : {});
+    return res.data as GenerateReportResponse;
+  },
+
+  /** List the last 12 board reports for this tenant */
+  list: async (): Promise<BoardReportListItem[]> => {
+    const res = await api.get('/api/v1/board-report/list');
+    return (res.data as { reports: BoardReportListItem[] }).reports;
+  },
+};
+
+// ==================== Bulk Upload ====================
+import type {
+  BulkInitiateResponse,
+  BulkProcessResponse,
+  BulkUploadBatch,
+} from '@/types/bulk-upload';
+
+export const bulkUploadApi = {
+  /** Create batch + get presigned S3 PUT URLs per file */
+  initiate: async (files: Array<{
+    filename: string;
+    fileType: 'pdf' | 'docx';
+    fileSize: number;
+  }>): Promise<BulkInitiateResponse> => {
+    const res = await api.post('/api/v1/bulk-upload/initiate', { files });
+    return res.data as BulkInitiateResponse;
+  },
+
+  /** Upload a file directly to S3 via presigned URL with progress tracking */
+  uploadToS3: (
+    presignedUrl: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', presignedUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`S3 upload failed: ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('S3 upload network error'));
+      xhr.send(file);
+    });
+  },
+
+  /** Process uploaded files — triggers Omni triage + document creation */
+  process: async (batchId: string, itemIds: string[]): Promise<BulkProcessResponse> => {
+    const res = await api.post('/api/v1/bulk-upload/process', { batchId, itemIds });
+    return res.data as BulkProcessResponse;
+  },
+
+  /** Poll batch status */
+  getStatus: async (batchId: string): Promise<BulkUploadBatch> => {
+    const res = await api.get(`/api/v1/bulk-upload/batch/${batchId}`);
+    return res.data as BulkUploadBatch;
+  },
 };

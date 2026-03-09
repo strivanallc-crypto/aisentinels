@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { UpdateUserRoleSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -77,6 +78,17 @@ export async function updateUserRole(event: APIGatewayProxyEventV2WithJWTAuthori
       body: JSON.stringify({ error: (result as { error: string }).error }),
     };
   }
+
+  logAuditEvent({
+    eventType:  'user.role.changed',
+    entityType: 'user',
+    entityId:   userId!,
+    actorId:    sub,
+    tenantId,
+    action:     'ROLE_CHANGE',
+    detail:     { roleId, roleName: (result as { roleName?: string }).roleName },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

@@ -10,6 +10,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { composeSentinelPrompt, AUDIE_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const ConversationMessage = z.object({
   role: z.enum(['auditor', 'auditee']),
@@ -25,7 +26,7 @@ const Schema = z.object({
 });
 
 export async function auditExamine(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { clause, standard, auditContext, evidence, conversationHistory } = parsed.data;
@@ -73,6 +74,19 @@ Set findingType to null if you need more evidence. Only set it when you have eno
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.audit.examined',
+    entityType: 'sentinel',
+    entityId:   `${standard}:${clause}`,
+    actorId:    sub,
+    tenantId,
+    action:     'EXAMINE',
+    detail:     { clause, standard },
+    clauseRef:  clause,
+    standard,
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

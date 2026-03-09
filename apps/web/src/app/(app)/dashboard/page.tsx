@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   capaApi, sentinelsApi, auditApi, riskApi, billingApi, documentsApi,
+  boardReportApi,
 } from '@/lib/api';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { SENTINEL_LIST } from '@/lib/sentinels';
@@ -11,6 +12,7 @@ import {
   Wrench, Bot, ClipboardCheck, AlertTriangle, CreditCard,
   FileText, Archive, BookOpen, TrendingUp, ArrowUpRight,
   Grid3X3, Shield, Settings, CheckCircle2, Circle, Sparkles,
+  BarChart3, Download,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -87,6 +89,9 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({});
   const [loading, setLoading] = useState(true);
   const [docCount, setDocCount] = useState<number | null>(null);
+  const [latestReport, setLatestReport] = useState<{
+    period: string; status: string; generatedAt: string | null; presignedUrl?: string;
+  } | null>(null);
 
   useEffect(() => {
     Promise.allSettled([
@@ -96,7 +101,8 @@ export default function DashboardPage() {
       riskApi.list(),
       billingApi.getUsage(),
       documentsApi.list(),
-    ]).then(([capa, ai, audits, risks, billing, docs]) => {
+      boardReportApi.list(),
+    ]).then(([capa, ai, audits, risks, billing, docs, boardReports]) => {
       setStats({
         capaOpen:     capa.status    === 'fulfilled' ? capa.value.data?.openCount       : undefined,
         capaTotal:    capa.status    === 'fulfilled' ? capa.value.data?.totalCount      : undefined,
@@ -113,6 +119,12 @@ export default function DashboardPage() {
       } else {
         setDocCount(0);
       }
+      if (boardReports.status === 'fulfilled') {
+        const reportList = boardReports.value;
+        if (Array.isArray(reportList) && reportList.length > 0) {
+          setLatestReport(reportList[0]);
+        }
+      }
       setLoading(false);
     });
   }, []);
@@ -126,7 +138,7 @@ export default function DashboardPage() {
     { title: 'AI Analyses', value: stats.aiActivities, sub: 'analyses run',                                                      icon: Bot,            color: '#2563eb', benchmark: 'Industry avg: 24/mo' },
     { title: 'Audits',      value: stats.audits,       sub: 'scheduled / completed',                                             icon: ClipboardCheck, color: '#F43F5E', benchmark: 'Industry avg: 4/yr' },
     { title: 'Risk Items',  value: stats.risks,        sub: 'in register',                                                       icon: AlertTriangle,  color: '#dc2626', benchmark: 'Industry avg: 15' },
-    { title: 'AI Credits',  value: stats.creditsPct,   sub: `${stats.creditsUsed ?? 0} / ${stats.creditsLimit ?? 100} used`, icon: CreditCard,     color: '#7c3aed' },
+    { title: 'AI Credits',  value: stats.creditsPct,   sub: `${stats.creditsUsed ?? 0} / ${stats.creditsLimit ?? 50} used`, icon: CreditCard,     color: '#7c3aed' },
   ];
 
   return (
@@ -270,6 +282,56 @@ export default function DashboardPage() {
           {cards.map((c) => <StatCard key={c.title} {...c} />)}
         </div>
       )}
+
+      {/* ── Board Report Widget ── */}
+      <div
+        className="rounded-xl p-5"
+        style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-lg"
+              style={{ background: 'rgba(99,102,241,0.12)' }}
+            >
+              <BarChart3 className="h-4 w-4" style={{ color: '#818CF8' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>
+                Board Performance Report
+              </p>
+              <p className="text-xs" style={{ color: 'var(--content-text-dim)' }}>
+                {latestReport
+                  ? `Latest: ${new Date(Number(latestReport.period.split('-')[0]), Number(latestReport.period.split('-')[1]) - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}`
+                  : 'No reports generated yet'
+                }
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {latestReport?.status === 'ready' && latestReport.presignedUrl && (
+              <a
+                href={latestReport.presignedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
+                style={{ color: '#818CF8', border: '1px solid rgba(99,102,241,0.2)' }}
+              >
+                <Download className="h-3 w-3" />
+                Download
+              </a>
+            )}
+            <Link
+              href="/board-report"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ color: 'var(--content-text-muted)' }}
+            >
+              View All
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* ── Sentinel Status (Shield + Pulse) ── */}
       <div

@@ -9,6 +9,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { composeSentinelPrompt, QUALY_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const Schema = z.object({
   auditResults: z.any().optional().default({}),
@@ -17,7 +18,7 @@ const Schema = z.object({
 });
 
 export async function managementReview(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { auditResults, capaStatus, complianceScores } = parsed.data;
@@ -64,6 +65,17 @@ Return JSON:
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.management-review.generated',
+    entityType: 'sentinel',
+    entityId:   tenantId,
+    actorId:    sub,
+    tenantId,
+    action:     'REVIEW',
+    detail:     { standard: 'iso_9001' },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

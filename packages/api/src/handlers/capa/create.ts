@@ -4,6 +4,7 @@ import { capaRecords } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateCapaSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -42,6 +43,19 @@ export async function createCapa(event: APIGatewayProxyEventV2WithJWTAuthorizer)
       })
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'capa.created',
+    entityType: 'capa',
+    entityId:   record!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'CREATE',
+    detail:     { sourceType, severity: severity as string, problemDescription },
+    clauseRef,
+    standard:   standard as string,
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

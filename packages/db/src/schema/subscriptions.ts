@@ -42,8 +42,8 @@ export const subscriptions = pgTable('subscriptions', {
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   /** Gemini AI credits consumed this billing period */
   aiCreditsUsed: integer('ai_credits_used').notNull().default(0),
-  /** Monthly credit limit per plan (starter=100, professional=1000, enterprise=custom) */
-  aiCreditsLimit: integer('ai_credits_limit').notNull().default(100),
+  /** Monthly credit limit per plan (starter=50, professional=200, enterprise=500) */
+  aiCreditsLimit: integer('ai_credits_limit').notNull().default(50),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({

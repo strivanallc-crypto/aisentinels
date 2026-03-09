@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { ActivateStandardSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const STANDARD_TO_SENTINEL: Record<string, string> = {
   'ISO 9001': 'Qualy',
@@ -53,6 +54,18 @@ export async function activateStandard(event: APIGatewayProxyEventV2WithJWTAutho
     });
 
     return { activated: true, alreadyActive: false, sentinelActivated: STANDARD_TO_SENTINEL[standardCode] ?? null };
+  });
+
+  logAuditEvent({
+    eventType:  'standard.activated',
+    entityType: 'standard',
+    entityId:   standardCode,
+    actorId:    sub,
+    tenantId,
+    action:     'ACTIVATE',
+    detail:     { standardCode, alreadyActive: (result as { alreadyActive?: boolean }).alreadyActive },
+    standard:   standardCode,
+    severity:   'info',
   });
 
   return {

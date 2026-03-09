@@ -1,0 +1,668 @@
+Bundling asset AiSentinels-Cognito-Prod/PostConfirmationFn/Code/Stage...
+
+  ...33b92d31306d2f30479da06d285f42f2860495648c1b0ede-building\index.js  1.0kb
+
+Done in 37ms
+Bundling asset AiSentinels-Cognito-Prod/PreTokenGenerationFn/Code/Stage...
+
+  ...fcf91316227cefce51971575dbff490568f32e98f85e70ef-building\index.js  786b 
+
+Done in 17ms
+Bundling asset AiSentinels-Api-Prod/HealthFn/Code/Stage...
+
+  ...705e72b12d9fe40c8af20cb26c4b7b409dd68ce827e32953-building\index.js  663b 
+
+Done in 19ms
+Bundling asset AiSentinels-Api-Prod/TenantProvisionFn/Code/Stage...
+
+  ...7a9ce221847b08c014e27d961cf264389dd748e9605d7-building\index.mjs  105.0kb
+
+Done in 173ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-e9575be62df7166437b7a9ce221847b08c014e27d961cf264389dd748e9605d7-building\package.json:
+
+{
+  "name": "bundling-temp-e9575be62df7166437b7a9ce221847b08c014e27d961cf264389dd748e9605d7-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/DocumentsFn/Code/Stage...
+
+  ...1e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building\index.mjs  169.5kb
+
+Done in 142ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-3f6d77fdc7c944490d41e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building\package.json:
+
+{
+  "name": "bundling-temp-3f6d77fdc7c944490d41e9d3dd4ddd0bc166ef03731885866514d1ec60f6d64a-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AuditsFn/Code/Stage...
+
+  ...864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building\index.mjs  168.3kb
+
+Done in 132ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-cc6e19e391462435fed864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building\package.json:
+
+{
+  "name": "bundling-temp-cc6e19e391462435fed864d2654f15888daf75c6745d9356b16be6dc35b2b8c3-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/CapaFn/Code/Stage...
+
+  ...836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building\index.mjs  168.4kb
+
+Done in 136ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-93ee1353f2fe14a850a836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building\package.json:
+
+{
+  "name": "bundling-temp-93ee1353f2fe14a850a836fa99d501f5c9109103e44949354be3cfc4eaf04d4e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/RecordsFn/Code/Stage...
+
+  ...1ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building\index.mjs  168.5kb
+
+Done in 117ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-d7abafa924ffe05b8301ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building\package.json:
+
+{
+  "name": "bundling-temp-d7abafa924ffe05b8301ae786dd875090917d29bb0338e60e0a8a62dd0292eee-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/BillingFn/Code/Stage...
+
+  ...2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building\index.mjs  173.4kb
+
+Done in 132ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-6c0b5c012b63ae67cbd2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building\package.json:
+
+{
+  "name": "bundling-temp-6c0b5c012b63ae67cbd2ebed96a0fb1e438482e5464ca4a27d6c6f1d484b9820-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AdminFn/Code/Stage...
+
+  ...ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building\index.mjs  168.2kb
+
+Done in 133ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-9bd60a11d50d42a8f35ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building\package.json:
+
+{
+  "name": "bundling-temp-9bd60a11d50d42a8f35ca0fc6c86199384a54cc3601363c7ccb5e08aadc7b10e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/SettingsFn/Code/Stage...
+
+  ...e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building\index.mjs  172.8kb
+
+Done in 135ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-fe88e39c5ae629864c8e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building\package.json:
+
+{
+  "name": "bundling-temp-fe88e39c5ae629864c8e5668deddf8d44438be6f66434fb6ab5a915e0a046501-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/BrainFn/Code/Stage...
+
+  ...317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building\index.mjs  1.1mb
+
+Done in 424ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-bdd2cbe7a02c5a2f1cf317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building\package.json:
+
+{
+  "name": "bundling-temp-bdd2cbe7a02c5a2f1cf317ae08ab7404553d452d7d9a6a5491ff40c5d8fdfba6-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/AiFn/Code/Stage...
+
+  ...2a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building\index.mjs  204.7kb
+
+Done in 134ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-09266eba8919b78d5012a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building\package.json:
+
+{
+  "name": "bundling-temp-09266eba8919b78d5012a33281768b254b9cf46cf5e6a15e0d43020ab276d37e-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+Bundling asset AiSentinels-Api-Prod/OmniFn/Code/Stage...
+
+  ...ec316c1ea92867d9869996c117f83247814e94f245d63-building\index.mjs  180.2kb
+
+Done in 93ms
+Wrote to C:\Users\julio\OneDrive\Documents\Software Factory\aisentinels-aws\cdk.out\bundling-temp-c46d17d5edc47bed646ec316c1ea92867d9869996c117f83247814e94f245d63-building\package.json:
+
+{
+  "name": "bundling-temp-c46d17d5edc47bed646ec316c1ea92867d9869996c117f83247814e94f245d63-building",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
+(node:278588) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+✨  Synthesis time: 81.06s
+
+AiSentinels-Network-Prod
+AiSentinels-Network-Prod: deploying... [1/10]
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+AiSentinels-Compute-Prod: start: Building AiSentinels-Compute-Prod Template
+AiSentinels-Compute-Prod: success: Built AiSentinels-Compute-Prod Template
+AiSentinels-Event-Prod: start: Building AiSentinels-Event-Prod Template
+AiSentinels-Event-Prod: success: Built AiSentinels-Event-Prod Template
+AiSentinels-Api-Prod: start: Building TenantProvisionFn/Code
+AiSentinels-Api-Prod: success: Built TenantProvisionFn/Code
+AiSentinels-Api-Prod: start: Building DocumentsFn/Code
+AiSentinels-Api-Prod: success: Built DocumentsFn/Code
+AiSentinels-Api-Prod: start: Building AuditsFn/Code
+AiSentinels-Api-Prod: success: Built AuditsFn/Code
+AiSentinels-Api-Prod: start: Building CapaFn/Code
+AiSentinels-Api-Prod: success: Built CapaFn/Code
+AiSentinels-Api-Prod: start: Building RecordsFn/Code
+AiSentinels-Api-Prod: success: Built RecordsFn/Code
+AiSentinels-Api-Prod: start: Building BillingFn/Code
+AiSentinels-Api-Prod: success: Built BillingFn/Code
+AiSentinels-Api-Prod: start: Building AdminFn/Code
+AiSentinels-Api-Prod: success: Built AdminFn/Code
+AiSentinels-Api-Prod: start: Building SettingsFn/Code
+AiSentinels-Api-Prod: success: Built SettingsFn/Code
+AiSentinels-Api-Prod: start: Building BrainFn/Code
+AiSentinels-Api-Prod: success: Built BrainFn/Code
+AiSentinels-Api-Prod: start: Building AiFn/Code
+AiSentinels-Api-Prod: success: Built AiFn/Code
+AiSentinels-Api-Prod: start: Building OmniFn/Code
+AiSentinels-Api-Prod: success: Built OmniFn/Code
+AiSentinels-Api-Prod: start: Building AiSentinels-Api-Prod Template
+AiSentinels-Api-Prod: success: Built AiSentinels-Api-Prod Template
+AiSentinels-Amplify-Prod: start: Building AiSentinels-Amplify-Prod Template
+AiSentinels-Amplify-Prod: success: Built AiSentinels-Amplify-Prod Template
+AiSentinels-Network-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Network-Prod (no changes)
+
+✨  Deployment time: 2.12s
+
+Outputs:
+AiSentinels-Network-Prod.AppSubnetId0 = subnet-0d7c280d123282cf1
+AiSentinels-Network-Prod.AppSubnetId1 = subnet-02fb61081fff6d017
+AiSentinels-Network-Prod.AppSubnetId2 = subnet-06c63fe41db713965
+AiSentinels-Network-Prod.DataSubnetId0 = subnet-0082ed0191fd42384
+AiSentinels-Network-Prod.DataSubnetId1 = subnet-0cd7d31cbde077fd9
+AiSentinels-Network-Prod.DataSubnetId2 = subnet-0f407ce28880912a1
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgAlbEA3AC417GroupId6CDB1929 = sg-01aa8232c51157235
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgFargateB5F998B7GroupId58365FB1 = sg-07faac2aad6f94c98
+AiSentinels-Network-Prod.ExportsOutputFnGetAttSgLambda8961DF47GroupIdD6A19374 = sg-0d26ec0b3169fc518
+AiSentinels-Network-Prod.ExportsOutputRefVpc8378EB38272D6E3A = vpc-097d4314ee9780546
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet1Subnet7D2CF347EF8F3244 = subnet-0d7c280d123282cf1
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet2Subnet8D65443B8D3841EA = subnet-02fb61081fff6d017
+AiSentinels-Network-Prod.ExportsOutputRefVpcAppSubnet3SubnetBA2B220EF49D73AC = subnet-06c63fe41db713965
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet1Subnet8E3CA4EDBB6D2B2E = subnet-0082ed0191fd42384
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet2Subnet25D1B0F65BC21239 = subnet-0cd7d31cbde077fd9
+AiSentinels-Network-Prod.ExportsOutputRefVpcDataSubnet3Subnet56FCDCE8AF9F43FD = subnet-0f407ce28880912a1
+AiSentinels-Network-Prod.PublicSubnetId0 = subnet-06afae421b744a53b
+AiSentinels-Network-Prod.PublicSubnetId1 = subnet-0eafd32bb22fd561c
+AiSentinels-Network-Prod.PublicSubnetId2 = subnet-00b432758d7184c39
+AiSentinels-Network-Prod.SgAlbId = sg-01aa8232c51157235
+AiSentinels-Network-Prod.SgFargateId = sg-07faac2aad6f94c98
+AiSentinels-Network-Prod.SgLambdaId = sg-0d26ec0b3169fc518
+AiSentinels-Network-Prod.SgOpenSearchId = sg-0618bbd9868bf688e
+AiSentinels-Network-Prod.VpcId = vpc-097d4314ee9780546
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Network-Prod/9425a390-1677-11f1-ba06-0affed9a6e7d
+
+✨  Total time: 83.18s
+
+AiSentinels-Security-Prod
+AiSentinels-Security-Prod: deploying... [2/10]
+AiSentinels-Security-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Security-Prod (no changes)
+
+✨  Deployment time: 1.5s
+
+Outputs:
+AiSentinels-Security-Prod.AuroraKeyArn = arn:aws:kms:us-east-1:304242047817:key/0aeaf6a4-4bdd-4b84-8570-6ec10a1f1150
+AiSentinels-Security-Prod.CloudTrailKeyArn = arn:aws:kms:us-east-1:304242047817:key/44f8fba5-186c-47c1-91b8-647355b82ac9
+AiSentinels-Security-Prod.DynamoDbKeyArn = arn:aws:kms:us-east-1:304242047817:key/eedf0ca2-58c7-4642-8be8-5bc1e05c4d60
+AiSentinels-Security-Prod.ExportsOutputFnGetAttAuroraKey1CBB37BCArnC7AAD920 = arn:aws:kms:us-east-1:304242047817:key/0aeaf6a4-4bdd-4b84-8570-6ec10a1f1150
+AiSentinels-Security-Prod.ExportsOutputFnGetAttDynamoDbKey90E87944Arn58C9F73D = arn:aws:kms:us-east-1:304242047817:key/eedf0ca2-58c7-4642-8be8-5bc1e05c4d60
+AiSentinels-Security-Prod.ExportsOutputRefPermissionBoundary66882DF6CEA7A7AF = arn:aws:iam::304242047817:policy/aisentinels-permission-boundary-prod
+AiSentinels-Security-Prod.GuardDutyDetectorId = 90d824ce8da943f2b2103bc56c19724b
+AiSentinels-Security-Prod.PermissionBoundaryArn = arn:aws:iam::304242047817:policy/aisentinels-permission-boundary-prod
+AiSentinels-Security-Prod.SigningKeyArn = arn:aws:kms:us-east-1:304242047817:key/38dde670-f8c2-4ecf-a9d2-544e6e189386
+AiSentinels-Security-Prod.TrailBucketName = aisentinels-cloudtrail-304242047817-us-east-1
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Security-Prod/5797aa80-1678-11f1-a4e5-0eef73d613d5
+
+✨  Total time: 82.57s
+
+AiSentinels-Storage-Replication-Prod
+AiSentinels-Storage-Replication-Prod: deploying... [3/10]
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-deploy-role-304242047817-eu-west-1', but are for the right account. Proceeding anyway.
+AiSentinels-Storage-Replication-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Storage-Replication-Prod (no changes)
+
+✨  Deployment time: 4.2s
+
+Outputs:
+AiSentinels-Storage-Replication-Prod.DestinationBucketArn = arn:aws:s3:::aisentinels-compliance-evidence-eu-west-1
+AiSentinels-Storage-Replication-Prod.DestinationBucketName = aisentinels-compliance-evidence-eu-west-1
+Stack ARN:
+arn:aws:cloudformation:eu-west-1:304242047817:stack/AiSentinels-Storage-Replication-Prod/c174b0a0-1679-11f1-9c5d-0aac8e6717eb
+
+✨  Total time: 85.26s
+
+AiSentinels-Cognito-Prod
+AiSentinels-Cognito-Prod: deploying... [6/10]
+AiSentinels-Cognito-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Cognito-Prod (no changes)
+
+✨  Deployment time: 1.49s
+
+Outputs:
+AiSentinels-Cognito-Prod.ExportsOutputFnGetAttUserPool6BA7E5F2Arn686ACC00 = arn:aws:cognito-idp:us-east-1:304242047817:userpool/us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.ExportsOutputRefUserPool6BA7E5F296FD7236 = us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.ExportsOutputRefUserPoolWebAppClientCD2D5CB13BAB4F14 = 796tnh57vdbrnsln665bcsn11u
+AiSentinels-Cognito-Prod.HostedUiBaseUrl = https://aisentinels-prod-304242047817.auth.us-east-1.amazoncognito.com
+AiSentinels-Cognito-Prod.M2mClientId = 7deps3co3ag2hrs8rhvfhvrr3d
+AiSentinels-Cognito-Prod.PostConfirmFnArn = arn:aws:lambda:us-east-1:304242047817:function:aisentinels-cognito-post-confirm-prod
+AiSentinels-Cognito-Prod.PreTokenFnArn = arn:aws:lambda:us-east-1:304242047817:function:aisentinels-cognito-pre-token-prod
+AiSentinels-Cognito-Prod.UserPoolArn = arn:aws:cognito-idp:us-east-1:304242047817:userpool/us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.UserPoolDomain = aisentinels-prod-304242047817
+AiSentinels-Cognito-Prod.UserPoolId = us-east-1_To4FpwT6C
+AiSentinels-Cognito-Prod.WebClientId = 796tnh57vdbrnsln665bcsn11u
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Cognito-Prod/089138c0-1691-11f1-90fa-1214db599741
+
+✨  Total time: 82.55s
+
+AiSentinels-Storage-Prod
+AiSentinels-Storage-Prod: deploying... [4/10]
+AiSentinels-Storage-Prod: creating CloudFormation changeset...
+
+ ✅  AiSentinels-Storage-Prod (no changes)
+
+✨  Deployment time: 1.62s
+
+Outputs:
+AiSentinels-Storage-Prod.ComplianceBucketArn = arn:aws:s3:::aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ComplianceBucketName = aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ExportsBucketArn = arn:aws:s3:::aisentinels-exports-us-east-1
+AiSentinels-Storage-Prod.ExportsBucketName = aisentinels-exports-us-east-1
+AiSentinels-Storage-Prod.ExportsOutputFnGetAttComplianceBucketC4CB6538Arn8D06156C = arn:aws:s3:::aisentinels-compliance-evidence-us-east-1
+AiSentinels-Storage-Prod.ExportsOutputFnGetAttWorkingFilesBucketEC011B53Arn39B7DF47 = arn:aws:s3:::aisentinels-working-files-us-east-1
+AiSentinels-Storage-Prod.LogsBucketName = aisentinels-s3-logs-304242047817-us-east-1
+AiSentinels-Storage-Prod.WorkingFilesBucketArn = arn:aws:s3:::aisentinels-working-files-us-east-1
+AiSentinels-Storage-Prod.WorkingFilesBucketName = aisentinels-working-files-us-east-1
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Storage-Prod/cce532b0-167a-11f1-971e-0affffc23bff
+
+✨  Total time: 82.69s
+
+AiSentinels-Data-Prod
+AiSentinels-Data-Prod: deploying... [5/10]
+AiSentinels-Data-Prod: creating CloudFormation changeset...
+AiSentinels-Data-Prod | 0/4 | 11:23:14 AM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod User Initiated
+AiSentinels-Data-Prod | 0/4 | 11:23:18 AM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 0/4 | 11:23:18 AM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU User Initiated
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 0/4 | 11:23:21 AM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU Transformation succeeded
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 1/4 | 11:23:23 AM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU 
+AiSentinels-Data-Prod | 2/4 | 11:23:29 AM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod | 3/4 | 11:23:33 AM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod 
+AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU | 4/4 | 11:23:35 AM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod-DbRot16DFC283-4S03NLFMWKOU 
+AiSentinels-Data-Prod | 3/4 | 11:23:44 AM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | DbRot (DbRot16DFC283) 
+AiSentinels-Data-Prod | 4/4 | 11:23:45 AM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                  | AiSentinels-Data-Prod 
+
+ ✅  AiSentinels-Data-Prod
+
+✨  Deployment time: 53.64s
+
+Outputs:
+AiSentinels-Data-Prod.AuditEventsTableArn = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-audit-events-prod
+AiSentinels-Data-Prod.AuroraClusterEndpoint = aisentinels-aurora-cluster-prod.cluster-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.AuroraProxyEndpoint = aisentinels-aurora-proxy-prod.proxy-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.AuroraSecretArn = arn:aws:secretsmanager:us-east-1:304242047817:secret:AuroraClusterSecret8E4F2BC8-Ra0rZ7iPmSCS-Tn1rPl
+AiSentinels-Data-Prod.ExportsOutputFnGetAttAuditEventsTable0723963EArn8F8FCDEF = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-audit-events-prod
+AiSentinels-Data-Prod.ExportsOutputFnGetAttAuroraProxy1E1757CCEndpointB9C5AF11 = aisentinels-aurora-proxy-prod.proxy-ci90ia4wkigh.us-east-1.rds.amazonaws.com
+AiSentinels-Data-Prod.ExportsOutputFnGetAttSessionsTable7C302024Arn24FF8012 = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-sessions-prod
+AiSentinels-Data-Prod.ExportsOutputFnGetAttSgAurora26A4AFA6GroupId3899A53F = sg-07ed21c6deb4d4f32
+AiSentinels-Data-Prod.RedisPrimaryEndpoint = master.aisentinels-redis-prod.howkbo.use1.cache.amazonaws.com
+AiSentinels-Data-Prod.SessionsTableArn = arn:aws:dynamodb:us-east-1:304242047817:table/aisentinels-sessions-prod
+AiSentinels-Data-Prod.SgAuroraId = sg-07ed21c6deb4d4f32
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Data-Prod/16978840-168f-11f1-9ba9-12ae3fa04949
+
+✨  Total time: 134.7s
+
+AiSentinels-Compute-Prod: start: Publishing AiSentinels-Compute-Prod Template (304242047817-us-east-1-4f61c5a6)
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+AiSentinels-Compute-Prod: success: Published AiSentinels-Compute-Prod Template (304242047817-us-east-1-4f61c5a6)
+AiSentinels-Compute-Prod
+AiSentinels-Compute-Prod: deploying... [7/10]
+AiSentinels-Compute-Prod: creating CloudFormation changeset...
+AiSentinels-Compute-Prod |  0/38 | 11:24:13 AM | UPDATE_IN_PROGRESS   | AWS::CloudFormation::Stack                    | AiSentinels-Compute-Prod User Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | AiOrchestratorTaskRole/DefaultPolicy (AiOrchestratorTaskRoleDefaultPolicyB2CE282D) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | AuditTaskRole/DefaultPolicy (AuditTaskRoleDefaultPolicy133AF96B) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | CapaTaskRole/DefaultPolicy (CapaTaskRoleDefaultPolicy01B9C05E) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | RecordsTaskRole/DefaultPolicy (RecordsTaskRoleDefaultPolicyCEB7066B) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | DocsTaskRole/DefaultPolicy (DocsTaskRoleDefaultPolicy608AD243) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:19 AM | UPDATE_IN_PROGRESS   | AWS::IAM::Policy                              | BillingTaskRole/DefaultPolicy (BillingTaskRoleDefaultPolicy83883636) 
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | RecordsTaskDef (RecordsTaskDef43061C6F) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AuditTaskDef (AuditTaskDef46C5D5D1) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | DocsTaskDef (DocsTaskDef6E32D4CE) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | BillingTaskDef (BillingTaskDef67E6B87D) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | CapaTaskDef (CapaTaskDef4C227A61) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:21 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AiOrchestratorTaskDef (AiOrchestratorTaskDef2BCA9B56) Requested update requires the creation of a new physical resource; hence creating one.
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | RecordsTaskDef (RecordsTaskDef43061C6F) Resource creation Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | CapaTaskDef (CapaTaskDef4C227A61) Resource creation Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | DocsTaskDef (DocsTaskDef6E32D4CE) Resource creation Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AuditTaskDef (AuditTaskDef46C5D5D1) Resource creation Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | BillingTaskDef (BillingTaskDef67E6B87D) Resource creation Initiated
+AiSentinels-Compute-Prod |  0/38 | 11:24:22 AM | UPDATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AiOrchestratorTaskDef (AiOrchestratorTaskDef2BCA9B56) Resource creation Initiated
+AiSentinels-Compute-Prod |  1/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | RecordsTaskDef (RecordsTaskDef43061C6F) 
+AiSentinels-Compute-Prod |  2/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | AuditTaskDef (AuditTaskDef46C5D5D1) 
+AiSentinels-Compute-Prod |  3/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | DocsTaskDef (DocsTaskDef6E32D4CE) 
+AiSentinels-Compute-Prod |  4/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | CapaTaskDef (CapaTaskDef4C227A61) 
+AiSentinels-Compute-Prod |  5/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | AiOrchestratorTaskDef (AiOrchestratorTaskDef2BCA9B56) 
+AiSentinels-Compute-Prod |  6/38 | 11:24:23 AM | UPDATE_COMPLETE      | AWS::ECS::TaskDefinition                      | BillingTaskDef (BillingTaskDef67E6B87D) 
+AiSentinels-Compute-Prod |  7/38 | 11:24:35 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | RecordsTaskRole/DefaultPolicy (RecordsTaskRoleDefaultPolicyCEB7066B) 
+AiSentinels-Compute-Prod |  8/38 | 11:24:35 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | DocsTaskRole/DefaultPolicy (DocsTaskRoleDefaultPolicy608AD243) 
+AiSentinels-Compute-Prod |  9/38 | 11:24:36 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | CapaTaskRole/DefaultPolicy (CapaTaskRoleDefaultPolicy01B9C05E) 
+AiSentinels-Compute-Prod | 10/38 | 11:24:36 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | BillingTaskRole/DefaultPolicy (BillingTaskRoleDefaultPolicy83883636) 
+AiSentinels-Compute-Prod | 11/38 | 11:24:36 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | AuditTaskRole/DefaultPolicy (AuditTaskRoleDefaultPolicy133AF96B) 
+AiSentinels-Compute-Prod | 11/38 | 11:24:36 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | RecordsService/Service (RecordsService83B881F0) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:37 AM | UPDATE_COMPLETE      | AWS::IAM::Policy                              | AiOrchestratorTaskRole/DefaultPolicy (AiOrchestratorTaskRoleDefaultPolicyB2CE282D) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:37 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | DocsService/Service (DocsService755EDE6D) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:38 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | AuditService/Service (AuditServiceE2BB7D9C) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:38 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | CapaService/Service (CapaServiceD9D0F148) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:38 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | BillingService/Service (BillingServiceFEB36D90) 
+AiSentinels-Compute-Prod | 12/38 | 11:24:38 AM | UPDATE_IN_PROGRESS   | AWS::ECS::Service                             | AiOrchestratorService/Service (AiOrchestratorServiceBDB69796) 
+AiSentinels-Compute-Prod | 13/38 | 11:26:42 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | AiOrchestratorService/Service (AiOrchestratorServiceBDB69796) 
+AiSentinels-Compute-Prod | 14/38 | 11:27:20 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | RecordsService/Service (RecordsService83B881F0) 
+AiSentinels-Compute-Prod | 15/38 | 11:27:20 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | DocsService/Service (DocsService755EDE6D) 
+AiSentinels-Compute-Prod | 16/38 | 11:27:21 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | AuditService/Service (AuditServiceE2BB7D9C) 
+AiSentinels-Compute-Prod | 17/38 | 11:27:21 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | CapaService/Service (CapaServiceD9D0F148) 
+AiSentinels-Compute-Prod | 18/38 | 11:27:21 AM | UPDATE_COMPLETE      | AWS::ECS::Service                             | BillingService/Service (BillingServiceFEB36D90) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:25 AM | UPDATE_COMPLETE_CLEA | AWS::CloudFormation::Stack                    | AiSentinels-Compute-Prod 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | BillingTaskDef (BillingTaskDef67E6B87D) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | DocsTaskDef (DocsTaskDef6E32D4CE) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | CapaTaskDef (CapaTaskDef4C227A61) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | RecordsTaskDef (RecordsTaskDef43061C6F) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AiOrchestratorTaskDef (AiOrchestratorTaskDef2BCA9B56) 
+AiSentinels-Compute-Prod | 19/38 | 11:27:26 AM | DELETE_IN_PROGRESS   | AWS::ECS::TaskDefinition                      | AuditTaskDef (AuditTaskDef46C5D5D1) 
+AiSentinels-Compute-Prod | 18/38 | 11:27:27 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | AiOrchestratorTaskDef (AiOrchestratorTaskDef2BCA9B56) 
+AiSentinels-Compute-Prod | 17/38 | 11:27:27 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | BillingTaskDef (BillingTaskDef67E6B87D) 
+AiSentinels-Compute-Prod | 16/38 | 11:27:27 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | RecordsTaskDef (RecordsTaskDef43061C6F) 
+AiSentinels-Compute-Prod | 15/38 | 11:27:27 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | DocsTaskDef (DocsTaskDef6E32D4CE) 
+AiSentinels-Compute-Prod | 14/38 | 11:27:28 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | AuditTaskDef (AuditTaskDef46C5D5D1) 
+AiSentinels-Compute-Prod | 13/38 | 11:27:28 AM | DELETE_COMPLETE      | AWS::ECS::TaskDefinition                      | CapaTaskDef (CapaTaskDef4C227A61) 
+AiSentinels-Compute-Prod | 14/38 | 11:27:29 AM | UPDATE_COMPLETE      | AWS::CloudFormation::Stack                    | AiSentinels-Compute-Prod 
+
+ ✅  AiSentinels-Compute-Prod
+
+✨  Deployment time: 223.06s
+
+Outputs:
+AiSentinels-Compute-Prod.AlbDns = internal-aisentinels-alb-prod-1897455637.us-east-1.elb.amazonaws.com
+AiSentinels-Compute-Prod.ClusterName = aisentinels-prod
+AiSentinels-Compute-Prod.ExportsOutputRefAlbHttpListener00C8B33EB501C1D0 = arn:aws:elasticloadbalancing:us-east-1:304242047817:listener/app/aisentinels-alb-prod/78d169e839d1bb37/86c54d4190e80bab
+AiSentinels-Compute-Prod.ExportsOutputRefVpcLink42ED6FF0DCEB9DB7 = ecsvtd
+AiSentinels-Compute-Prod.VpcLinkId = ecsvtd
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Compute-Prod/92482e90-1707-11f1-bec8-0eccd7b2612d
+
+✨  Total time: 304.12s
+
+AiSentinels-Event-Prod: start: Publishing AiSentinels-Event-Prod Template (304242047817-us-east-1-cdec7c02)
+AiSentinels-Api-Prod: start: Publishing TenantProvisionFn/Code (304242047817-us-east-1-a509f9e9)
+AiSentinels-Api-Prod: start: Publishing DocumentsFn/Code (304242047817-us-east-1-9655d670)
+AiSentinels-Api-Prod: start: Publishing AuditsFn/Code (304242047817-us-east-1-fb63cfbe)
+AiSentinels-Api-Prod: start: Publishing CapaFn/Code (304242047817-us-east-1-de74aebe)
+AiSentinels-Api-Prod: start: Publishing RecordsFn/Code (304242047817-us-east-1-15ead81d)
+AiSentinels-Api-Prod: start: Publishing BillingFn/Code (304242047817-us-east-1-6b0ea08c)
+AiSentinels-Api-Prod: start: Publishing AdminFn/Code (304242047817-us-east-1-8fbe3c72)
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+current credentials could not be used to assume 'arn:aws:iam::304242047817:role/cdk-hnb659fds-file-publishing-role-304242047817-us-east-1', but are for the right account. Proceeding anyway.
+AiSentinels-Event-Prod: success: Published AiSentinels-Event-Prod Template (304242047817-us-east-1-cdec7c02)
+AiSentinels-Event-Prod
+AiSentinels-Event-Prod: deploying... [8/10]
+AiSentinels-Api-Prod: start: Publishing SettingsFn/Code (304242047817-us-east-1-0a4fdc44)
+AiSentinels-Event-Prod: creating CloudFormation changeset...
+AiSentinels-Api-Prod: success: Published TenantProvisionFn/Code (304242047817-us-east-1-a509f9e9)
+AiSentinels-Api-Prod: start: Publishing BrainFn/Code (304242047817-us-east-1-b8ab79b3)
+AiSentinels-Api-Prod: success: Published AdminFn/Code (304242047817-us-east-1-8fbe3c72)
+AiSentinels-Api-Prod: start: Publishing AiFn/Code (304242047817-us-east-1-63cacd7c)
+AiSentinels-Api-Prod: success: Published RecordsFn/Code (304242047817-us-east-1-15ead81d)
+AiSentinels-Api-Prod: start: Publishing OmniFn/Code (304242047817-us-east-1-f89efb3a)
+AiSentinels-Api-Prod: success: Published AuditsFn/Code (304242047817-us-east-1-fb63cfbe)
+AiSentinels-Api-Prod: start: Publishing AiSentinels-Api-Prod Template (304242047817-us-east-1-43152c0a)
+AiSentinels-Api-Prod: success: Published BillingFn/Code (304242047817-us-east-1-6b0ea08c)
+AiSentinels-Api-Prod: success: Published CapaFn/Code (304242047817-us-east-1-de74aebe)
+AiSentinels-Api-Prod: success: Published DocumentsFn/Code (304242047817-us-east-1-9655d670)
+AiSentinels-Api-Prod: success: Published SettingsFn/Code (304242047817-us-east-1-0a4fdc44)
+AiSentinels-Api-Prod: success: Published AiSentinels-Api-Prod Template (304242047817-us-east-1-43152c0a)
+AiSentinels-Api-Prod: success: Published OmniFn/Code (304242047817-us-east-1-f89efb3a)
+AiSentinels-Api-Prod: success: Published AiFn/Code (304242047817-us-east-1-63cacd7c)
+AiSentinels-Api-Prod: success: Published BrainFn/Code (304242047817-us-east-1-b8ab79b3)
+AiSentinels-Event-Prod |  0/23 | 11:27:35 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack | AiSentinels-Event-Prod User Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:41 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack | AiSentinels-Event-Prod User Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | audit-completedDLQ (auditcompletedDLQ07913451) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus      | SentinelEventBus (SentinelEventBus4B1E067F) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata         | CDKMetadata/Default (CDKMetadata) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | retention-expiredDLQ (retentionexpiredDLQCBDFD250) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | document-approvedDLQ (documentapprovedDLQ8EDE1C55) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | approval-requestedDLQ (approvalrequestedDLQAF922485) 
+AiSentinels-Event-Prod |  0/23 | 11:27:44 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | capa-overdueDLQ (capaoverdueDLQE452C792) 
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | audit-completedDLQ (auditcompletedDLQ07913451) Resource creation Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus      | SentinelEventBus (SentinelEventBus4B1E067F) Resource creation Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | approval-requestedDLQ (approvalrequestedDLQAF922485) Resource creation Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | document-approvedDLQ (documentapprovedDLQ8EDE1C55) Resource creation Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | capa-overdueDLQ (capaoverdueDLQE452C792) Resource creation Initiated
+AiSentinels-Event-Prod |  0/23 | 11:27:45 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata         | CDKMetadata/Default (CDKMetadata) Resource creation Initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:45 AM | CREATE_COMPLETE      | AWS::CDK::Metadata         | CDKMetadata/Default (CDKMetadata) 
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | audit-completedDLQ (auditcompletedDLQ07913451) Eventual consistency check initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | approval-requestedDLQ (approvalrequestedDLQAF922485) Eventual consistency check initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | document-approvedDLQ (documentapprovedDLQ8EDE1C55) Eventual consistency check initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | capa-overdueDLQ (capaoverdueDLQE452C792) Eventual consistency check initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | retention-expiredDLQ (retentionexpiredDLQCBDFD250) Resource creation Initiated
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | AuditCompletedQueue (AuditCompletedQueue68BD5C18) 
+AiSentinels-Event-Prod |  1/23 | 11:27:46 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | ApprovalRequestedQueue (ApprovalRequestedQueueB8D996FF) 
+AiSentinels-Event-Prod |  1/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | DocumentApprovedQueue (DocumentApprovedQueue70789816) 
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_COMPLETE      | AWS::Events::EventBus      | SentinelEventBus (SentinelEventBus4B1E067F) 
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | retention-expiredDLQ (retentionexpiredDLQCBDFD250) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | CapaOverdueQueue (CapaOverdueQueueC4BA9021) 
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | RetentionExpiredQueue (RetentionExpiredQueue0350F97D) 
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | AuditCompletedQueue (AuditCompletedQueue68BD5C18) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | ApprovalRequestedQueue (ApprovalRequestedQueueB8D996FF) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:47 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | DocumentApprovedQueue (DocumentApprovedQueue70789816) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | CapaOverdueQueue (CapaOverdueQueueC4BA9021) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | AuditCompletedQueue (AuditCompletedQueue68BD5C18) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | ApprovalRequestedQueue (ApprovalRequestedQueueB8D996FF) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | DocumentApprovedQueue (DocumentApprovedQueue70789816) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | CapaOverdueQueue (CapaOverdueQueueC4BA9021) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | RetentionExpiredQueue (RetentionExpiredQueue0350F97D) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:48 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | AuditCompletedRule (AuditCompletedRule99BC1752) 
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | ApprovalRequestedRule (ApprovalRequestedRuleBEE6CE9F) 
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | DocumentApprovedRule (DocumentApprovedRuleF3E3560D) 
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue            | RetentionExpiredQueue (RetentionExpiredQueue0350F97D) Eventual consistency check initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | CapaOverdueRule (CapaOverdueRuleEB0F849F) 
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | RetentionExpiredRule (RetentionExpiredRuleFC114888) 
+AiSentinels-Event-Prod |  2/23 | 11:27:49 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | AuditCompletedRule (AuditCompletedRule99BC1752) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:50 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | ApprovalRequestedRule (ApprovalRequestedRuleBEE6CE9F) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:50 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | DocumentApprovedRule (DocumentApprovedRuleF3E3560D) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:50 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | CapaOverdueRule (CapaOverdueRuleEB0F849F) Resource creation Initiated
+AiSentinels-Event-Prod |  2/23 | 11:27:50 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule          | RetentionExpiredRule (RetentionExpiredRuleFC114888) Resource creation Initiated
+AiSentinels-Event-Prod |  3/23 | 11:28:16 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | audit-completedDLQ (auditcompletedDLQ07913451) 
+AiSentinels-Event-Prod |  4/23 | 11:28:16 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | approval-requestedDLQ (approvalrequestedDLQAF922485) 
+AiSentinels-Event-Prod |  5/23 | 11:28:16 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | document-approvedDLQ (documentapprovedDLQ8EDE1C55) 
+AiSentinels-Event-Prod |  6/23 | 11:28:16 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | capa-overdueDLQ (capaoverdueDLQE452C792) 
+AiSentinels-Event-Prod |  7/23 | 11:28:16 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | retention-expiredDLQ (retentionexpiredDLQCBDFD250) 
+AiSentinels-Event-Prod |  8/23 | 11:28:18 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | AuditCompletedQueue (AuditCompletedQueue68BD5C18) 
+AiSentinels-Event-Prod |  9/23 | 11:28:18 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | ApprovalRequestedQueue (ApprovalRequestedQueueB8D996FF) 
+AiSentinels-Event-Prod | 10/23 | 11:28:18 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | DocumentApprovedQueue (DocumentApprovedQueue70789816) 
+AiSentinels-Event-Prod | 11/23 | 11:28:18 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | CapaOverdueQueue (CapaOverdueQueueC4BA9021) 
+AiSentinels-Event-Prod | 12/23 | 11:28:19 AM | CREATE_COMPLETE      | AWS::SQS::Queue            | RetentionExpiredQueue (RetentionExpiredQueue0350F97D) 
+AiSentinels-Event-Prod | 13/23 | 11:28:50 AM | CREATE_COMPLETE      | AWS::Events::Rule          | AuditCompletedRule (AuditCompletedRule99BC1752) 
+AiSentinels-Event-Prod | 14/23 | 11:28:50 AM | CREATE_COMPLETE      | AWS::Events::Rule          | DocumentApprovedRule (DocumentApprovedRuleF3E3560D) 
+AiSentinels-Event-Prod | 15/23 | 11:28:50 AM | CREATE_COMPLETE      | AWS::Events::Rule          | ApprovalRequestedRule (ApprovalRequestedRuleBEE6CE9F) 
+AiSentinels-Event-Prod | 16/23 | 11:28:51 AM | CREATE_COMPLETE      | AWS::Events::Rule          | CapaOverdueRule (CapaOverdueRuleEB0F849F) 
+AiSentinels-Event-Prod | 16/23 | 11:28:51 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | AuditCompletedQueue/Policy (AuditCompletedQueuePolicyC4B06FA2) 
+AiSentinels-Event-Prod | 17/23 | 11:28:51 AM | CREATE_COMPLETE      | AWS::Events::Rule          | RetentionExpiredRule (RetentionExpiredRuleFC114888) 
+AiSentinels-Event-Prod | 17/23 | 11:28:51 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | DocumentApprovedQueue/Policy (DocumentApprovedQueuePolicy07051CC3) 
+AiSentinels-Event-Prod | 17/23 | 11:28:51 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | ApprovalRequestedQueue/Policy (ApprovalRequestedQueuePolicyD1CFBE27) 
+AiSentinels-Event-Prod | 17/23 | 11:28:51 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | CapaOverdueQueue/Policy (CapaOverdueQueuePolicy726B1A55) 
+AiSentinels-Event-Prod | 17/23 | 11:28:52 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | AuditCompletedQueue/Policy (AuditCompletedQueuePolicyC4B06FA2) Resource creation Initiated
+AiSentinels-Event-Prod | 17/23 | 11:28:52 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | DocumentApprovedQueue/Policy (DocumentApprovedQueuePolicy07051CC3) Resource creation Initiated
+AiSentinels-Event-Prod | 17/23 | 11:28:52 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | ApprovalRequestedQueue/Policy (ApprovalRequestedQueuePolicyD1CFBE27) Resource creation Initiated
+AiSentinels-Event-Prod | 17/23 | 11:28:52 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | RetentionExpiredQueue/Policy (RetentionExpiredQueuePolicyBAC22942) 
+AiSentinels-Event-Prod | 17/23 | 11:28:52 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | CapaOverdueQueue/Policy (CapaOverdueQueuePolicy726B1A55) Resource creation Initiated
+AiSentinels-Event-Prod | 17/23 | 11:28:53 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy      | RetentionExpiredQueue/Policy (RetentionExpiredQueuePolicyBAC22942) Resource creation Initiated
+AiSentinels-Event-Prod | 18/23 | 11:29:22 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy      | AuditCompletedQueue/Policy (AuditCompletedQueuePolicyC4B06FA2) 
+AiSentinels-Event-Prod | 19/23 | 11:29:23 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy      | ApprovalRequestedQueue/Policy (ApprovalRequestedQueuePolicyD1CFBE27) 
+AiSentinels-Event-Prod | 20/23 | 11:29:23 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy      | CapaOverdueQueue/Policy (CapaOverdueQueuePolicy726B1A55) 
+AiSentinels-Event-Prod | 21/23 | 11:29:23 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy      | DocumentApprovedQueue/Policy (DocumentApprovedQueuePolicy07051CC3) 
+AiSentinels-Event-Prod | 22/23 | 11:29:23 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy      | RetentionExpiredQueue/Policy (RetentionExpiredQueuePolicyBAC22942) 
+AiSentinels-Event-Prod | 23/23 | 11:29:25 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack | AiSentinels-Event-Prod 
+
+ ✅  AiSentinels-Event-Prod
+
+✨  Deployment time: 114.63s
+
+Outputs:
+AiSentinels-Event-Prod.SentinelEventBusArn = arn:aws:events:us-east-1:304242047817:event-bus/aisentinels-sentinel-bus
+AiSentinels-Event-Prod.SentinelEventBusName = aisentinels-sentinel-bus
+Stack ARN:
+arn:aws:cloudformation:us-east-1:304242047817:stack/AiSentinels-Event-Prod/8c90ce60-1a42-11f1-bbca-123c460468a9
+
+✨  Total time: 195.7s
+
+AiSentinels-Api-Prod
+AiSentinels-Api-Prod: deploying... [9/10]
+AiSentinels-Api-Prod: creating CloudFormation changeset...
+❌  AiSentinels-Api-Prod failed: ValidationError: Unable to fetch parameters [/aisentinels/prod/billing/wise-api-key] from parameter store for this account.

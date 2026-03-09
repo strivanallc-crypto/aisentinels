@@ -21,20 +21,20 @@ import { Badge } from '@/components/ui/badge';
 /* ─── Pricing Constants ─── */
 const MONTHLY_PRICES: Record<PlanType, number> = {
   enterprise:   2497,
-  professional: 1197,
+  professional: 1397,
   starter:      597,
 };
 
 const ANNUAL_PRICES: Record<PlanType, number> = {
-  enterprise:   1998,
-  professional: 958,
-  starter:      478,
+  enterprise:   1997,
+  professional: 1117,
+  starter:      477,
 };
 
 const ACTION_LIMITS: Record<PlanType, string> = {
-  enterprise:   'Unlimited',
-  professional: '500',
-  starter:      '100',
+  enterprise:   '500',
+  professional: '200',
+  starter:      '50',
 };
 
 const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
@@ -69,7 +69,7 @@ const FEATURES: FeatureRow[] = [
   { feature: 'Management Review module',             starter: false,        professional: true,        enterprise: true },
   { feature: 'Compliance Matrix (gap detection)',     starter: true,         professional: true,        enterprise: true },
   { feature: 'Records Vault (tamper-proof)',          starter: '50 records', professional: 'Unlimited', enterprise: 'Unlimited' },
-  { feature: 'AI actions per month',                  starter: '100',        professional: '500',       enterprise: 'Unlimited' },
+  { feature: 'AI actions per month',                  starter: '50',         professional: '200',       enterprise: '500' },
   { feature: 'Multi-site support',                    starter: false,        professional: '2 sites',   enterprise: 'Unlimited' },
   { feature: 'Custom sentinel training',              starter: false,        professional: false,       enterprise: true },
   { feature: 'Priority support',                      starter: false,        professional: true,        enterprise: true },

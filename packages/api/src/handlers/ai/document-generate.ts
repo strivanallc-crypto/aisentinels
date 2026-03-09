@@ -9,6 +9,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { composeSentinelPrompt, DOKI_WRITER_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const Schema = z.object({
   documentType: z.string().min(1).max(100),
@@ -18,7 +19,7 @@ const Schema = z.object({
 });
 
 export async function documentGenerate(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { documentType, standards, orgContext, sections } = parsed.data;
@@ -51,6 +52,17 @@ Return JSON: { "content": "full document markdown", "clauseRefs": ["ISO 9001:7.5
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.document.generated',
+    entityType: 'sentinel',
+    entityId:   tenantId,
+    actorId:    sub,
+    tenantId,
+    action:     'GENERATE',
+    detail:     { documentType, standards, sections },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

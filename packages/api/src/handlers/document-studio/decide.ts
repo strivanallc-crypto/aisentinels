@@ -4,6 +4,7 @@ import { documents } from '@aisentinels/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -74,6 +75,17 @@ export async function decideDocument(event: APIGatewayProxyEventV2WithJWTAuthori
       body: JSON.stringify({ error: 'Document not found or not under review' }),
     };
   }
+
+  logAuditEvent({
+    eventType:  isApproved ? 'document.approved' : 'document.rejected',
+    entityType: 'document',
+    entityId:   approvalId,
+    actorId:    sub,
+    tenantId,
+    action:     isApproved ? 'APPROVE' : 'REJECT',
+    detail:     { decision: body.decision, comments: body.comments },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

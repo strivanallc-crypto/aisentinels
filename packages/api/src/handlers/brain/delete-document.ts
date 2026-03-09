@@ -4,6 +4,7 @@ import { orgDocuments } from '@aisentinels/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 const REGION = process.env.AWS_DEFAULT_REGION ?? process.env.AWS_REGION ?? 'us-east-1';
@@ -18,7 +19,7 @@ async function getDb() {
 }
 
 export async function deleteBrainDocument(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const path = event.rawPath;
 
   // Extract document ID from path: /api/v1/brain/documents/{id}
@@ -67,6 +68,17 @@ export async function deleteBrainDocument(event: APIGatewayProxyEventV2WithJWTAu
       body: JSON.stringify({ error: (result as { error: string }).error }),
     };
   }
+
+  logAuditEvent({
+    eventType:  'brain.document.deleted',
+    entityType: 'brain',
+    entityId:   docId,
+    actorId:    sub,
+    tenantId,
+    action:     'DELETE',
+    detail:     { chunksRemoved: (result as { chunksRemoved?: number }).chunksRemoved },
+    severity:   'warning',
+  });
 
   return {
     statusCode: 200,

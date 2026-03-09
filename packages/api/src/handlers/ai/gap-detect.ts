@@ -9,6 +9,7 @@ import { callGemini } from '../../lib/gemini.ts';
 import { QUALY_CONTEXT, ENVI_CONTEXT, SAFFY_CONTEXT } from '../../lib/sentinel-prompts.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 const ControlSchema = z.object({
   clause: z.string(),
@@ -29,7 +30,7 @@ const Schema = z.object({
 });
 
 export async function gapDetect(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
   const parsed = parseBody(Schema, event.body);
   if ('statusCode' in parsed) return parsed;
   const { standards, existingControls, auditResults } = parsed.data;
@@ -91,6 +92,17 @@ Return JSON:
   });
 
   const data = JSON.parse(result.text);
+
+  logAuditEvent({
+    eventType:  'ai.gap.detected',
+    entityType: 'sentinel',
+    entityId:   tenantId,
+    actorId:    sub,
+    tenantId,
+    action:     'ANALYZE',
+    detail:     { standards, controlsCount: existingControls.length },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

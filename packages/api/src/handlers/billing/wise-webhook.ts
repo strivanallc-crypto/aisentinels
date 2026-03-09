@@ -4,15 +4,112 @@ import { createDb } from '@aisentinels/db';
 import { subscriptions } from '@aisentinels/db/schema';
 import { eq } from 'drizzle-orm';
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 
-const dynamo = new DynamoDBClient({});
-const AUDIT_TABLE = process.env.AUDIT_EVENTS_TABLE_NAME ?? 'aisentinels-audit-events';
+const dynamo     = new DynamoDBClient({});
+const cloudwatch = new CloudWatchClient({});
+const AUDIT_TABLE  = process.env.AUDIT_EVENTS_TABLE_NAME ?? 'aisentinels-audit-events';
+const WISE_API_KEY = process.env.WISE_API_KEY ?? '';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
   if (!_db) _db = await createDb({ iamAuth: true });
   return _db;
+}
+
+// ── Plan tier definitions ────────────────────────────────────────────────────
+// Allow ±$5 tolerance for currency rounding / FX conversion.
+const PRICE_TOLERANCE = 5;
+
+interface PlanTier {
+  plan:           'starter' | 'professional' | 'enterprise';
+  targetAmount:   number;
+  aiCreditsLimit: number;
+  maxUsers:       number;
+}
+
+const PLAN_TIERS: PlanTier[] = [
+  { plan: 'starter',      targetAmount: 597,  aiCreditsLimit: 50,  maxUsers: 3  },
+  { plan: 'professional', targetAmount: 1397, aiCreditsLimit: 200, maxUsers: 10 },
+  { plan: 'enterprise',   targetAmount: 2497, aiCreditsLimit: 500, maxUsers: 25 },
+];
+
+function mapAmountToPlan(amount: number): PlanTier | null {
+  for (const tier of PLAN_TIERS) {
+    if (Math.abs(amount - tier.targetAmount) <= PRICE_TOLERANCE) {
+      return tier;
+    }
+  }
+  return null;
+}
+
+// ── Wise transfer API call ───────────────────────────────────────────────────
+interface WiseTransfer {
+  amount:   number;   // amount paid in source currency
+  currency: string;   // source currency (e.g. 'USD')
+}
+
+async function fetchWiseTransfer(transferId: string): Promise<WiseTransfer | null> {
+  if (!WISE_API_KEY) {
+    console.error(JSON.stringify({ event: 'WiseApiFetchError', error: 'WISE_API_KEY not set' }));
+    return null;
+  }
+
+  try {
+    const res = await fetch(`https://api.wise.com/v1/transfers/${transferId}`, {
+      headers: {
+        'Authorization': `Bearer ${WISE_API_KEY}`,
+        'Content-Type':  'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      console.error(JSON.stringify({
+        event:      'WiseApiFetchError',
+        transferId,
+        status:     res.status,
+        statusText: res.statusText,
+      }));
+      return null;
+    }
+
+    const body = await res.json() as {
+      sourceValue?: number;
+      sourceCurrency?: string;
+      amount?: number;
+      currency?: string;
+    };
+
+    // Wise v1 transfers endpoint returns sourceValue + sourceCurrency
+    const amount   = body.sourceValue    ?? body.amount   ?? 0;
+    const currency = body.sourceCurrency ?? body.currency ?? 'USD';
+
+    return { amount, currency };
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'WiseApiFetchError', transferId, error: String(err) }));
+    return null;
+  }
+}
+
+// ── CloudWatch metric for unmatched payment amounts ──────────────────────────
+async function emitUnmatchedPaymentMetric(amount: number, transferId: string): Promise<void> {
+  try {
+    await cloudwatch.send(new PutMetricDataCommand({
+      Namespace: 'AiSentinels/Billing',
+      MetricData: [{
+        MetricName: 'UnmatchedPayment',
+        Value: 1,
+        Unit: 'Count',
+        Dimensions: [
+          { Name: 'TransferId', Value: transferId },
+        ],
+      }],
+    }));
+  } catch (err) {
+    // Non-fatal — metric emission should never crash the webhook
+    console.error(JSON.stringify({ event: 'CloudWatchMetricError', error: String(err) }));
+  }
 }
 
 /**
@@ -138,7 +235,83 @@ export async function wiseWebhook(event: APIGatewayProxyEventV2): Promise<{ stat
   };
 
   if (newStatus === 'active') {
-    // Advance the billing period by one month from current period end
+    // ── Fetch transfer amount from Wise API and map to plan tier ──────────────
+    // On outgoing_payment_sent: fetch the transfer details to detect which
+    // plan was purchased based on the payment amount.
+    //
+    // Failure is non-fatal: billing period still advances, plan stays unchanged.
+    // Admin can correct via POST /api/v1/admin/billing/activate.
+    const transfer = await fetchWiseTransfer(transferId);
+
+    if (transfer) {
+      const tier = mapAmountToPlan(transfer.amount);
+
+      if (!tier) {
+        // Amount doesn't match any known tier — log + alert, do NOT activate
+        const warnMsg = {
+          event:      'WiseWebhookUnmatchedAmount',
+          tenantId,
+          transferId,
+          amount:     transfer.amount,
+          currency:   transfer.currency,
+          knownTiers: PLAN_TIERS.map(t => t.targetAmount),
+        };
+        console.warn(JSON.stringify(warnMsg));
+
+        // Emit CloudWatch metric so ops team is alerted
+        await emitUnmatchedPaymentMetric(transfer.amount, transferId);
+
+        // Record in DynamoDB audit trail
+        try {
+          await dynamo.send(new PutItemCommand({
+            TableName: AUDIT_TABLE,
+            Item: {
+              pk:         { S: `TENANT#${tenantId}` },
+              sk:         { S: `BILLING_WARN#${now.getTime()}` },
+              eventType:  { S: 'wise.webhook.unmatched_amount' },
+              transferId: { S: transferId },
+              amount:     { N: String(transfer.amount) },
+              currency:   { S: transfer.currency },
+              timestamp:  { S: now.toISOString() },
+            },
+          }));
+        } catch (dynErr) {
+          console.error(JSON.stringify({ event: 'WiseWebhookDynamoError', error: String(dynErr) }));
+        }
+
+        // Return 200 — Wise must not retry; admin resolves manually
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ received: true, warning: 'unmatched_amount' }),
+        };
+      }
+
+      // Amount matched a tier — set plan + credit limit
+      updateValues.plan           = tier.plan;
+      updateValues.aiCreditsLimit = tier.aiCreditsLimit;
+
+      console.log(JSON.stringify({
+        event:          'WiseWebhookPlanMapped',
+        tenantId,
+        transferId,
+        amount:         transfer.amount,
+        currency:       transfer.currency,
+        plan:           tier.plan,
+        aiCreditsLimit: tier.aiCreditsLimit,
+        maxUsers:       tier.maxUsers,
+      }));
+    } else {
+      // Wise API call failed — continue without plan re-mapping
+      console.warn(JSON.stringify({
+        event:      'WiseWebhookPlanMappingSkipped',
+        tenantId,
+        transferId,
+        reason:     'Wise API fetch failed — plan unchanged, use /admin/billing/activate to correct',
+      }));
+    }
+
+    // Advance the billing period by one month
     updateValues.currentPeriodStart = now;
     updateValues.currentPeriodEnd   = new Date(
       now.getFullYear(),
@@ -146,6 +319,8 @@ export async function wiseWebhook(event: APIGatewayProxyEventV2): Promise<{ stat
       now.getDate(),
     );
     updateValues.wiseTransferId = transferId;
+    // Reset AI credit counter for the new billing period
+    updateValues.aiCreditsUsed = 0;
   }
 
   await withTenantContext(client, tenantId, async (txDb) =>
@@ -165,6 +340,7 @@ export async function wiseWebhook(event: APIGatewayProxyEventV2): Promise<{ stat
         eventType:    { S: eventType },
         wiseState:    { S: currentState },
         newStatus:    { S: newStatus },
+        ...(updateValues.plan ? { plan: { S: updateValues.plan } } : {}),
         transferId:   { S: transferId },
         timestamp:    { S: now.toISOString() },
       },
@@ -174,7 +350,7 @@ export async function wiseWebhook(event: APIGatewayProxyEventV2): Promise<{ stat
     console.error(JSON.stringify({ event: 'WiseWebhookDynamoError', error: String(dynErr) }));
   }
 
-  console.log(JSON.stringify({ event: 'WiseWebhookProcessed', tenantId, currentState, newStatus }));
+  console.log(JSON.stringify({ event: 'WiseWebhookProcessed', tenantId, currentState, newStatus, plan: updateValues.plan ?? 'unchanged' }));
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },

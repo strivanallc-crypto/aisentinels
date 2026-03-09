@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { UploadUrlSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
@@ -59,6 +60,17 @@ export async function uploadUrl(event: APIGatewayProxyEventV2WithJWTAuthorizer) 
       : 'text/plain',
   });
   const uploadUrlStr = await getSignedUrl(s3, command, { expiresIn: 900 });
+
+  logAuditEvent({
+    eventType:  'brain.document.uploaded',
+    entityType: 'brain',
+    entityId:   doc!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'CREATE',
+    detail:     { fileName, fileType, docCategory },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

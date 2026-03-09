@@ -12,6 +12,7 @@
  *   POST /api/v1/ai/management-review  — Platform management review
  */
 import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { withCreditCheck } from '../../middleware/check-ai-credits.ts';
 import { documentGenerate } from './document-generate.ts';
 import { clauseClassify } from './clause-classify.ts';
 import { auditPlan } from './audit-plan.ts';
@@ -20,6 +21,18 @@ import { auditReport } from './audit-report.ts';
 import { rootCause } from './root-cause.ts';
 import { gapDetect } from './gap-detect.ts';
 import { managementReview } from './management-review.ts';
+
+// Wrap all AI handlers with credit deduction
+const metered = {
+  documentGenerate: withCreditCheck(documentGenerate),
+  clauseClassify:   withCreditCheck(clauseClassify),
+  auditPlan:        withCreditCheck(auditPlan),
+  auditExamine:     withCreditCheck(auditExamine),
+  auditReport:      withCreditCheck(auditReport),
+  rootCause:        withCreditCheck(rootCause),
+  gapDetect:        withCreditCheck(gapDetect),
+  managementReview: withCreditCheck(managementReview),
+};
 
 const json = (statusCode: number, body: Record<string, unknown>) => ({
   statusCode,
@@ -36,14 +49,14 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
       return json(405, { error: `Method not allowed: ${method}` });
     }
 
-    if (path === '/api/v1/ai/document-generate') return documentGenerate(event);
-    if (path === '/api/v1/ai/clause-classify') return clauseClassify(event);
-    if (path === '/api/v1/ai/audit-plan') return auditPlan(event);
-    if (path === '/api/v1/ai/audit-examine') return auditExamine(event);
-    if (path === '/api/v1/ai/audit-report') return auditReport(event);
-    if (path === '/api/v1/ai/root-cause') return rootCause(event);
-    if (path === '/api/v1/ai/gap-detect') return gapDetect(event);
-    if (path === '/api/v1/ai/management-review') return managementReview(event);
+    if (path === '/api/v1/ai/document-generate') return metered.documentGenerate(event);
+    if (path === '/api/v1/ai/clause-classify') return metered.clauseClassify(event);
+    if (path === '/api/v1/ai/audit-plan') return metered.auditPlan(event);
+    if (path === '/api/v1/ai/audit-examine') return metered.auditExamine(event);
+    if (path === '/api/v1/ai/audit-report') return metered.auditReport(event);
+    if (path === '/api/v1/ai/root-cause') return metered.rootCause(event);
+    if (path === '/api/v1/ai/gap-detect') return metered.gapDetect(event);
+    if (path === '/api/v1/ai/management-review') return metered.managementReview(event);
 
     return json(404, { error: `Not found: ${method} ${path}` });
   } catch (err: unknown) {

@@ -4,6 +4,7 @@ import { documents } from '@aisentinels/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -12,7 +13,7 @@ async function getDb() {
 }
 
 export async function submitDocument(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   // Path: /api/v1/document-studio/documents/{id}/submit-for-approval
   // Extract {id} — second-to-last segment
@@ -50,6 +51,17 @@ export async function submitDocument(event: APIGatewayProxyEventV2WithJWTAuthori
       body: JSON.stringify({ error: 'Document not found or not in draft status' }),
     };
   }
+
+  logAuditEvent({
+    eventType:  'document.submitted',
+    entityType: 'document',
+    entityId:   updated.id,
+    actorId:    sub,
+    tenantId,
+    action:     'SUBMIT',
+    detail:     { previousStatus: 'draft', newStatus: 'review' },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

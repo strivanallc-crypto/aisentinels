@@ -4,6 +4,7 @@ import { auditFindings } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { AddFindingSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -12,7 +13,7 @@ async function getDb() {
 }
 
 export async function addFinding(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   // Path: /api/v1/audits/{id}/findings — extract {id} (second-to-last segment)
   const segments = event.rawPath.split('/');
@@ -46,6 +47,19 @@ export async function addFinding(event: APIGatewayProxyEventV2WithJWTAuthorizer)
       })
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'audit.finding.raised',
+    entityType: 'audit',
+    entityId:   finding!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'FINDING',
+    detail:     { sessionId, clauseRef, standard, severity: severity as string, description },
+    clauseRef,
+    standard:   standard as string,
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

@@ -10,7 +10,9 @@ import { CognitoStack } from '../infra/cdk/stacks/CognitoStack';
 import { ApiStack } from '../infra/cdk/stacks/ApiStack';
 import { ComputeStack } from '../infra/cdk/stacks/ComputeStack';
 import { SearchStack } from '../infra/cdk/stacks/SearchStack';
+import { EventStack } from '../infra/cdk/stacks/EventStack';
 import { AmplifyStack } from '../infra/cdk/stacks/AmplifyStack';
+import { GhostStack } from '../infra/cdk/stacks/GhostStack';
 import { ObservabilityStack } from '../infra/cdk/stacks/ObservabilityStack';
 
 const app = new cdk.App();
@@ -139,6 +141,17 @@ computeStack.addDependency(dataStack);
 computeStack.addDependency(storageStack);
 
 // ════════════════════════════════════════════════════════════════════════════
+// Phase 2 — EventStack (EventBridge · SQS · DLQ — event-driven backbone)
+// Depends on ComputeStack being deployed first. All rules are DISABLED
+// until Phase 3 activates them.
+// ════════════════════════════════════════════════════════════════════════════
+const eventStack = new EventStack(app, `AiSentinels-Event-${envTitle}`, {
+  ...commonProps,
+  description: `AI Sentinels — Event Backbone [${envName}] (EventBridge · SQS · DLQ)`,
+});
+eventStack.addDependency(computeStack);
+
+// ════════════════════════════════════════════════════════════════════════════
 // E3 — ApiStack (HTTP API Gateway, JWT Authorizer, Lambda Handlers)
 // Depends on CognitoStack (JWT issuer + audience), DataStack (Aurora, DynamoDB),
 // and ComputeStack (ALB listener + VpcLink for /api/v1/* domain routes)
@@ -161,6 +174,22 @@ const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
 apiStack.addDependency(cognitoStack);
 apiStack.addDependency(dataStack);
 apiStack.addDependency(computeStack);
+
+// ════════════════════════════════════════════════════════════════════════════
+// P6-B — GhostStack (Ghost Sentinel — ISO SEO Content Engine)
+// Lambda + EventBridge weekly schedule + DLQ
+// Depends on DataStack (Aurora/RDS Proxy) and EventStack (deploy ordering)
+// ════════════════════════════════════════════════════════════════════════════
+const ghostStack = new GhostStack(app, `AiSentinels-Ghost-${envTitle}`, {
+  ...commonProps,
+  vpc: networkStack.vpc,
+  appSubnets: networkStack.appSubnets,
+  sgLambda: networkStack.sgLambda,
+  auroraProxyEndpoint: dataStack.auroraProxy.endpoint,
+  description: `AI Sentinels — Ghost Sentinel [${envName}] (ISO SEO Content Engine · EventBridge · DLQ)`,
+});
+ghostStack.addDependency(dataStack);
+ghostStack.addDependency(eventStack);
 
 // ════════════════════════════════════════════════════════════════════════════
 // E6 — AmplifyStack (Next.js SSR · GitHub CI/CD · Custom Domain)

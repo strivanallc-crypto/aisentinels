@@ -101,7 +101,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
             currentPeriodStart: now,
             currentPeriodEnd: trialEndsAt,
             trialEndsAt,
-            aiCreditsLimit: 100,
+            aiCreditsLimit: 50,
           })
           .onConflictDoNothing();
       }

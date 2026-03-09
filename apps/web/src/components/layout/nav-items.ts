@@ -12,6 +12,7 @@ import {
   Compass,
   BookOpen,
   CreditCard,
+  BarChart3,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -33,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/compliance-matrix', label: 'Compliance Matrix', icon: Grid3X3,         sentinelId: 'qualy' },
   { href: '/management-review', label: 'Mgmt Review',       icon: BookOpen,        sentinelId: 'qualy',  requiredPlan: 'professional' },
   { href: '/records-vault',     label: 'Records Vault',     icon: Archive,         sentinelId: 'doki' },
+  { href: '/board-report',     label: 'Board Report',      icon: BarChart3,       sentinelId: 'qualy',  requiredPlan: 'professional' },
   { href: '/billing',           label: 'Billing',           icon: CreditCard },
   { href: '/settings',          label: 'Settings',          icon: Settings },
 ];

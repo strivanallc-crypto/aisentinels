@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { ProcessDocumentSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 
 const REGION = process.env.AWS_DEFAULT_REGION ?? process.env.AWS_REGION ?? 'us-east-1';
@@ -86,7 +87,7 @@ function chunkText(text: string): { content: string; tokenCount: number }[] {
 
 // ── Handler ─────────────────────────────────────────────────────────────────
 export async function processDocument(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   const parsed = parseBody(ProcessDocumentSchema, event.body);
   if ('statusCode' in parsed) return parsed;
@@ -158,6 +159,17 @@ export async function processDocument(event: APIGatewayProxyEventV2WithJWTAuthor
       body: JSON.stringify({ error: (result as { error: string }).error }),
     };
   }
+
+  logAuditEvent({
+    eventType:  'brain.document.processed',
+    entityType: 'brain',
+    entityId:   orgDocumentId,
+    actorId:    sub,
+    tenantId,
+    action:     'PROCESS',
+    detail:     { chunksCreated: (result as { chunksCreated?: number }).chunksCreated },
+    severity:   'info',
+  });
 
   return {
     statusCode: 200,

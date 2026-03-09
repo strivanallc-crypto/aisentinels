@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { UpdateCapaStatusSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -13,7 +14,7 @@ async function getDb() {
 }
 
 export async function updateCapaStatus(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const { tenantId } = extractClaims(event);
+  const { sub, tenantId } = extractClaims(event);
 
   // Path: /api/v1/capa/{id}/status  — id is second-to-last segment
   const segments = event.rawPath.split('/');
@@ -55,6 +56,17 @@ export async function updateCapaStatus(event: APIGatewayProxyEventV2WithJWTAutho
       body: JSON.stringify({ error: 'CAPA record not found' }),
     };
   }
+
+  logAuditEvent({
+    eventType:  'capa.status.changed',
+    entityType: 'capa',
+    entityId:   id,
+    actorId:    sub,
+    tenantId,
+    action:     'UPDATE',
+    detail:     { newStatus: status },
+    severity:   status === 'closed' ? 'info' : 'warning',
+  });
 
   return {
     statusCode: 200,

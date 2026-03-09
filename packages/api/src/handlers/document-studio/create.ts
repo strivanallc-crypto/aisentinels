@@ -4,6 +4,7 @@ import { documents } from '@aisentinels/db/schema';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateDocumentSchema, parseBody } from '../../lib/validate.ts';
+import { logAuditEvent } from '../../lib/audit-logger.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -49,6 +50,17 @@ export async function createDocument(event: APIGatewayProxyEventV2WithJWTAuthori
       })
       .returning(),
   );
+
+  logAuditEvent({
+    eventType:  'document.created',
+    entityType: 'document',
+    entityId:   doc!.id,
+    actorId:    sub,
+    tenantId,
+    action:     'CREATE',
+    detail:     { title, docType, standards },
+    severity:   'info',
+  });
 
   return {
     statusCode: 201,

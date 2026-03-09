@@ -26,8 +26,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
   const planIdx = PLAN_ORDER.indexOf(currentPlan);
 
   // Actions remaining
-  const [actionsRemaining, setActionsRemaining] = useState(100);
-  const [actionsLimit, setActionsLimit] = useState(100);
+  const [actionsRemaining, setActionsRemaining] = useState(50);
+  const [actionsLimit, setActionsLimit] = useState(50);
 
   useEffect(() => {
     billingApi
@@ -35,8 +35,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
       .then((res) => {
         const d = res.data as { creditsRemaining?: number; aiCreditsLimit?: number } | null;
         if (d) {
-          setActionsRemaining(d.creditsRemaining ?? 100);
-          setActionsLimit(d.aiCreditsLimit ?? 100);
+          setActionsRemaining(d.creditsRemaining ?? 50);
+          setActionsLimit(d.aiCreditsLimit ?? 50);
         }
       })
       .catch(() => {});
