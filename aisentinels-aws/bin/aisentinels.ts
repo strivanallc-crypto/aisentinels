@@ -167,10 +167,12 @@ const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
   nextAuthClientId: '2osgds469cgdss3facqigvr7b7', // aisentinels-web-nextauth (created outside CDK for NextAuth server-side auth)
   auroraProxyEndpoint: dataStack.auroraProxy.endpoint,
   auditEventsTableArn: dataStack.auditEventsTable.tableArn,
+  dynamoDbKeyArn: securityStack.dynamoDbKey.keyArn,
   description: `AI Sentinels — API Gateway [${envName}] (HTTP API · JWT Auth · 49 Lambda Routes)`,
 });
 apiStack.addDependency(cognitoStack);
 apiStack.addDependency(dataStack);
+apiStack.addDependency(securityStack);
 
 // ════════════════════════════════════════════════════════════════════════════
 // P6-B — GhostStack (Ghost Sentinel — ISO SEO Content Engine)

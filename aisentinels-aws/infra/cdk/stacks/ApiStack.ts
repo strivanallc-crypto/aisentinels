@@ -59,6 +59,8 @@ export interface ApiStackProps extends cdk.StackProps {
   auroraProxyEndpoint: string;
   /** DynamoDB audit events table ARN — from DataStack.auditEventsTable.tableArn */
   auditEventsTableArn: string;
+  /** DynamoDB CMK ARN — from SecurityStack.dynamoDbKey.keyArn (needed for kms:Decrypt on audit table) */
+  dynamoDbKeyArn: string;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -227,6 +229,15 @@ export class ApiStack extends cdk.Stack {
             props.auditEventsTableArn,
             `${props.auditEventsTableArn}/index/*`,
           ],
+        }),
+      );
+      // DynamoDB audit table uses SSE-KMS (customer-managed key) — callers need
+      // kms:Decrypt + kms:DescribeKey for read/write via the DynamoDB service.
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'AllowAuditDynamoKms',
+          actions: ['kms:Decrypt', 'kms:DescribeKey', 'kms:GenerateDataKey*'],
+          resources: [props.dynamoDbKeyArn],
         }),
       );
       tag(fn);
@@ -1025,6 +1036,15 @@ export class ApiStack extends cdk.Stack {
         ],
       }),
     );
+    // DynamoDB audit table uses SSE-KMS (customer-managed key) — callers need
+    // kms:Decrypt + kms:DescribeKey for read operations via the DynamoDB service.
+    auditTrailFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamoKms',
+        actions: ['kms:Decrypt', 'kms:DescribeKey'],
+        resources: [props.dynamoDbKeyArn],
+      }),
+    );
 
     // ── Audit Trail route (Phase 3) ────────────────────────────────────────
     const auditTrailIntegration = new HttpLambdaIntegration('AuditTrailIntegration', auditTrailFn);
@@ -1185,14 +1205,14 @@ export class ApiStack extends cdk.Stack {
         minify: true,
         target: 'node22',
         format: OutputFormat.ESM,
-        externalModules: ['@aws-sdk/*', 'postgres', '@sparticuz/chromium'],
+        externalModules: ['@aws-sdk/*', 'postgres', '@sparticuz/chromium', 'puppeteer-core'],
         commandHooks: {
           beforeBundling(): string[] { return []; },
           beforeInstall(): string[] { return []; },
           afterBundling(_inputDir: string, outputDir: string): string[] {
             const dir = outputDir.replace(/\\/g, '/');
             return [
-              `cd "${outputDir}" && npm init -y --silent 2>nul && npm install postgres@3.4.8 @sparticuz/chromium@143 --save --silent`,
+              `cd "${outputDir}" && npm init -y --silent 2>nul && npm install postgres@3.4.8 @sparticuz/chromium@143 puppeteer-core --save --silent`,
               `node -e "var f=require('fs'),p=JSON.parse(f.readFileSync('${dir}/package.json','utf8'));p.type='module';f.writeFileSync('${dir}/package.json',JSON.stringify(p,null,2))"`,
             ];
           },
