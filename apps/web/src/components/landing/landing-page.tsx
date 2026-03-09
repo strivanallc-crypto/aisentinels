@@ -444,9 +444,7 @@ export function LandingPage() {
               lineHeight: 1.05,
             }}
           >
-            Say Goodbye to Consultants.
-            <br />
-            Let AI Run Your ISO Compliance.
+            ISO Certification Shouldn&apos;t Take 18 Months.
           </h1>
 
           {/* Subtext */}
@@ -454,9 +452,8 @@ export function LandingPage() {
             className="mx-auto mt-5 max-w-2xl leading-relaxed"
             style={{ fontSize: '18px', color: '#6B7280', lineHeight: '1.7' }}
           >
-            Six specialized AI agents automate documents, audits, risk assessments, and
-            CAPAs across ISO 9001, 14001, and 45001 — so your team focuses on operations,
-            not paperwork.
+            Six AI Sentinels eliminate the paperwork, the guesswork, and the audit anxiety
+            — delivering certification-ready compliance in a fraction of the time.
           </p>
 
           {/* CTAs */}
