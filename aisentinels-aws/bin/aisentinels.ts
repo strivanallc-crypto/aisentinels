@@ -153,8 +153,8 @@ eventStack.addDependency(computeStack);
 
 // ════════════════════════════════════════════════════════════════════════════
 // E3 — ApiStack (HTTP API Gateway, JWT Authorizer, Lambda Handlers)
-// Depends on CognitoStack (JWT issuer + audience), DataStack (Aurora, DynamoDB),
-// and ComputeStack (ALB listener + VpcLink for /api/v1/* domain routes)
+// Depends on CognitoStack (JWT issuer + audience), DataStack (Aurora, DynamoDB)
+// NOTE: ECS catch-all route removed — all routes now go directly to Lambda.
 // ════════════════════════════════════════════════════════════════════════════
 const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
   ...commonProps,
@@ -167,13 +167,10 @@ const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
   nextAuthClientId: '2osgds469cgdss3facqigvr7b7', // aisentinels-web-nextauth (created outside CDK for NextAuth server-side auth)
   auroraProxyEndpoint: dataStack.auroraProxy.endpoint,
   auditEventsTableArn: dataStack.auditEventsTable.tableArn,
-  albListener: computeStack.albListener,
-  vpcLink: computeStack.vpcLink,
-  description: `AI Sentinels — API Gateway [${envName}] (HTTP API · JWT Auth · Tenant Provision · VpcLink)`,
+  description: `AI Sentinels — API Gateway [${envName}] (HTTP API · JWT Auth · 49 Lambda Routes)`,
 });
 apiStack.addDependency(cognitoStack);
 apiStack.addDependency(dataStack);
-apiStack.addDependency(computeStack);
 
 // ════════════════════════════════════════════════════════════════════════════
 // P6-B — GhostStack (Ghost Sentinel — ISO SEO Content Engine)

@@ -16,7 +16,7 @@
  */
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+// import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2'; // removed: ALB catch-all route deleted
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
@@ -29,10 +29,9 @@ import {
   CorsHttpMethod,
   HttpStage,
   HttpNoneAuthorizer,
-  IVpcLink,
 } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
-import { HttpAlbIntegration, HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as evtTargets from 'aws-cdk-lib/aws-events-targets';
@@ -60,10 +59,6 @@ export interface ApiStackProps extends cdk.StackProps {
   auroraProxyEndpoint: string;
   /** DynamoDB audit events table ARN — from DataStack.auditEventsTable.tableArn */
   auditEventsTableArn: string;
-  /** Internal ALB listener from ComputeStack — routes all /api/v1/* domain traffic */
-  albListener: elbv2.IApplicationListener;
-  /** VpcLink connecting API Gateway to the internal ALB */
-  vpcLink: IVpcLink;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -1348,31 +1343,9 @@ export class ApiStack extends cdk.Stack {
       integration: legalIntegration,
     });
 
-    // Catch-all routes to internal ALB via VpcLink
-    // API Gateway evaluates more-specific routes first:
-    //   POST /api/v1/tenants/provision → Lambda (matched above)
-    //   E7 document-studio + audit routes → Lambda (matched above)
-    //   E8 CAPA + records routes → Lambda (matched above)
-    //   E9 billing routes → Lambda (matched above)
-    //   Phase 1 AI routes → Lambda (matched above)
-    //   P3 settings + brain routes → Lambda (matched above)
-    //   P6-D ghost trigger → Lambda (matched above)
-    //   P8-B bulk upload → Lambda (matched above)
-    //   P9-B board report → Lambda (matched above)
-    //   P10 legal routes → Lambda (matched above)
-    //   Everything else → ALB → Fargate service (path-based routing on ALB)
-    //
-    // IMPORTANT: Uses explicit methods instead of HttpMethod.ANY to avoid
-    // catching OPTIONS preflight requests. HTTP API auto-CORS only responds
-    // to OPTIONS when no route matches — ANY would hijack preflights and
-    // send them through the JWT authorizer, causing 401 on CORS preflight.
-    this.httpApi.addRoutes({
-      path: '/api/v1/{proxy+}',
-      methods: [HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH],
-      integration: new HttpAlbIntegration('AlbProxyIntegration', props.albListener, {
-        vpcLink: props.vpcLink,
-      }),
-    });
+    // NOTE: ECS catch-all route (ANY /api/v1/{proxy+} → ALB → Fargate)
+    // was REMOVED. All 49 Lambda routes above are now the only routes.
+    // Unmatched paths return HTTP API Gateway default 404.
 
     // ══════════════════════════════════════════════════════════════════════════
     // SSM Parameters

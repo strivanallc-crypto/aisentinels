@@ -1,46 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
-  capaApi, sentinelsApi, auditApi, riskApi, billingApi, documentsApi,
-  boardReportApi,
+  capaApi, auditApi, riskApi, billingApi, documentsApi,
+  boardReportApi, settingsApi, auditTrailApi, reviewApi,
 } from '@/lib/api';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { SENTINEL_LIST } from '@/lib/sentinels';
 import {
-  Wrench, Bot, ClipboardCheck, AlertTriangle, CreditCard,
-  FileText, Archive, BookOpen, TrendingUp, ArrowUpRight,
+  Wrench, ClipboardCheck, AlertTriangle, CreditCard,
+  FileText, Archive, BookOpen, ArrowUpRight,
   Grid3X3, Shield, Settings, CheckCircle2, Circle, Sparkles,
-  BarChart3, Download,
+  BarChart3, Download, Activity,
 } from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from 'recharts';
 
 /* ─── Types ─── */
 interface Stats {
   capaOpen?: number; capaTotal?: number;
-  aiActivities?: number; audits?: number; risks?: number;
+  audits?: number; risks?: number;
   creditsPct?: number; creditsUsed?: number; creditsLimit?: number;
+  docCount?: number;
+}
+
+interface AuditTrailEntry {
+  id?: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  createdAt: string;
+  actorName?: string;
+  actorEmail?: string;
 }
 
 /* ─── Constants ─── */
-const MOCK_ACTIVITY = [
-  { name: 'Mon', value: 3 }, { name: 'Tue', value: 7 }, { name: 'Wed', value: 5 },
-  { name: 'Thu', value: 9 }, { name: 'Fri', value: 4 }, { name: 'Sat', value: 2 },
-  { name: 'Sun', value: 6 },
-];
-
-const ONBOARDING_STEPS = [
-  { label: 'Create your account',           href: '#',                done: true },
-  { label: 'Activate your ISO standards',   href: '/settings' },
-  { label: 'Upload your first document',    href: '/document-studio' },
-  { label: 'Run your first AI audit',       href: '/audit' },
-  { label: 'Complete a management review',  href: '/management-review' },
-];
-
 const QUICK_LINKS = [
   { href: '/document-studio',   label: 'Document Studio',   icon: FileText,       color: '#6366F1' },
   { href: '/audit',             label: 'Audit Room',        icon: ClipboardCheck, color: '#F43F5E' },
@@ -52,14 +45,28 @@ const QUICK_LINKS = [
   { href: '/settings',          label: 'Settings',          icon: Settings,       color: '#64748b' },
 ];
 
+/* ─── Helpers ─── */
+function timeAgo(iso: string): string {
+  const sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (sec < 60) return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 /* ─── Stat Card ─── */
 function StatCard({
-  title, value, sub, benchmark, icon: Icon, color,
+  title, value, sub, benchmark, icon: Icon, color, timedOut,
 }: {
   title: string; value?: number; sub: string; benchmark?: string;
-  icon: React.ElementType; color: string;
+  icon: React.ElementType; color: string; timedOut?: boolean;
 }) {
-  const bgHex = `${color}1f`; // 12% opacity
+  const bgHex = `${color}1f`;
+  const showEmpty = timedOut && value === undefined;
   return (
     <div
       className="rounded-xl p-5 flex flex-col gap-3"
@@ -75,8 +82,10 @@ function StatCard({
         <p className="text-3xl font-bold" style={{ color: 'var(--content-text)' }}>
           {value !== undefined ? value : <span className="text-2xl" style={{ color: 'var(--content-text-dim)' }}>—</span>}
         </p>
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--content-text-dim)' }}>{sub}</p>
-        {benchmark && (
+        <p className="mt-0.5 text-xs" style={{ color: 'var(--content-text-dim)' }}>
+          {showEmpty ? 'No data yet' : sub}
+        </p>
+        {benchmark && !showEmpty && value !== undefined && (
           <p className="mt-1.5 text-[10px]" style={{ color: 'var(--content-text-dim)' }}>{benchmark}</p>
         )}
       </div>
@@ -84,40 +93,72 @@ function StatCard({
   );
 }
 
-/* ─── Page ─── */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Dashboard Page                                                            */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({});
   const [loading, setLoading] = useState(true);
-  const [docCount, setDocCount] = useState<number | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const [docCount, setDocCount] = useState(0);
+  const [auditCount, setAuditCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [hasStandards, setHasStandards] = useState(false);
   const [latestReport, setLatestReport] = useState<{
     period: string; status: string; generatedAt: string | null; presignedUrl?: string;
   } | null>(null);
+  const [activityFeed, setActivityFeed] = useState<AuditTrailEntry[]>([]);
+  const [activityLoaded, setActivityLoaded] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* ── 5-second skeleton timeout ─────────────────────────────────────────── */
+  useEffect(() => {
+    timerRef.current = setTimeout(() => {
+      setTimedOut(true);
+      setLoading(false);
+    }, 5000);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  /* ── Main data fetch (KPI cards + onboarding wizard) ───────────────────── */
   useEffect(() => {
     Promise.allSettled([
-      capaApi.dashboard(),
-      sentinelsApi.stats(),
-      auditApi.list(),
-      riskApi.list(),
-      billingApi.getUsage(),
-      documentsApi.list(),
-      boardReportApi.list(),
-    ]).then(([capa, ai, audits, risks, billing, docs, boardReports]) => {
-      setStats({
-        capaOpen:     capa.status    === 'fulfilled' ? capa.value.data?.openCount       : undefined,
-        capaTotal:    capa.status    === 'fulfilled' ? capa.value.data?.totalCount      : undefined,
-        aiActivities: ai.status      === 'fulfilled' ? ai.value.data?.totalActivities   : undefined,
-        audits:       audits.status  === 'fulfilled' ? audits.value.data?.length        : undefined,
-        risks:        risks.status   === 'fulfilled' ? risks.value.data?.length         : undefined,
-        creditsPct:   billing.status === 'fulfilled' ? billing.value.data?.usagePercent  : undefined,
-        creditsUsed:  billing.status === 'fulfilled' ? billing.value.data?.aiCreditsUsed : undefined,
-        creditsLimit: billing.status === 'fulfilled' ? billing.value.data?.aiCreditsLimit : undefined,
-      });
+      capaApi.dashboard(),           // 0
+      auditApi.list(),               // 1
+      riskApi.list(),                // 2
+      billingApi.getUsage(),         // 3
+      documentsApi.list(),           // 4
+      boardReportApi.list(),         // 5
+      settingsApi.getOrg(),          // 6
+      reviewApi.list(),              // 7
+    ]).then(([capa, audits, risks, billing, docs, boardReports, org, reviews]) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+
+      const s: Stats = {};
+
+      if (capa.status === 'fulfilled') {
+        s.capaOpen = capa.value.data?.openCount;
+        s.capaTotal = capa.value.data?.totalCount;
+      }
+      if (audits.status === 'fulfilled') {
+        const l = audits.value.data;
+        s.audits = Array.isArray(l) ? l.length : undefined;
+        setAuditCount(Array.isArray(l) ? l.length : 0);
+      }
+      if (risks.status === 'fulfilled') {
+        const l = risks.value.data;
+        s.risks = Array.isArray(l) ? l.length : undefined;
+      }
+      if (billing.status === 'fulfilled') {
+        s.creditsPct = billing.value.data?.usagePercent;
+        s.creditsUsed = billing.value.data?.aiCreditsUsed;
+        s.creditsLimit = billing.value.data?.aiCreditsLimit;
+      }
       if (docs.status === 'fulfilled') {
-        const list = docs.value.data;
-        setDocCount(Array.isArray(list) ? list.length : 0);
-      } else {
-        setDocCount(0);
+        const l = docs.value.data;
+        const cnt = Array.isArray(l) ? l.length : 0;
+        s.docCount = cnt;
+        setDocCount(cnt);
       }
       if (boardReports.status === 'fulfilled') {
         const reportList = boardReports.value;
@@ -125,22 +166,56 @@ export default function DashboardPage() {
           setLatestReport(reportList[0]);
         }
       }
+      if (org.status === 'fulfilled') {
+        const d = org.value.data;
+        const stds = d?.standards ?? d?.activeStandards ?? [];
+        setHasStandards(Array.isArray(stds) && stds.length > 0);
+      }
+      if (reviews.status === 'fulfilled') {
+        const l = reviews.value.data;
+        setReviewCount(Array.isArray(l) ? l.length : 0);
+      }
+
+      setStats(s);
       setLoading(false);
     });
   }, []);
 
-  const completedSteps = ONBOARDING_STEPS.filter((s) => s.done).length;
-  const totalSteps = ONBOARDING_STEPS.length;
-  const progressPct = Math.round((completedSteps / totalSteps) * 100);
+  /* ── Activity feed (wired to audit-trail Lambda) ───────────────────────── */
+  useEffect(() => {
+    auditTrailApi
+      .query({ limit: 8 })
+      .then((res) => {
+        const raw = res.data?.entries ?? res.data ?? [];
+        setActivityFeed(Array.isArray(raw) ? raw.slice(0, 8) : []);
+      })
+      .catch(() => setActivityFeed([]))
+      .finally(() => setActivityLoaded(true));
+  }, []);
 
-  const cards = [
-    { title: 'Open CAPAs',  value: stats.capaOpen,     sub: `${stats.capaTotal ?? 0} total`,                                     icon: Wrench,         color: '#8B5CF6', benchmark: 'Industry avg: 3 open CAPAs' },
-    { title: 'AI Analyses', value: stats.aiActivities, sub: 'analyses run',                                                      icon: Bot,            color: '#2563eb', benchmark: 'Industry avg: 24/mo' },
-    { title: 'Audits',      value: stats.audits,       sub: 'scheduled / completed',                                             icon: ClipboardCheck, color: '#F43F5E', benchmark: 'Industry avg: 4/yr' },
-    { title: 'Risk Items',  value: stats.risks,        sub: 'in register',                                                       icon: AlertTriangle,  color: '#dc2626', benchmark: 'Industry avg: 15' },
-    { title: 'AI Credits',  value: stats.creditsPct,   sub: `${stats.creditsUsed ?? 0} / ${stats.creditsLimit ?? 50} used`, icon: CreditCard,     color: '#7c3aed' },
+  /* ── Onboarding steps (wired to real settings API) ─────────────────────── */
+  const onboardingSteps = [
+    { label: 'Create your account',          href: '#',                 done: true },
+    { label: 'Activate your ISO standards',  href: '/settings',         done: hasStandards },
+    { label: 'Upload your first document',   href: '/document-studio',  done: docCount > 0 },
+    { label: 'Run your first AI audit',      href: '/audit',            done: auditCount > 0 },
+    { label: 'Complete a management review', href: '/management-review', done: reviewCount > 0 },
   ];
 
+  const completedSteps = onboardingSteps.filter((s) => s.done).length;
+  const totalSteps = onboardingSteps.length;
+  const progressPct = Math.round((completedSteps / totalSteps) * 100);
+
+  /* ── KPI card definitions ──────────────────────────────────────────────── */
+  const cards = [
+    { title: 'Open CAPAs',  value: stats.capaOpen,  sub: `${stats.capaTotal ?? 0} total`,                                 icon: Wrench,         color: '#8B5CF6', benchmark: 'Industry avg: 3 open CAPAs' },
+    { title: 'Audits',      value: stats.audits,    sub: 'scheduled / completed',                                          icon: ClipboardCheck, color: '#F43F5E', benchmark: 'Industry avg: 4/yr' },
+    { title: 'Risk Items',  value: stats.risks,     sub: 'in register',                                                    icon: AlertTriangle,  color: '#dc2626', benchmark: 'Industry avg: 15' },
+    { title: 'AI Credits',  value: stats.creditsPct, sub: `${stats.creditsUsed ?? 0} / ${stats.creditsLimit ?? 50} used`,  icon: CreditCard,     color: '#7c3aed' },
+    { title: 'Documents',   value: stats.docCount,  sub: 'in library',                                                     icon: FileText,       color: '#6366F1' },
+  ];
+
+  /* ═════════════════════════════════════════════════════════════════════════ */
   return (
     <div className="p-6 space-y-6 max-w-6xl" style={{ color: 'var(--content-text)' }}>
 
@@ -164,7 +239,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Onboarding Checklist (Endowed Progress / Zeigarnik Effect) ── */}
+      {/* ── Onboarding Checklist (wired to real data) ── */}
       <div
         className="rounded-xl p-6"
         style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
@@ -199,7 +274,7 @@ export default function DashboardPage() {
 
         {/* Steps */}
         <div className="space-y-1">
-          {ONBOARDING_STEPS.map((step) => {
+          {onboardingSteps.map((step) => {
             const StepIcon = step.done ? CheckCircle2 : Circle;
             const inner = (
               <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors">
@@ -270,7 +345,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── KPI Cards (Social Proof Benchmarks) ── */}
+      {/* ── KPI Cards (graceful empty states — neutral gray, never red) ── */}
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -279,11 +354,11 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {cards.map((c) => <StatCard key={c.title} {...c} />)}
+          {cards.map((c) => <StatCard key={c.title} {...c} timedOut={timedOut} />)}
         </div>
       )}
 
-      {/* ── Board Report Widget ── */}
+      {/* ── Board Report Widget (unchanged) ── */}
       <div
         className="rounded-xl p-5"
         style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
@@ -333,7 +408,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Sentinel Status (Shield + Pulse) ── */}
+      {/* ── Sentinel Status (static "Ready" — no API call) ── */}
       <div
         className="rounded-xl border p-5"
         style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
@@ -357,7 +432,7 @@ export default function DashboardPage() {
                   <p className="text-xs font-semibold truncate" style={{ color: 'var(--content-text)' }}>
                     {s.name}
                   </p>
-                  {/* Online pulse */}
+                  {/* Green online indicator */}
                   <span className="relative flex h-2 w-2 flex-shrink-0">
                     <span
                       className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
@@ -369,70 +444,90 @@ export default function DashboardPage() {
                     />
                   </span>
                 </div>
-                <p className="text-[10px] truncate" style={{ color: 'var(--content-text-dim)' }}>{s.role}</p>
+                <p className="text-[10px] truncate" style={{ color: 'var(--content-text-dim)' }}>
+                  Ready · Awaiting first task
+                </p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Chart + Quick Links ── */}
+      {/* ── Recent Activity + Quick Links ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Activity Chart (Dark) */}
+        {/* Recent Activity (wired to GET /api/v1/audit-trail) */}
         <div
           className="lg:col-span-2 rounded-xl p-6"
           style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>Weekly Activity</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--content-text-dim)' }}>Compliance actions this week</p>
+              <p className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>Recent Activity</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--content-text-dim)' }}>
+                Latest compliance actions across your organisation
+              </p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#22C55E' }}>
-              <TrendingUp className="h-3.5 w-3.5" />
-              +12% vs last week
-            </div>
+            <Link
+              href="/audit-trail"
+              className="flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
+              style={{ color: 'var(--content-text-muted)' }}
+            >
+              View all
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={MOCK_ACTIVITY} barSize={28}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: '#6B7280' }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: '#6B7280' }}
-                width={24}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: '#111827',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  color: '#F9FAFB',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.3)',
-                }}
-                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-              />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {MOCK_ACTIVITY.map((_, i) => (
-                  <Cell
-                    key={i}
-                    fill={i === 3 ? 'var(--sentinel-accent, #6366F1)' : 'rgba(99,102,241,0.2)'}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+
+          {!activityLoaded ? (
+            /* Skeleton while loading (max 5 seconds) */
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-10 rounded-lg animate-pulse" style={{ background: 'var(--content-border)' }} />
+              ))}
+            </div>
+          ) : activityFeed.length === 0 ? (
+            /* Graceful empty state */
+            <div className="flex flex-col items-center justify-center py-10 gap-3">
+              <BarChart3 className="h-8 w-8" style={{ color: 'var(--content-text-dim)' }} />
+              <p className="text-sm" style={{ color: 'var(--content-text-dim)' }}>
+                Activity will appear here after your first audit
+              </p>
+            </div>
+          ) : (
+            /* Real activity feed entries */
+            <div className="space-y-1">
+              {activityFeed.map((entry, i) => (
+                <div
+                  key={entry.id ?? i}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                >
+                  <div
+                    className="flex h-7 w-7 items-center justify-center rounded-md flex-shrink-0"
+                    style={{ background: 'rgba(99,102,241,0.12)' }}
+                  >
+                    <Activity className="h-3.5 w-3.5" style={{ color: '#818CF8' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate" style={{ color: 'var(--content-text)' }}>
+                      {entry.action}
+                    </p>
+                    {(entry.actorName || entry.actorEmail) && (
+                      <p className="text-[10px] truncate" style={{ color: 'var(--content-text-dim)' }}>
+                        {entry.actorName ?? entry.actorEmail}
+                        {entry.entityType ? ` · ${entry.entityType}` : ''}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--content-text-dim)' }}>
+                    {timeAgo(entry.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Quick Links (Dark) */}
+        {/* Quick Links */}
         <div
           className="rounded-xl p-6"
           style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
