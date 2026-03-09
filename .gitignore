@@ -37,3 +37,6 @@ nul
 *.tsbuildinfo
 npm-debug.log*
 pnpm-debug.log*
+
+# Legacy prototype - do not track
+frontend/
