@@ -33,7 +33,7 @@ const TABLE_NAME = process.env.AUDIT_EVENTS_TABLE_NAME ?? '';
 
 const AuditEventSchema = z.object({
   eventType:   z.string().min(1).max(100),
-  entityType:  z.enum(['document', 'audit', 'capa', 'record', 'user', 'sentinel', 'billing', 'org', 'brain', 'standard', 'legal', 'compliance_check']),
+  entityType:  z.enum(['document', 'audit', 'capa', 'record', 'user', 'sentinel', 'billing', 'org', 'brain', 'standard', 'legal', 'compliance_check', 'risk', 'management_review']),
   entityId:    z.string().min(1).max(256),
   actorId:     z.string().min(1).max(256),
   actorEmail:  z.string().max(320).optional(),

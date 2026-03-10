@@ -24,14 +24,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     jwt({ token, account }) {
-      // Persist the Cognito access_token so the API client can attach it as Bearer
-      if (account?.access_token) {
-        token.accessToken = account.access_token;
+      if (account) {
+        // First sign-in — persist provider and tokens.
+        // Cognito access_token is the preferred Bearer token for API Gateway.
+        // Cognito id_token also passes JWT validation (aud = client_id).
+        // Google access_token is an opaque token — NOT valid for our API Gateway.
+        token.provider = account.provider;
+
+        if (account.provider === 'cognito') {
+          token.accessToken = account.access_token;
+          token.idToken = account.id_token;
+        } else {
+          // Google (or other providers): no Cognito token available.
+          // Store id_token in case it can be used; clear accessToken to avoid
+          // sending an opaque Google token to API Gateway.
+          token.accessToken = undefined;
+          token.idToken = account.id_token;
+        }
       }
       return token;
     },
     session({ session, token }) {
-      return { ...session, accessToken: token.accessToken as string | undefined };
+      return {
+        ...session,
+        accessToken: token.accessToken as string | undefined,
+        idToken: token.idToken as string | undefined,
+        provider: token.provider as string | undefined,
+      };
     },
   },
   pages: {

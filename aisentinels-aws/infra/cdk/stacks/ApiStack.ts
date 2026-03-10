@@ -692,6 +692,11 @@ export class ApiStack extends cdk.Stack {
       methods: [HttpMethod.PATCH],
       integration: capaIntegration,
     });
+    this.httpApi.addRoutes({
+      path: '/api/v1/capa/stats/dashboard',
+      methods: [HttpMethod.GET],
+      integration: capaIntegration,
+    });
 
     // ── Records Vault routes (E8) ─────────────────────────────────────────────
     const recordsIntegration = new HttpLambdaIntegration('RecordsIntegration', recordsFn);
@@ -1618,6 +1623,104 @@ export class ApiStack extends cdk.Stack {
       methods: [HttpMethod.GET],
       integration: docsIntegration,
       authorizer: new HttpNoneAuthorizer(),
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Placeholders — GET /api/v1/risks + GET /api/v1/management-reviews
+    // Thin stubs that return empty arrays. JWT protected. Non-VPC (no DB).
+    // Only needs DynamoDB for audit logging (fire-and-forget).
+    // ══════════════════════════════════════════════════════════════════════════
+    const riskLogGroup = new logs.LogGroup(this, 'RiskFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-risk-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(riskLogGroup);
+
+    const riskFn = new NodejsFunction(this, 'RiskFn', {
+      functionName: `aisentinels-api-risk-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/risk/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(5),
+      memorySize: 128,
+      environment: { ENV_NAME: envName, AUDIT_EVENTS_TABLE_NAME: auditEventsTableName },
+      logGroup: riskLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*'],
+      },
+    });
+    tag(riskFn);
+    riskFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamo',
+        actions: ['dynamodb:PutItem'],
+        resources: [props.auditEventsTableArn],
+      }),
+    );
+    riskFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamoKms',
+        actions: ['kms:Decrypt', 'kms:DescribeKey', 'kms:GenerateDataKey*'],
+        resources: [props.dynamoDbKeyArn],
+      }),
+    );
+
+    const mgmtReviewLogGroup = new logs.LogGroup(this, 'MgmtReviewFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-mgmt-review-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(mgmtReviewLogGroup);
+
+    const mgmtReviewFn = new NodejsFunction(this, 'MgmtReviewFn', {
+      functionName: `aisentinels-api-mgmt-review-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/management-review/list.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(5),
+      memorySize: 128,
+      environment: { ENV_NAME: envName, AUDIT_EVENTS_TABLE_NAME: auditEventsTableName },
+      logGroup: mgmtReviewLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*'],
+      },
+    });
+    tag(mgmtReviewFn);
+    mgmtReviewFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamo',
+        actions: ['dynamodb:PutItem'],
+        resources: [props.auditEventsTableArn],
+      }),
+    );
+    mgmtReviewFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowAuditDynamoKms',
+        actions: ['kms:Decrypt', 'kms:DescribeKey', 'kms:GenerateDataKey*'],
+        resources: [props.dynamoDbKeyArn],
+      }),
+    );
+
+    // ── Placeholder routes (JWT protected via default authorizer) ─────────────
+    const riskIntegration = new HttpLambdaIntegration('RiskIntegration', riskFn);
+    const mgmtReviewIntegration = new HttpLambdaIntegration('MgmtReviewIntegration', mgmtReviewFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/risks',
+      methods: [HttpMethod.GET],
+      integration: riskIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/management-reviews',
+      methods: [HttpMethod.GET],
+      integration: mgmtReviewIntegration,
     });
 
     // ══════════════════════════════════════════════════════════════════════════

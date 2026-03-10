@@ -137,6 +137,20 @@ export class AmplifyStack extends cdk.Stack {
 
       buildSpec: BUILD_SPEC,
 
+      // ── Custom headers — CSP, security headers ──────────────────────────────
+      // Calendly embed needs script-src, style-src, frame-src allowlisted.
+      customHeaders: `customHeaders:
+  - pattern: '**/*'
+    headers:
+      - key: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com; style-src 'self' 'unsafe-inline' https://assets.calendly.com; frame-src 'self' https://calendly.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com https://accounts.google.com https://calendly.com"
+      - key: X-Frame-Options
+        value: SAMEORIGIN
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin`,
+
       environmentVariables: [
         { name: 'AMPLIFY_MONOREPO_APP_ROOT', value: 'apps/web' },
         { name: 'NEXT_PUBLIC_API_URL',    value: apiEndpoint },

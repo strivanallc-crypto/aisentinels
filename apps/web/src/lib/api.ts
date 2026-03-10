@@ -5,10 +5,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export const api = axios.create({ baseURL: API_URL });
 
-// Attach Cognito access token to every request
+// Attach Cognito JWT to every request.
+// Prefers access_token (Cognito), falls back to id_token (also Cognito JWT).
+// Google-only sessions won't have a Cognito token — API calls will be unauthenticated.
 api.interceptors.request.use(async (config) => {
   const session = await getSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
+  const s = session as { accessToken?: string; idToken?: string } | null;
+  const token = s?.accessToken ?? s?.idToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
