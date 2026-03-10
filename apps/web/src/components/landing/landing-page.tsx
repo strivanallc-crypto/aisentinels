@@ -285,7 +285,7 @@ export default function LandingPage() {
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-4 mb-16">
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
             <Link
               href="/login"
               className="h-12 px-8 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold inline-flex items-center gap-2 hover:brightness-110 transition-all"
@@ -293,10 +293,14 @@ export default function LandingPage() {
               Start Free Trial <ArrowRight size={16} />
             </Link>
             <button
-              onClick={() => scrollTo('features')}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.Calendly) {
+                  window.Calendly.initPopupWidget({ url: 'https://calendly.com/julio-aisentinels' });
+                }
+              }}
               className="h-12 px-8 rounded-full border border-[var(--border)] text-white font-medium inline-flex items-center gap-2 hover:bg-white/5 transition-all cursor-pointer"
             >
-              See How It Works
+              Book a Demo
             </button>
           </div>
 
