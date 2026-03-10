@@ -50,36 +50,36 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
 
   return (
     <aside
-      className={`flex flex-shrink-0 flex-col h-screen transition-all duration-200 ${
-        collapsed ? 'w-16' : 'w-[240px]'
+      className={`flex flex-shrink-0 flex-col h-screen transition-all duration-300 ${
+        collapsed ? 'w-16' : 'w-[248px]'
       }`}
-      style={{ background: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.06)' }}
     >
       {/* ── Logo ── */}
       <div
         className={`flex items-center gap-3 py-5 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0"
-          style={{ background: '#3B82F6' }}
+          className="flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
         >
           <Shield className="h-4 w-4 text-white" />
         </div>
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-white leading-tight font-heading">
+            <p className="text-[13px] font-bold text-white leading-tight font-heading tracking-tight">
               AI Sentinels
             </p>
             <p className="text-[10px] leading-tight" style={{ color: '#4b5563' }}>
-              ISO Compliance
+              ISO Compliance Platform
             </p>
           </div>
         )}
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="flex-shrink-0 rounded p-1 transition-colors hover:bg-white/5"
+            className="flex-shrink-0 rounded-lg p-1.5 transition-all duration-200 hover:bg-white/5"
             style={{ color: '#4b5563' }}
             title="Collapse sidebar"
           >
@@ -101,12 +101,12 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
       )}
 
       {/* ── Nav ── */}
-      <nav className={`flex-1 overflow-y-auto py-4 space-y-5 ${collapsed ? 'px-1.5' : 'px-3'}`}>
+      <nav className={`flex-1 overflow-y-auto py-4 space-y-6 ${collapsed ? 'px-1.5' : 'px-3'}`}>
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {!collapsed && (
               <p
-                className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider"
+                className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em]"
                 style={{ color: '#4b5563' }}
               >
                 {group.label}
@@ -125,7 +125,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                     <div
                       key={href}
                       title={collapsed ? `${label} (Locked)` : 'Upgrade to Professional'}
-                      className={`flex items-center gap-3 rounded-md py-2 text-[13px] opacity-40 cursor-not-allowed select-none ${
+                      className={`flex items-center gap-3 rounded-xl py-2 text-[13px] opacity-35 cursor-not-allowed select-none ${
                         collapsed ? 'justify-center px-0' : 'px-3'
                       }`}
                       style={{ color: '#6b7280' }}
@@ -142,13 +142,13 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                     key={href}
                     href={href}
                     title={collapsed ? label : undefined}
-                    className={`flex items-center gap-3 rounded-md py-2 text-[13px] transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl py-2.5 text-[13px] transition-all duration-200 ${
                       collapsed ? 'justify-center px-0' : 'px-3'
-                    } ${active ? 'font-medium' : 'hover:bg-white/5'}`}
+                    } ${active ? 'font-semibold' : 'hover:bg-white/[0.04] hover:translate-x-0.5'}`}
                     style={{
                       borderLeft: collapsed ? 'none' : `2px solid ${active ? '#c2fa69' : 'transparent'}`,
                       color: active ? '#c2fa69' : '#9ca3af',
-                      ...(active ? { background: 'rgba(194, 250, 105, 0.05)' } : {}),
+                      ...(active ? { background: 'rgba(194, 250, 105, 0.06)' } : {}),
                       ...(collapsed && active ? { background: 'rgba(194, 250, 105, 0.10)' } : {}),
                     }}
                   >
@@ -168,19 +168,19 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
       {/* ── Bottom section ── */}
       <div
         className={`mt-auto pb-3 space-y-3 ${collapsed ? 'px-1.5' : 'px-3'}`}
-        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         {/* Book a Demo */}
         <button
           onClick={openCalendly}
           title={collapsed ? 'Book a Demo' : undefined}
-          className={`flex items-center justify-center gap-2 rounded-md mt-3 text-[13px] font-medium transition-colors hover:bg-[rgba(194,250,105,0.1)] ${
-            collapsed ? 'mx-auto h-10 w-10 px-0' : 'w-full px-3 py-2'
+          className={`flex items-center justify-center gap-2 rounded-xl mt-3 text-[13px] font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+            collapsed ? 'mx-auto h-10 w-10 px-0' : 'w-full px-3 py-2.5'
           }`}
           style={{
-            border: '1px solid #c2fa69',
+            border: '1px solid rgba(194,250,105,0.4)',
             color: '#c2fa69',
-            background: 'transparent',
+            background: 'rgba(194,250,105,0.04)',
           }}
         >
           <Calendar className="h-4 w-4 flex-shrink-0" />

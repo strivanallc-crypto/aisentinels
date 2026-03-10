@@ -157,30 +157,25 @@ export default function AuditPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {filtered.map((s, i) => (
               <div
                 key={s.id}
                 onClick={() => router.push(`/audit/${s.id}`)}
-                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-colors hover:bg-white/5"
+                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group"
               >
-                {/* Number */}
                 <span
-                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.15)' }}
+                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
+                  style={{ color: 'rgba(255,255,255,0.12)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
-
-                {/* Title */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold truncate">{s.title}</p>
                   <p className="text-[11px]" style={{ color: '#6b7280' }}>
                     {AUDIT_TYPE_LABELS[s.auditType]} · {s.scope}
                   </p>
                 </div>
-
-                {/* Status */}
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0"
                   style={{
@@ -190,13 +185,10 @@ export default function AuditPage() {
                 >
                   {AUDIT_STATUS_LABELS[s.status] ?? s.status}
                 </span>
-
-                {/* Date */}
-                <span className="text-[12px] flex-shrink-0 w-24 text-right" style={{ color: '#6b7280' }}>
+                <span className="text-[11px] flex-shrink-0 w-24 text-right tabular-nums" style={{ color: '#4b5563' }}>
                   {new Date(s.auditDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
-
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
               </div>
             ))}
           </div>

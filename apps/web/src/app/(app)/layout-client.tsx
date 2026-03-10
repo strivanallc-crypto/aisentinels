@@ -146,8 +146,8 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
         <main className="flex flex-1 flex-col overflow-hidden">
           {/* ── Header bar ── */}
           <header
-            className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+            className="flex items-center justify-between px-6 lg:px-8 py-3 flex-shrink-0"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
           >
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-[13px]">
@@ -177,8 +177,8 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-4">
               {/* Actions remaining badge */}
               <div
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1"
-                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)' }}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.06)' }}
               >
                 <Zap className="h-3.5 w-3.5" style={{ color: '#c2fa69' }} />
                 <span className="text-[12px]" style={{ color: '#6b7280' }}>
@@ -202,10 +202,11 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
 
                 {userMenuOpen && (
                   <div
-                    className="absolute right-0 top-10 z-50 w-56 rounded-lg py-1 shadow-xl"
+                    className="absolute right-0 top-10 z-50 w-56 rounded-xl py-1 shadow-2xl"
                     style={{
                       background: '#111111',
                       border: '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
                     }}
                   >
                     <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>

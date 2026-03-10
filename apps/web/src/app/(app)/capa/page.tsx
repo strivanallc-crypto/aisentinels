@@ -186,30 +186,25 @@ export default function CapaPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {filtered.map((c, i) => (
               <div
                 key={c.id}
                 onClick={() => router.push(`/capa/${c.id}`)}
-                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-colors hover:bg-white/5"
+                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group"
               >
-                {/* Number */}
                 <span
-                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.15)' }}
+                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
+                  style={{ color: 'rgba(255,255,255,0.12)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
-
-                {/* Problem */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold truncate">{c.problemDescription}</p>
                   <p className="text-[11px]" style={{ color: '#6b7280' }}>
                     {CAPA_SOURCE_TYPE_LABELS[c.sourceType]}
                   </p>
                 </div>
-
-                {/* Severity */}
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0"
                   style={{
@@ -219,8 +214,6 @@ export default function CapaPage() {
                 >
                   {FINDING_SEVERITY_LABELS[c.severity]}
                 </span>
-
-                {/* Status */}
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0"
                   style={{
@@ -230,12 +223,10 @@ export default function CapaPage() {
                 >
                   {CAPA_STATUS_LABELS[c.status] ?? c.status}
                 </span>
-
-                {/* Due date */}
                 <span
-                  className="text-[12px] flex-shrink-0 w-24 text-right"
+                  className="text-[11px] flex-shrink-0 w-24 text-right tabular-nums"
                   style={{
-                    color: isOverdue(c) ? '#EF4444' : '#6b7280',
+                    color: isOverdue(c) ? '#EF4444' : '#4b5563',
                     fontWeight: isOverdue(c) ? 600 : 400,
                   }}
                 >
@@ -243,8 +234,7 @@ export default function CapaPage() {
                     ? new Date(c.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     : '\u2014'}
                 </span>
-
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
               </div>
             ))}
           </div>

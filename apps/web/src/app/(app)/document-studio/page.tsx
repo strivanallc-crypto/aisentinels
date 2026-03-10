@@ -154,17 +154,17 @@ export default function DocumentStudioPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {filtered.map((doc, i) => (
               <div
                 key={doc.id}
                 onClick={() => router.push(`/document-studio/${doc.id}`)}
-                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-colors hover:bg-white/5"
+                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group"
               >
                 {/* Number */}
                 <span
-                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.15)' }}
+                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
+                  style={{ color: 'rgba(255,255,255,0.12)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
@@ -182,8 +182,8 @@ export default function DocumentStudioPage() {
                   {(doc.standards ?? []).slice(0, 2).map((s) => (
                     <span
                       key={s}
-                      className="rounded px-2 py-0.5 text-[10px] font-semibold"
-                      style={{ background: 'rgba(99,102,241,0.12)', color: '#818CF8' }}
+                      className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
+                      style={{ background: 'rgba(99,102,241,0.10)', color: '#818CF8' }}
                     >
                       {s.replace('iso_', 'ISO ').toUpperCase()}
                     </span>
@@ -202,11 +202,11 @@ export default function DocumentStudioPage() {
                 </span>
 
                 {/* Date */}
-                <span className="text-[12px] flex-shrink-0 w-20 text-right" style={{ color: '#6b7280' }}>
+                <span className="text-[11px] flex-shrink-0 w-20 text-right tabular-nums" style={{ color: '#4b5563' }}>
                   {new Date(doc.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
 
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
               </div>
             ))}
           </div>

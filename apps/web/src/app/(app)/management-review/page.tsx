@@ -142,14 +142,14 @@ export default function ManagementReviewPage() {
             action={reviews.length === 0 ? (<PrimaryButton onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Schedule Review</PrimaryButton>) : undefined}
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {filtered.map((rev, i) => {
               const statusKey = rev.status.toLowerCase();
               const color = STATUS_COLORS[statusKey] ?? '#6b7280';
               const label = statusKey === 'completed' ? 'Completed' : statusKey === 'in_progress' ? 'In Progress' : 'Scheduled';
               return (
-                <div key={rev.id} className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-white/5">
-                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                <div key={rev.id} className="flex items-center gap-4 px-4 py-4 transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group">
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'rgba(255,255,255,0.12)' }}>/{String(i + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-semibold truncate">{rev.title}</p>
                     <p className="text-[11px]" style={{ color: '#6b7280' }}>
@@ -160,7 +160,7 @@ export default function ManagementReviewPage() {
                     )}
                   </div>
                   <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0" style={{ color, background: `${color}1a` }}>{label}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                  <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
                 </div>
               );
             })}

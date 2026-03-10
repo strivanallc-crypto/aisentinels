@@ -150,7 +150,7 @@ export default function BillingPage() {
               const canDowngrade = planOrder.indexOf(plan) < currentPlanIdx;
 
               return (
-                <div key={plan} className="relative flex flex-col rounded-xl p-6" style={{ background: '#111111', border: isPopular ? '2px solid #c2fa69' : '1px solid rgba(255,255,255,0.08)' }}>
+                <div key={plan} className="relative flex flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(0,0,0,0.4)]" style={{ background: '#111111', border: isPopular ? '2px solid #c2fa69' : '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
                   {isPopular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" style={{ background: '#c2fa69', color: '#0a0a0a' }}>Most Popular</div>
                   )}

@@ -145,14 +145,14 @@ export default function BoardReportPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {reports.map((report, i) => {
               const color = STATUS_COLORS[report.status] ?? '#6b7280';
               const label = STATUS_LABELS[report.status] ?? report.status;
               const StatusIcon = report.status === 'ready' ? CheckCircle2 : report.status === 'generating' ? Clock : AlertCircle;
               return (
-                <div key={report.reportId} className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-white/5">
-                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                <div key={report.reportId} className="flex items-center gap-4 px-4 py-4 transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group">
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'rgba(255,255,255,0.12)' }}>/{String(i + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-semibold">{formatPeriod(report.period)}</p>
                     <p className="text-[11px]" style={{ color: '#6b7280' }}>{formatDate(report.generatedAt)}</p>
