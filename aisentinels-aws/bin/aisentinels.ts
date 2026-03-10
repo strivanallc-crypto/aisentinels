@@ -168,6 +168,8 @@ const apiStack = new ApiStack(app, `AiSentinels-Api-${envTitle}`, {
   auroraProxyEndpoint: dataStack.auroraProxy.endpoint,
   auditEventsTableArn: dataStack.auditEventsTable.tableArn,
   dynamoDbKeyArn: securityStack.dynamoDbKey.keyArn,
+  complianceChecksTableArn: dataStack.complianceChecksTable.tableArn,
+  complianceChecksTableName: dataStack.complianceChecksTable.tableName,
   description: `AI Sentinels — API Gateway [${envName}] (HTTP API · JWT Auth · 49 Lambda Routes)`,
 });
 apiStack.addDependency(cognitoStack);

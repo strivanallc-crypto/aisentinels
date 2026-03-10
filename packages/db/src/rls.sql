@@ -327,6 +327,61 @@ BEGIN
 END $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE org_knowledge_chunks TO app_role;
 
+-- =============================================================================
+-- API Keys + Webhooks tables (Phase 14) — 3 new tenant-scoped tables
+-- =============================================================================
+
+-- ── api_keys ──────────────────────────────────────────────────────────────────
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_keys FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'api_keys' AND policyname = 'api_keys_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY api_keys_tenant_isolation ON api_keys
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE api_keys TO app_role;
+
+-- ── webhook_endpoints ─────────────────────────────────────────────────────────
+ALTER TABLE webhook_endpoints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhook_endpoints FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'webhook_endpoints' AND policyname = 'webhook_endpoints_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY webhook_endpoints_tenant_isolation ON webhook_endpoints
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE webhook_endpoints TO app_role;
+
+-- ── webhook_deliveries ────────────────────────────────────────────────────────
+ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhook_deliveries FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'webhook_deliveries' AND policyname = 'webhook_deliveries_tenant_isolation'
+  ) THEN
+    EXECUTE $p$
+      CREATE POLICY webhook_deliveries_tenant_isolation ON webhook_deliveries
+        USING      (tenant_id = current_setting('app.tenant_id')::UUID)
+        WITH CHECK (tenant_id = current_setting('app.tenant_id')::UUID)
+    $p$;
+  END IF;
+END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE webhook_deliveries TO app_role;
+
 -- ── Sequence grants ───────────────────────────────────────────────────────────
 -- app_role needs USAGE on sequences to generate UUIDs via gen_random_uuid()
 -- (pgcrypto sequences, not serial sequences — but safe to grant proactively)
@@ -338,5 +393,5 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_role;
 -- FROM pg_tables t JOIN pg_class c ON c.relname = t.tablename
 -- WHERE schemaname = 'public' AND tablename != 'iso_clauses'
 -- ORDER BY tablename;
--- Expected: rowsecurity = true, forcerowsecurity = true for all 17 tables
+-- Expected: rowsecurity = true, forcerowsecurity = true for all 20 tables
 -- =============================================================================

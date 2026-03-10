@@ -243,3 +243,23 @@ export const bulkUploadApi = {
     return res.data as BulkUploadBatch;
   },
 };
+
+// ==================== API Keys (Phase 14) ====================
+export const apiKeysApi = {
+  list:   () => api.get('/api/v1/settings/api-keys'),
+  create: (data: { name: string; scopes?: string[]; expiresAt?: string }) =>
+    api.post('/api/v1/settings/api-keys', data),
+  revoke: (keyId: string) => api.delete(`/api/v1/settings/api-keys/${keyId}`),
+};
+
+// ==================== Webhooks (Phase 14) ====================
+export const webhooksApi = {
+  list:   () => api.get('/api/v1/settings/webhooks'),
+  get:    (id: string) => api.get(`/api/v1/settings/webhooks/${id}`),
+  create: (data: { url: string; description?: string; eventTypes: string[] }) =>
+    api.post('/api/v1/settings/webhooks', data),
+  update: (id: string, data: { url?: string; description?: string; eventTypes?: string[]; status?: string }) =>
+    api.put(`/api/v1/settings/webhooks/${id}`, data),
+  remove: (id: string) => api.delete(`/api/v1/settings/webhooks/${id}`),
+  test:   (id: string) => api.post(`/api/v1/settings/webhooks/${id}/test`),
+};

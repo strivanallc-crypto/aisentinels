@@ -61,6 +61,10 @@ export interface ApiStackProps extends cdk.StackProps {
   auditEventsTableArn: string;
   /** DynamoDB CMK ARN — from SecurityStack.dynamoDbKey.keyArn (needed for kms:Decrypt on audit table) */
   dynamoDbKeyArn: string;
+  /** DynamoDB compliance-checks table ARN — from DataStack.complianceChecksTable.tableArn */
+  complianceChecksTableArn: string;
+  /** DynamoDB compliance-checks table name — from DataStack.complianceChecksTable.tableName */
+  complianceChecksTableName: string;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -1363,9 +1367,258 @@ export class ApiStack extends cdk.Stack {
       integration: legalIntegration,
     });
 
-    // NOTE: ECS catch-all route (ANY /api/v1/{proxy+} → ALB → Fargate)
-    // was REMOVED. All 49 Lambda routes above are now the only routes.
-    // Unmatched paths return HTTP API Gateway default 404.
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Compliance — POST /api/v1/admin/compliance/run-checks
+    //                      GET  /api/v1/admin/compliance/results
+    // Phase 13B — ISO 27001 / SOC 2 automated evidence collection.
+    // NOT VPC-attached — needs IAM/CloudTrail public APIs (no VPC endpoints).
+    // Internal admin only — never exposed to tenants.
+    // ══════════════════════════════════════════════════════════════════════════
+    const complianceLogGroup = new logs.LogGroup(this, 'ComplianceFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-compliance-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(complianceLogGroup);
+
+    const complianceFn = new NodejsFunction(this, 'ComplianceFn', {
+      functionName: `aisentinels-api-compliance-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/compliance/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 256,
+      // NOT VPC-attached: IAM + CloudTrail APIs require internet access
+      // (no VPC endpoints configured for these services)
+      environment: {
+        ENV_NAME: envName,
+        COMPLIANCE_CHECKS_TABLE: props.complianceChecksTableName,
+        AUDIT_EVENTS_TABLE_NAME: auditEventsTableName,
+      },
+      logGroup: complianceLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*'],
+      },
+    });
+    tag(complianceFn);
+
+    // DynamoDB: read/write compliance-checks table
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowComplianceChecksDynamo',
+      actions: ['dynamodb:PutItem', 'dynamodb:GetItem', 'dynamodb:Query'],
+      resources: [props.complianceChecksTableArn],
+    }));
+
+    // DynamoDB: write audit events (fire-and-forget audit log)
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowAuditDynamo',
+      actions: ['dynamodb:PutItem'],
+      resources: [props.auditEventsTableArn],
+    }));
+
+    // KMS: decrypt DynamoDB CMK for audit events table
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowAuditDynamoKms',
+      actions: ['kms:Decrypt', 'kms:DescribeKey', 'kms:GenerateDataKey*'],
+      resources: [props.dynamoDbKeyArn],
+    }));
+
+    // IAM: read-only for key age check
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowIamReadOnly',
+      actions: ['iam:ListUsers', 'iam:ListAccessKeys'],
+      resources: ['*'],
+    }));
+
+    // S3: read-only for encryption check
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowS3ReadEncryption',
+      actions: ['s3:ListAllMyBuckets', 's3:GetEncryptionConfiguration'],
+      resources: ['*'],
+    }));
+
+    // CloudTrail: read-only for status check
+    complianceFn.addToRolePolicy(new iam.PolicyStatement({
+      sid: 'AllowCloudTrailRead',
+      actions: ['cloudtrail:DescribeTrails', 'cloudtrail:GetTrailStatus'],
+      resources: ['*'],
+    }));
+
+    // ── Compliance routes (Phase 13B) ────────────────────────────────────────
+    const complianceIntegration = new HttpLambdaIntegration('ComplianceIntegration', complianceFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/admin/compliance/run-checks',
+      methods: [HttpMethod.POST],
+      integration: complianceIntegration,
+    });
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/admin/compliance/results',
+      methods: [HttpMethod.GET],
+      integration: complianceIntegration,
+    });
+
+    // ── EventBridge: Weekly compliance checks (Phase 13B) ────────────────────
+    // Monday 06:00 UTC. Invokes complianceFn directly.
+    const complianceDlq = new sqs.Queue(this, 'ComplianceDLQ', {
+      queueName: `aisentinels-compliance-dlq-${envName}`,
+      retentionPeriod: cdk.Duration.days(14),
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    tag(complianceDlq);
+
+    const complianceWeeklyRule = new events.Rule(this, 'ComplianceWeeklyRule', {
+      ruleName: `aisentinels-compliance-weekly-${envName}`,
+      description: 'Weekly ISO 27001 / SOC 2 automated evidence collection',
+      enabled: true,
+      schedule: events.Schedule.cron({
+        minute: '0',
+        hour: '6',
+        weekDay: 'MON',
+        month: '*',
+        year: '*',
+      }),
+    });
+    tag(complianceWeeklyRule);
+
+    complianceWeeklyRule.addTarget(new evtTargets.LambdaFunction(complianceFn, {
+      retryAttempts: 1,
+      deadLetterQueue: complianceDlq,
+    }));
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: API Keys — POST/GET/DELETE /api/v1/settings/api-keys (Phase 14)
+    // Manages tenant-scoped API keys. VPC-attached (Aurora).
+    // ══════════════════════════════════════════════════════════════════════════
+    const apiKeysLogGroup = new logs.LogGroup(this, 'ApiKeysFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-keys-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(apiKeysLogGroup);
+
+    const apiKeysFn = new NodejsFunction(this, 'ApiKeysFn', {
+      functionName: `aisentinels-api-keys-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/api-keys/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      ...businessLambdaVpcConfig,
+      environment: businessLambdaEnv,
+      logGroup: apiKeysLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(apiKeysFn);
+
+    // ── API Keys routes (Phase 14) ──────────────────────────────────────────
+    const apiKeysIntegration = new HttpLambdaIntegration('ApiKeysIntegration', apiKeysFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/api-keys',
+      methods: [HttpMethod.GET, HttpMethod.POST],
+      integration: apiKeysIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/api-keys/{keyId}',
+      methods: [HttpMethod.DELETE],
+      integration: apiKeysIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: Webhooks — CRUD /api/v1/settings/webhooks (Phase 14)
+    // Manages webhook endpoints and delivery logs. VPC-attached (Aurora).
+    // ══════════════════════════════════════════════════════════════════════════
+    const webhooksLogGroup = new logs.LogGroup(this, 'WebhooksFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-webhooks-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(webhooksLogGroup);
+
+    const webhooksFn = new NodejsFunction(this, 'WebhooksFn', {
+      functionName: `aisentinels-api-webhooks-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/webhooks/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      ...businessLambdaVpcConfig,
+      environment: businessLambdaEnv,
+      logGroup: webhooksLogGroup,
+      bundling: businessLambdaBundling,
+    });
+    grantBusinessLambda(webhooksFn);
+
+    // ── Webhooks routes (Phase 14) ──────────────────────────────────────────
+    const webhooksIntegration = new HttpLambdaIntegration('WebhooksIntegration', webhooksFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/webhooks',
+      methods: [HttpMethod.GET, HttpMethod.POST],
+      integration: webhooksIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/webhooks/{id}',
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      integration: webhooksIntegration,
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/settings/webhooks/{id}/test',
+      methods: [HttpMethod.POST],
+      integration: webhooksIntegration,
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Lambda: API Docs — GET /api/v1/docs + /api/v1/docs/spec (Phase 14)
+    // Serves Swagger UI + OpenAPI 3.0 spec. Public (no JWT).
+    // Non-VPC — no data access needed, static content only.
+    // ══════════════════════════════════════════════════════════════════════════
+    const docsLogGroup = new logs.LogGroup(this, 'DocsFnLogGroup', {
+      logGroupName: `/aws/lambda/aisentinels-api-docs-${envName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    tag(docsLogGroup);
+
+    const docsFn = new NodejsFunction(this, 'DocsFn', {
+      functionName: `aisentinels-api-docs-${envName}`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(repoRoot, 'packages/api/src/handlers/docs/index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(5),
+      memorySize: 128,
+      // NOT VPC-attached — no data access needed, serves static content
+      environment: { ENV_NAME: envName },
+      logGroup: docsLogGroup,
+      bundling: {
+        minify: true,
+        target: 'node22',
+        format: OutputFormat.ESM,
+        externalModules: ['@aws-sdk/*'],
+      },
+    });
+    tag(docsFn);
+
+    // ── Docs routes (Phase 14) — public (no JWT) ────────────────────────────
+    const docsIntegration = new HttpLambdaIntegration('DocsIntegration', docsFn);
+
+    this.httpApi.addRoutes({
+      path: '/api/v1/docs',
+      methods: [HttpMethod.GET],
+      integration: docsIntegration,
+      authorizer: new HttpNoneAuthorizer(),
+    });
+    this.httpApi.addRoutes({
+      path: '/api/v1/docs/spec',
+      methods: [HttpMethod.GET],
+      integration: docsIntegration,
+      authorizer: new HttpNoneAuthorizer(),
+    });
 
     // ══════════════════════════════════════════════════════════════════════════
     // SSM Parameters

@@ -38,6 +38,7 @@ export class DataStack extends cdk.Stack {
   public readonly auroraProxy: rds.DatabaseProxy;
   public readonly auditEventsTable: dynamodb.Table;
   public readonly sessionsTable: dynamodb.Table;
+  public readonly complianceChecksTable: dynamodb.Table;
   public readonly redisCluster: elasticache.CfnReplicationGroup;
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
@@ -258,6 +259,26 @@ export class DataStack extends cdk.Stack {
     tag(this.sessionsTable);
 
     // ════════════════════════════════════════════════════════════════════════
+    // DynamoDB Table 3 — aisentinels-compliance-checks (Phase 13B)
+    //
+    // PK: checkId (S)  SK: timestamp (S)
+    // TTL: expiresAt (90-day retention)
+    //
+    // Internal compliance evidence: IAM key age, S3 encryption, CloudTrail.
+    // Admin-only — never exposed to tenants.
+    // ════════════════════════════════════════════════════════════════════════
+    this.complianceChecksTable = new dynamodb.Table(this, 'ComplianceChecksTable', {
+      tableName: `aisentinels-compliance-checks-${envName}`,
+      partitionKey: { name: 'checkId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      timeToLiveAttribute: 'expiresAt',
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+    tag(this.complianceChecksTable);
+
+    // ════════════════════════════════════════════════════════════════════════
     // Redis auth token → Secrets Manager
     // ════════════════════════════════════════════════════════════════════════
     const redisAuthToken = new secretsmanager.Secret(this, 'RedisAuthToken', {
@@ -348,6 +369,14 @@ export class DataStack extends cdk.Stack {
       parameterName: `/aisentinels/${envName}/data/sessions-table`,
       stringValue: this.sessionsTable.tableName,
     });
+    new ssm.StringParameter(this, 'SsmComplianceChecksTableName', {
+      parameterName: `/aisentinels/${envName}/data/compliance-checks-table`,
+      stringValue: this.complianceChecksTable.tableName,
+    });
+    new ssm.StringParameter(this, 'SsmComplianceChecksTableArn', {
+      parameterName: `/aisentinels/${envName}/data/compliance-checks-table-arn`,
+      stringValue: this.complianceChecksTable.tableArn,
+    });
     new ssm.StringParameter(this, 'SsmRedisEndpoint', {
       parameterName: `/aisentinels/${envName}/data/redis-endpoint`,
       stringValue: this.redisCluster.attrPrimaryEndPointAddress,
@@ -391,6 +420,11 @@ export class DataStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'SessionsTableArn', {
       value: this.sessionsTable.tableArn,
       exportName: `aisentinels-${envName}-sessions-table-arn`,
+    });
+    new cdk.CfnOutput(this, 'ComplianceChecksTableArn', {
+      value: this.complianceChecksTable.tableArn,
+      exportName: `aisentinels-${envName}-compliance-checks-table-arn`,
+      description: 'DynamoDB compliance checks table ARN',
     });
     new cdk.CfnOutput(this, 'RedisPrimaryEndpoint', {
       value: this.redisCluster.attrPrimaryEndPointAddress,

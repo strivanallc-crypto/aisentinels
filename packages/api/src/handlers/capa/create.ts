@@ -5,6 +5,7 @@ import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateCapaSchema, parseBody } from '../../lib/validate.ts';
 import { logAuditEvent } from '../../lib/audit-logger.ts';
+import { dispatchWebhook } from '../../lib/webhook-dispatcher.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -55,6 +56,12 @@ export async function createCapa(event: APIGatewayProxyEventV2WithJWTAuthorizer)
     clauseRef,
     standard:   standard as string,
     severity:   'info',
+  });
+
+  dispatchWebhook({
+    tenantId,
+    eventType: 'capa.created',
+    payload: { id: record!.id, sourceType, severity, problemDescription },
   });
 
   return {

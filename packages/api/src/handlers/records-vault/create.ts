@@ -6,6 +6,7 @@ import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { CreateRecordSchema, parseBody } from '../../lib/validate.ts';
 import { logAuditEvent } from '../../lib/audit-logger.ts';
+import { dispatchWebhook } from '../../lib/webhook-dispatcher.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -60,6 +61,12 @@ export async function createRecord(event: APIGatewayProxyEventV2WithJWTAuthorize
     action:     'CREATE',
     detail:     { title, category, retentionYears },
     severity:   'info',
+  });
+
+  dispatchWebhook({
+    tenantId,
+    eventType: 'record.created',
+    payload: { id: record!.id, title, category, retentionYears },
   });
 
   return {

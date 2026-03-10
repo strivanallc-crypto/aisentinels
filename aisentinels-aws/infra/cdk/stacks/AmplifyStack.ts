@@ -39,6 +39,19 @@ applications:
           commands:
             - npm install -g pnpm@9.15.0
             - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
+            - |
+              echo "AUTH_SECRET=$AUTH_SECRET" >> .env.production
+              echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
+              echo "AUTH_URL=$AUTH_URL" >> .env.production
+              echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
+              echo "AUTH_TRUST_HOST=$AUTH_TRUST_HOST" >> .env.production
+              echo "COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> .env.production
+              echo "COGNITO_CLIENT_SECRET=$COGNITO_CLIENT_SECRET" >> .env.production
+              echo "COGNITO_ISSUER=$COGNITO_ISSUER" >> .env.production
+              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.production
+              echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.production
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
+              echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
         build:
           commands:
             - cd ../.. && pnpm --filter @aisentinels/web run build
@@ -93,6 +106,20 @@ export class AmplifyStack extends cdk.Stack {
       `/aisentinels/${envName}/api/endpoint`,
     );
 
+    // Google OAuth credentials — stored in Secrets Manager as JSON
+    const googleOauth = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'GoogleOAuth',
+      'aisentinels/google-oauth',
+    );
+
+    // Auth.js secret — used for JWT encryption and CSRF protection
+    const authSecret = secretsmanager.Secret.fromSecretCompleteArn(
+      this,
+      'AuthSecret',
+      'arn:aws:secretsmanager:us-east-1:304242047817:secret:aisentinels/auth-secret-yIs85M',
+    );
+
     // Cognito OIDC issuer — constructed from user pool ID + region
     const cognitoIssuer = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`;
 
@@ -111,14 +138,18 @@ export class AmplifyStack extends cdk.Stack {
       buildSpec: BUILD_SPEC,
 
       environmentVariables: [
+        { name: 'AMPLIFY_MONOREPO_APP_ROOT', value: 'apps/web' },
         { name: 'NEXT_PUBLIC_API_URL',    value: apiEndpoint },
         { name: 'NEXT_PUBLIC_AWS_REGION', value: this.region },
         { name: 'COGNITO_CLIENT_ID',      value: webClientId },
         { name: 'COGNITO_ISSUER',         value: cognitoIssuer },
-        // NEXTAUTH_URL:    set manually in Amplify Console after first deploy
-        //                  (value: https://{branch}.{appId}.amplifyapp.com)
-        // NEXTAUTH_SECRET: set manually in Amplify Console — never in CDK
-        // COGNITO_CLIENT_SECRET: set manually if needed (PKCE flow may not require it)
+        { name: 'GOOGLE_CLIENT_ID',       value: googleOauth.secretValueFromJson('client_id').unsafeUnwrap() },
+        { name: 'GOOGLE_CLIENT_SECRET',   value: googleOauth.secretValueFromJson('client_secret').unsafeUnwrap() },
+        { name: 'AUTH_SECRET',            value: authSecret.secretValue.unsafeUnwrap() },
+        { name: 'NEXTAUTH_SECRET',        value: authSecret.secretValue.unsafeUnwrap() },
+        { name: 'AUTH_URL',               value: 'https://aisentinels.io' },
+        { name: 'NEXTAUTH_URL',           value: 'https://aisentinels.io' },
+        { name: 'AUTH_TRUST_HOST',        value: 'true' },
       ],
     });
 

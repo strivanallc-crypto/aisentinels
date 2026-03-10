@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
 import { extractClaims } from '../../middleware/auth-context.ts';
 import { logAuditEvent } from '../../lib/audit-logger.ts';
+import { dispatchWebhook } from '../../lib/webhook-dispatcher.ts';
 
 let _db: Awaited<ReturnType<typeof createDb>> | null = null;
 async function getDb() {
@@ -85,6 +86,12 @@ export async function decideDocument(event: APIGatewayProxyEventV2WithJWTAuthori
     action:     isApproved ? 'APPROVE' : 'REJECT',
     detail:     { decision: body.decision, comments: body.comments },
     severity:   'info',
+  });
+
+  dispatchWebhook({
+    tenantId,
+    eventType: isApproved ? 'document.approved' : 'document.rejected',
+    payload: { id: approvalId, decision: body.decision, comments: body.comments },
   });
 
   return {

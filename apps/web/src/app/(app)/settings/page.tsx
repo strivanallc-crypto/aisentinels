@@ -2,18 +2,20 @@
 
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Building2, Shield, Users, Brain, Settings, Activity } from 'lucide-react';
+import { Building2, Shield, Users, Brain, Settings, Activity, Key } from 'lucide-react';
 import { OrgTab } from './_components/OrgTab';
 import { StandardsTab } from './_components/StandardsTab';
 import { UsersTab } from './_components/UsersTab';
 import { BrainTab } from './_components/BrainTab';
 import { AuditLogTab } from './_components/AuditLogTab';
+import { ApiWebhooksTab } from './_components/ApiWebhooksTab';
 
 const TABS = [
   { key: 'organization', label: 'Organization', icon: Building2 },
   { key: 'standards',    label: 'Standards',    icon: Shield },
   { key: 'users',        label: 'Users',        icon: Users },
   { key: 'brain',        label: 'Brain',        icon: Brain },
+  { key: 'api',          label: 'API & Webhooks', icon: Key },
   { key: 'audit-log',    label: 'Audit Log',    icon: Activity },
 ] as const;
 
@@ -74,6 +76,7 @@ function SettingsContent() {
         {activeTab === 'standards' && <StandardsTab />}
         {activeTab === 'users' && <UsersTab />}
         {activeTab === 'brain' && <BrainTab />}
+        {activeTab === 'api' && <ApiWebhooksTab />}
         {activeTab === 'audit-log' && <AuditLogTab />}
       </div>
     </div>

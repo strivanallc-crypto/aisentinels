@@ -41,3 +41,7 @@ export * from './risks.ts';
 
 // ── Settings + Brain (Phase 3) ──────────────────────────────────────────────
 export * from './settings.ts';
+
+// ── API Keys + Webhooks (Phase 14) ─────────────────────────────────────────
+export * from './api-keys.ts';
+export * from './webhooks.ts';
