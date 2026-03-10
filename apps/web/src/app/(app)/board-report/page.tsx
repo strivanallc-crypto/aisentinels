@@ -2,30 +2,38 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  BarChart3,
   Download,
   Loader2,
   FileText,
-  Calendar,
+  RefreshCw,
+  CheckCircle2,
   Clock,
   AlertCircle,
-  CheckCircle2,
-  RefreshCw,
 } from 'lucide-react';
 import { boardReportApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { TableSkeleton } from '@/components/ui/skeleton';
 import type { BoardReportListItem } from '@/types/board-report';
+import {
+  SentinelPageHero,
+  PrimaryButton,
+  SadewaEmptyState,
+  SectionLabel,
+  ContentCard,
+  PageSkeleton,
+} from '@/components/ui/sentinel-page-hero';
 
-/* ─── Status config ─── */
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'destructive'; icon: React.ElementType }> = {
-  ready:      { label: 'Ready',      variant: 'success',     icon: CheckCircle2 },
-  generating: { label: 'Generating', variant: 'warning',     icon: Clock },
-  failed:     { label: 'Failed',     variant: 'destructive', icon: AlertCircle },
+const STATUS_COLORS: Record<string, string> = {
+  ready: '#22C55E',
+  generating: '#F59E0B',
+  failed: '#EF4444',
 };
 
-/* ─── Helpers ─── */
+const STATUS_LABELS: Record<string, string> = {
+  ready: 'Ready',
+  generating: 'Generating',
+  failed: 'Failed',
+};
+
 function formatPeriod(period: string): string {
   const [year, month] = period.split('-');
   const date = new Date(Number(year), Number(month) - 1);
@@ -33,11 +41,8 @@ function formatPeriod(period: string): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+  if (!iso) return '\u2014';
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function getCurrentPeriod(): string {
@@ -46,11 +51,9 @@ function getCurrentPeriod(): string {
   return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/* ─── Page ─── */
 export default function BoardReportPage() {
   const [reports, setReports] = useState<BoardReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [pollInterval, setPollInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
@@ -58,19 +61,15 @@ export default function BoardReportPage() {
     try {
       const data = await boardReportApi.list();
       setReports(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reports');
+    } catch {
+      setReports([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+  useEffect(() => { fetchReports(); }, [fetchReports]);
 
-  // Poll while any report is generating
   useEffect(() => {
     const hasGenerating = reports.some((r) => r.status === 'generating');
     if (hasGenerating && !pollInterval) {
@@ -80,219 +79,122 @@ export default function BoardReportPage() {
       clearInterval(pollInterval);
       setPollInterval(null);
     }
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-    };
+    return () => { if (pollInterval) clearInterval(pollInterval); };
   }, [reports, pollInterval, fetchReports]);
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
       const result = await boardReportApi.generate(getCurrentPeriod());
-      if (result.presignedUrl) {
-        window.open(result.presignedUrl, '_blank');
-      }
+      if (result.presignedUrl) window.open(result.presignedUrl, '_blank');
       await fetchReports();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Generation failed');
-    } finally {
-      setGenerating(false);
-    }
+    } catch { /* silent */ } finally { setGenerating(false); }
   };
 
-  const handleDownload = (url: string) => {
-    window.open(url, '_blank');
-  };
+  const handleDownload = (url: string) => { window.open(url, '_blank'); };
+
+  const readyCount = reports.filter((r) => r.status === 'ready').length;
+  const totalCount = reports.length;
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl" style={{ color: 'var(--content-text)' }}>
+    <div className="p-6 max-w-[1280px]">
+      <SentinelPageHero
+        sectionLabel="BOARD REPORT"
+        title="Monthly Intelligence. Board-Ready."
+        subtitle="AI-generated executive summaries with compliance scores, CAPA status, and audit findings."
+        sentinelColor="#3B82F6"
+        stats={
+          loading
+            ? undefined
+            : [
+                { value: String(totalCount), label: 'Reports' },
+                { value: String(readyCount), label: 'Ready' },
+              ]
+        }
+      />
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p
-            className="text-xs font-medium uppercase tracking-wider"
-            style={{ color: 'var(--content-text-muted)' }}
-          >
-            ISO Platform › Board Report
-          </p>
-          <h1 className="mt-1 text-2xl font-bold flex items-center gap-2">
-            <BarChart3 className="h-6 w-6" style={{ color: 'var(--sentinel-accent)' }} />
-            Board Performance Report
-          </h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-            Monthly board-level ISO compliance reports with AI executive summary
-          </p>
-        </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="gap-2"
-        >
-          {generating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
-          {generating ? 'Generating…' : 'Generate Report'}
-        </Button>
-      </div>
-
-      {/* ── Error banner ── */}
-      {error && (
-        <div
-          className="rounded-xl p-4 flex items-center gap-3"
-          style={{
-            background: 'rgba(239,68,68,0.06)',
-            border: '1px solid rgba(239,68,68,0.15)',
-          }}
-        >
-          <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: '#EF4444' }} />
-          <p className="text-sm" style={{ color: '#FCA5A5' }}>{error}</p>
-        </div>
-      )}
-
-      {/* ── Reports table ── */}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
-      >
-        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--content-border)' }}>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" style={{ color: 'var(--content-text-muted)' }} />
-            <span className="text-sm font-semibold">Report History</span>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <SectionLabel>REPORT HISTORY</SectionLabel>
+        <div className="flex items-center gap-3">
           <button
             onClick={fetchReports}
-            className="text-xs flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/5 transition-colors"
-            style={{ color: 'var(--content-text-muted)' }}
+            className="flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors hover:bg-white/5"
+            style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#6b7280' }}
           >
-            <RefreshCw className="h-3 w-3" />
-            Refresh
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </button>
+          <PrimaryButton onClick={handleGenerate} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+            {generating ? 'Generating...' : 'Generate Report'}
+          </PrimaryButton>
         </div>
+      </div>
 
+      <ContentCard>
         {loading ? (
-          <div className="p-6">
-            <TableSkeleton rows={4} cols={5} />
-          </div>
+          <PageSkeleton rows={5} />
         ) : reports.length === 0 ? (
-          <div className="p-12 text-center">
-            <BarChart3 className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--content-text-dim)' }} />
-            <p className="text-sm font-medium" style={{ color: 'var(--content-text)' }}>
-              No reports generated yet
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--content-text-dim)' }}>
-              Click &quot;Generate Report&quot; to create your first board performance report.
+          <SadewaEmptyState
+            number="01"
+            heading="No reports generated yet"
+            description="Generate your first board performance report with AI-powered executive summaries."
+            action={
+              <PrimaryButton onClick={handleGenerate} disabled={generating}>
+                <FileText className="h-4 w-4" /> Generate Report
+              </PrimaryButton>
+            }
+          />
+        ) : (
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            {reports.map((report, i) => {
+              const color = STATUS_COLORS[report.status] ?? '#6b7280';
+              const label = STATUS_LABELS[report.status] ?? report.status;
+              const StatusIcon = report.status === 'ready' ? CheckCircle2 : report.status === 'generating' ? Clock : AlertCircle;
+              return (
+                <div key={report.reportId} className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-white/5">
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold">{formatPeriod(report.period)}</p>
+                    <p className="text-[11px]" style={{ color: '#6b7280' }}>{formatDate(report.generatedAt)}</p>
+                  </div>
+                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold flex-shrink-0" style={{ color: report.generatedBy === 'scheduled' ? '#818CF8' : '#6b7280', background: report.generatedBy === 'scheduled' ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                    {report.generatedBy === 'scheduled' ? 'Scheduled' : 'Manual'}
+                  </span>
+                  <span className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0" style={{ color, background: `${color}1a` }}>
+                    <StatusIcon className="h-3 w-3" /> {label}
+                  </span>
+                  {report.status === 'ready' && report.presignedUrl ? (
+                    <Button variant="ghost" size="sm" onClick={() => handleDownload(report.presignedUrl!)} className="gap-1.5 flex-shrink-0">
+                      <Download className="h-3.5 w-3.5" /> PDF
+                    </Button>
+                  ) : report.status === 'generating' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin flex-shrink-0" style={{ color: '#F59E0B' }} />
+                  ) : (
+                    <span className="w-10" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ContentCard>
+
+      {/* Info card */}
+      <ContentCard className="mt-6">
+        <div className="flex items-start gap-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(99,102,241,0.15)' }}>
+            <FileText className="h-4 w-4" style={{ color: '#818CF8' }} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#818CF8' }}>Automated Monthly Reports</p>
+            <p className="text-[12px] mt-1 leading-relaxed" style={{ color: '#6b7280' }}>
+              Board reports are automatically generated on the 1st of every month at 08:00 UTC.
+              Each report includes compliance scores, CAPA status, audit findings, document completion,
+              and an AI-generated executive summary.
             </p>
           </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--content-border)' }}>
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                  Period
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                  Status
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                  Generated
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                  Source
-                </th>
-                <th className="text-right px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((report) => {
-                const statusCfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.failed!;
-                const StatusIcon = statusCfg.icon;
-                return (
-                  <tr
-                    key={report.reportId}
-                    className="hover:bg-white/[0.02] transition-colors"
-                    style={{ borderBottom: '1px solid var(--content-border)' }}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--content-text-muted)' }} />
-                        <span className="font-medium">{formatPeriod(report.period)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={statusCfg.variant} className="gap-1">
-                        <StatusIcon className="h-3 w-3" />
-                        {statusCfg.label}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--content-text-dim)' }}>
-                      {formatDate(report.generatedAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-md"
-                        style={{
-                          background: report.generatedBy === 'scheduled' ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)',
-                          color: report.generatedBy === 'scheduled' ? '#818CF8' : 'var(--content-text-dim)',
-                        }}
-                      >
-                        {report.generatedBy === 'scheduled' ? 'Scheduled' : 'Manual'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {report.status === 'ready' && report.presignedUrl ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(report.presignedUrl!)}
-                          className="gap-1.5"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Download PDF
-                        </Button>
-                      ) : report.status === 'generating' ? (
-                        <span className="text-xs flex items-center justify-end gap-1.5" style={{ color: 'var(--content-text-dim)' }}>
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Processing…
-                        </span>
-                      ) : (
-                        <span className="text-xs" style={{ color: 'var(--content-text-dim)' }}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* ── Info card ── */}
-      <div
-        className="rounded-xl p-5 flex items-start gap-4"
-        style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)' }}
-      >
-        <div
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: 'rgba(99,102,241,0.15)' }}
-        >
-          <BarChart3 className="h-4 w-4" style={{ color: '#818CF8' }} />
         </div>
-        <div>
-          <p className="text-sm font-semibold" style={{ color: '#818CF8' }}>
-            Automated Monthly Reports
-          </p>
-          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--content-text-dim)' }}>
-            Board reports are automatically generated on the 1st of every month at 08:00 UTC.
-            Each report includes compliance scores, CAPA status, audit findings, document completion,
-            and an AI-generated executive summary powered by Omni.
-          </p>
-        </div>
-      </div>
+      </ContentCard>
     </div>
   );
 }

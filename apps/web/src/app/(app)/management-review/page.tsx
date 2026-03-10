@@ -1,23 +1,19 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import {
-  BookOpen,
-  Plus,
-  AlertCircle,
-  Search,
-  CheckCircle2,
-  Clock,
-  CalendarDays,
-  Sparkles,
-  Loader2,
-} from 'lucide-react';
+import { Plus, Search, Sparkles, Loader2, ArrowUpRight } from 'lucide-react';
 import { reviewApi, aiApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
-import { TableSkeleton } from '@/components/ui/skeleton';
-import { SentinelAvatar } from '@/components/SentinelAvatar';
+import {
+  SentinelPageHero,
+  PrimaryButton,
+  SecondaryButton,
+  SadewaEmptyState,
+  SectionLabel,
+  ContentCard,
+  PageSkeleton,
+} from '@/components/ui/sentinel-page-hero';
 
 interface Review {
   id: string;
@@ -28,45 +24,30 @@ interface Review {
   decisions?: string[];
 }
 
-const STATUS_TABS = [
-  { value: 'all', label: 'All' },
-  { value: 'scheduled', label: 'Scheduled' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-];
-
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' }> = {
-  completed: { label: 'Completed', variant: 'success' },
-  in_progress: { label: 'In Progress', variant: 'warning' },
-  scheduled: { label: 'Scheduled', variant: 'default' },
-  COMPLETED: { label: 'Completed', variant: 'success' },
-  IN_PROGRESS: { label: 'In Progress', variant: 'warning' },
-  SCHEDULED: { label: 'Scheduled', variant: 'default' },
+const STATUS_COLORS: Record<string, string> = {
+  completed: '#22C55E',
+  in_progress: '#F59E0B',
+  scheduled: '#3B82F6',
 };
 
 export default function ManagementReviewPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', scheduledDate: '', agenda: '', attendees: '' });
   const [saving, setSaving] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-
-  // AI Review
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [showAiResult, setShowAiResult] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const r = await reviewApi.list();
-      setReviews(r.data as Review[]);
+      setReviews(Array.isArray(r.data) ? r.data as Review[] : []);
     } catch {
-      setError('Failed to load reviews.');
+      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -86,253 +67,137 @@ export default function ManagementReviewPage() {
       setShowForm(false);
       setForm({ title: '', scheduledDate: '', agenda: '', attendees: '' });
       await load();
-    } catch {
-      setError('Failed to schedule review.');
-    } finally {
-      setSaving(false);
-    }
+    } catch { /* silent */ } finally { setSaving(false); }
   };
 
   const handleAiReview = async () => {
     setAiLoading(true);
     try {
-      const res = await aiApi.managementReview({
-        auditResults: {},
-        capaStatus: {},
-        complianceScores: {},
-      });
+      const res = await aiApi.managementReview({ auditResults: {}, capaStatus: {}, complianceScores: {} });
       const data = res.data as { report?: string };
       setAiResult(data.report ?? JSON.stringify(data, null, 2));
       setShowAiResult(true);
-    } catch {
-      setError('AI review generation failed.');
-    } finally {
-      setAiLoading(false);
-    }
+    } catch { /* silent */ } finally { setAiLoading(false); }
   };
 
   const filtered = reviews.filter((r) => {
-    const status = r.status.toLowerCase();
-    if (statusFilter !== 'all' && status !== statusFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return r.title.toLowerCase().includes(q);
-    }
-    return true;
+    if (!search) return true;
+    return r.title.toLowerCase().includes(search.toLowerCase());
   });
 
-  const statusCounts = reviews.reduce<Record<string, number>>((acc, r) => {
-    const s = r.status.toLowerCase();
-    acc[s] = (acc[s] ?? 0) + 1;
-    return acc;
-  }, {});
+  const scheduledCount = reviews.filter((r) => r.status.toLowerCase() === 'scheduled').length;
+  const completedCount = reviews.filter((r) => r.status.toLowerCase() === 'completed').length;
+  const totalCount = reviews.length;
 
   return (
-    <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 max-w-[1280px]">
+      <SentinelPageHero
+        sectionLabel="MANAGEMENT REVIEW"
+        title="Clause 9.3. Made Simple."
+        subtitle="Qualy orchestrates leadership reviews with AI-generated inputs and decision tracking."
+        sentinelColor="#3B82F6"
+        stats={
+          loading
+            ? undefined
+            : [
+                { value: String(totalCount), label: 'Reviews' },
+                { value: String(scheduledCount), label: 'Scheduled' },
+                { value: String(completedCount), label: 'Completed' },
+              ]
+        }
+      />
+
+      <div className="flex items-center justify-between mb-6">
+        <SectionLabel>REVIEWS</SectionLabel>
         <div className="flex items-center gap-3">
-          <SentinelAvatar sentinelId="qualy" size={36} />
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-              ISO Platform › Management Review
-            </p>
-            <h1 className="mt-1 text-2xl font-bold">Management Review</h1>
-            <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-              ISO Clause 9.3 — Leadership management review meetings
-            </p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: '#4b5563' }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search reviews..."
+              className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
+              style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+            />
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleAiReview} disabled={aiLoading}>
-            {aiLoading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+          <SecondaryButton onClick={handleAiReview} disabled={aiLoading}>
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             AI Review Input
-          </Button>
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Schedule Review
-          </Button>
+          </SecondaryButton>
+          <PrimaryButton onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4" /> Schedule Review
+          </PrimaryButton>
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span className="flex-1">{error}</span>
-          <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Tabs + Search */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex gap-1">
-          {STATUS_TABS.map((tab) => {
-            const count = tab.value === 'all' ? reviews.length : (statusCounts[tab.value] ?? 0);
-            const active = statusFilter === tab.value;
-            return (
-              <button
-                key={tab.value}
-                onClick={() => setStatusFilter(tab.value)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  active ? 'bg-purple-500/15 text-purple-300 font-medium' : 'hover:bg-white/5'
-                }`}
-                style={active ? undefined : { color: 'var(--content-text-dim)' }}
-              >
-                {tab.label}
-                {count > 0 && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    active ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-gray-400'
-                  }`}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reviews…"
-            className="rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-white/20 w-60"
-            style={{ color: 'var(--content-text)' }}
-          />
-        </div>
-      </div>
-
-      {/* List */}
-      <div
-        className="rounded-xl border overflow-hidden"
-        style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-      >
+      <ContentCard>
         {loading ? (
-          <TableSkeleton rows={4} cols={4} />
+          <PageSkeleton rows={5} />
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <BookOpen className="h-10 w-10" style={{ color: 'var(--content-text-dim)' }} />
-            <div>
-              <p className="font-semibold">{reviews.length === 0 ? 'No reviews scheduled' : 'No matching reviews'}</p>
-              <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-                {reviews.length === 0 ? 'Schedule your first management review' : 'Try adjusting your filters'}
-              </p>
-            </div>
-            {reviews.length === 0 && (
-              <Button onClick={() => setShowForm(true)} className="mt-2">
-                <Plus className="mr-1.5 h-4 w-4" /> Schedule Review
-              </Button>
-            )}
-          </div>
+          <SadewaEmptyState
+            number="01"
+            heading={reviews.length === 0 ? 'No reviews scheduled' : 'No matching reviews'}
+            description={reviews.length === 0 ? 'Schedule your first management review meeting.' : 'Try adjusting your search query.'}
+            action={reviews.length === 0 ? (<PrimaryButton onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Schedule Review</PrimaryButton>) : undefined}
+          />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'var(--content-border)' }}>
-            {filtered.map((rev) => {
-              const cfg = STATUS_CONFIG[rev.status] ?? { label: rev.status, variant: 'secondary' as const };
+          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            {filtered.map((rev, i) => {
+              const statusKey = rev.status.toLowerCase();
+              const color = STATUS_COLORS[statusKey] ?? '#6b7280';
+              const label = statusKey === 'completed' ? 'Completed' : statusKey === 'in_progress' ? 'In Progress' : 'Scheduled';
               return (
-                <div key={rev.id} className="flex items-start justify-between px-5 py-4 hover:bg-white/5 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
-                      {rev.status.toLowerCase() === 'completed' ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      ) : rev.status.toLowerCase() === 'in_progress' ? (
-                        <Clock className="h-5 w-5 text-amber-500" />
-                      ) : (
-                        <CalendarDays className="h-5 w-5 text-blue-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">{rev.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--content-text-muted)' }}>
-                        {rev.scheduledDate ? new Date(rev.scheduledDate).toLocaleDateString() : '—'}
-                      </p>
-                      {rev.conclusions && (
-                        <p className="text-xs mt-2 max-w-xl" style={{ color: 'var(--content-text-muted)' }}>
-                          {rev.conclusions}
-                        </p>
-                      )}
-                    </div>
+                <div key={rev.id} className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-white/5">
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold truncate">{rev.title}</p>
+                    <p className="text-[11px]" style={{ color: '#6b7280' }}>
+                      {rev.scheduledDate ? new Date(rev.scheduledDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '\u2014'}
+                    </p>
+                    {rev.conclusions && (
+                      <p className="text-[11px] mt-1 truncate max-w-xl" style={{ color: '#4b5563' }}>{rev.conclusions}</p>
+                    )}
                   </div>
-                  <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0" style={{ color, background: `${color}1a` }}>{label}</span>
+                  <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </ContentCard>
 
       {/* Schedule Review Modal */}
-      <Modal
-        open={showForm}
-        onOpenChange={(o) => { setShowForm(o); if (!o) setForm({ title: '', scheduledDate: '', agenda: '', attendees: '' }); }}
-        title="Schedule Management Review"
-      >
+      <Modal open={showForm} onOpenChange={(o) => { setShowForm(o); if (!o) setForm({ title: '', scheduledDate: '', agenda: '', attendees: '' }); }} title="Schedule Management Review">
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Title *</label>
-            <input
-              required
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g. Q1 2026 Management Review"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
-              style={{ color: 'var(--content-text)' }}
-            />
+            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Title</label>
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Q1 2026 Management Review" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Date *</label>
-            <input
-              type="date"
-              required
-              value={form.scheduledDate}
-              onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: 'var(--content-text)' }}
-            />
+            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Date</label>
+            <input type="date" required value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Agenda</label>
-            <textarea
-              rows={3}
-              value={form.agenda}
-              onChange={(e) => setForm({ ...form, agenda: e.target.value })}
-              placeholder="Agenda items for the review…"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/20"
-              style={{ color: 'var(--content-text)' }}
-            />
+            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Agenda</label>
+            <textarea rows={3} value={form.agenda} onChange={(e) => setForm({ ...form, agenda: e.target.value })} placeholder="Agenda items..." className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--content-text-muted)' }}>Attendees</label>
-            <input
-              value={form.attendees}
-              onChange={(e) => setForm({ ...form, attendees: e.target.value })}
-              placeholder="Comma-separated names or IDs"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: 'var(--content-text)' }}
-            />
+            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Attendees</label>
+            <input value={form.attendees} onChange={(e) => setForm({ ...form, attendees: e.target.value })} placeholder="Comma-separated names" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
           </div>
           <div className="flex justify-end gap-3 pt-1">
             <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Scheduling…' : 'Schedule Review'}
-            </Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Scheduling...' : 'Schedule Review'}</Button>
           </div>
         </form>
       </Modal>
 
       {/* AI Review Result Modal */}
-      <Modal
-        open={showAiResult}
-        onOpenChange={setShowAiResult}
-        title="AI Management Review Input"
-      >
+      <Modal open={showAiResult} onOpenChange={setShowAiResult} title="AI Management Review Input">
         <div className="max-h-[60vh] overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--content-text)' }}>
-            {aiResult}
-          </pre>
+          <pre className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: '#fff' }}>{aiResult}</pre>
         </div>
         <div className="flex justify-end pt-4">
           <Button variant="ghost" onClick={() => setShowAiResult(false)}>Close</Button>

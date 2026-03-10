@@ -69,7 +69,7 @@ const PLANS = [
     name: 'Scale',
     badge: null,
     monthly: 2497,
-    annual: 1997,
+    annual: 1997.60,
     sub: 'For multi-site or multi-standard operations',
     standards: 3,
     users: 25,
@@ -80,7 +80,7 @@ const PLANS = [
     name: 'Professional',
     badge: 'MOST POPULAR',
     monthly: 1397,
-    annual: 1117,
+    annual: 1117.60,
     sub: 'For growing compliance teams',
     standards: 2,
     users: 10,
@@ -91,7 +91,7 @@ const PLANS = [
     name: 'Starter',
     badge: null,
     monthly: 597,
-    annual: 477,
+    annual: 477.60,
     sub: 'For single-standard certification',
     standards: 1,
     users: 3,
@@ -468,7 +468,7 @@ export default function LandingPage() {
                 </p>
 
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold">${annual ? plan.annual : plan.monthly}</span>
+                  <span className="text-5xl font-bold">${(annual ? plan.annual : plan.monthly).toLocaleString('en-US', { minimumFractionDigits: annual ? 2 : 0, maximumFractionDigits: 2 })}</span>
                   <span className={`text-sm ${plan.featured ? 'text-gray-400' : 'text-gray-500'}`}>/month</span>
                 </div>
                 <p className={`text-sm mb-8 ${plan.featured ? 'text-gray-400' : 'text-gray-500'}`}>

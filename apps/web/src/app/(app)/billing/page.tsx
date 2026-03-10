@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  CreditCard, AlertCircle, TrendingUp, Calendar, ArrowUp,
-  Check, Minus, Shield, Zap,
+  CreditCard, TrendingUp, Calendar, ArrowUp,
+  Check, Minus, Shield, Zap, AlertCircle,
 } from 'lucide-react';
 import { billingApi } from '@/lib/api';
 import type { Subscription, BillingUsage, PlanType } from '@/lib/types';
@@ -14,105 +14,66 @@ import {
   SUB_STATUS_VARIANT,
 } from '@/lib/types';
 import { Modal } from '@/components/ui/modal';
-import { TableSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  SentinelPageHero,
+  ContentCard,
+  PageSkeleton,
+  SectionLabel,
+} from '@/components/ui/sentinel-page-hero';
 
 /* ─── Pricing Constants ─── */
-const MONTHLY_PRICES: Record<PlanType, number> = {
-  enterprise:   2497,
-  professional: 1397,
-  starter:      597,
-};
-
-const ANNUAL_PRICES: Record<PlanType, number> = {
-  enterprise:   1997,
-  professional: 1117,
-  starter:      477,
-};
-
-const ACTION_LIMITS: Record<PlanType, string> = {
-  enterprise:   '500',
-  professional: '200',
-  starter:      '50',
-};
-
+const MONTHLY_PRICES: Record<PlanType, number> = { enterprise: 2497, professional: 1397, starter: 597 };
+const ANNUAL_PRICES: Record<PlanType, number> = { enterprise: 1997, professional: 1117, starter: 477 };
+const ACTION_LIMITS: Record<PlanType, string> = { enterprise: '500', professional: '200', starter: '50' };
 const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
-  enterprise:   'For teams running multi-site IMS across 3 standards',
+  enterprise: 'For teams running multi-site IMS across 3 standards',
   professional: 'Full compliance toolkit for growing manufacturers',
-  starter:      'Perfect while you evaluate — most teams upgrade within 60 days',
+  starter: 'Perfect while you evaluate — most teams upgrade within 60 days',
 };
-
-/* Display order: Scale LEFT → Professional CENTER → Starter RIGHT (anchoring) */
 const DISPLAY_ORDER: PlanType[] = ['enterprise', 'professional', 'starter'];
+const DISPLAY_NAMES: Record<PlanType, string> = { enterprise: 'Scale', professional: 'Professional', starter: 'Starter' };
 
-const DISPLAY_NAMES: Record<PlanType, string> = {
-  enterprise:   'Scale',
-  professional: 'Professional',
-  starter:      'Starter',
-};
-
-/* ─── Feature Comparison ─── */
-interface FeatureRow {
-  feature: string;
-  starter: boolean | string;
-  professional: boolean | string;
-  enterprise: boolean | string;
-}
-
+interface FeatureRow { feature: string; starter: boolean | string; professional: boolean | string; enterprise: boolean | string; }
 const FEATURES: FeatureRow[] = [
-  { feature: 'ISO 9001 / 14001 / 45001 coverage',  starter: true,         professional: true,        enterprise: true },
-  { feature: 'Document Studio (AI generation)',      starter: true,         professional: true,        enterprise: true },
-  { feature: 'AI-guided audit room',                 starter: '3/yr',       professional: 'Unlimited', enterprise: 'Unlimited' },
-  { feature: 'CAPA engine with root-cause AI',       starter: true,         professional: true,        enterprise: true },
-  { feature: 'Risk Navigator',                       starter: false,        professional: true,        enterprise: true },
-  { feature: 'Management Review module',             starter: false,        professional: true,        enterprise: true },
-  { feature: 'Compliance Matrix (gap detection)',     starter: true,         professional: true,        enterprise: true },
-  { feature: 'Records Vault (tamper-proof)',          starter: '50 records', professional: 'Unlimited', enterprise: 'Unlimited' },
-  { feature: 'AI actions per month',                  starter: '50',         professional: '200',       enterprise: '500' },
-  { feature: 'Multi-site support',                    starter: false,        professional: '2 sites',   enterprise: 'Unlimited' },
-  { feature: 'Custom sentinel training',              starter: false,        professional: false,       enterprise: true },
-  { feature: 'Priority support',                      starter: false,        professional: true,        enterprise: true },
-  { feature: 'SSO / SAML',                            starter: false,        professional: false,       enterprise: true },
-  { feature: 'Dedicated success manager',             starter: false,        professional: false,       enterprise: true },
+  { feature: 'ISO 9001 / 14001 / 45001 coverage', starter: true, professional: true, enterprise: true },
+  { feature: 'Document Studio (AI generation)', starter: true, professional: true, enterprise: true },
+  { feature: 'AI-guided audit room', starter: '3/yr', professional: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'CAPA engine with root-cause AI', starter: true, professional: true, enterprise: true },
+  { feature: 'Risk Navigator', starter: false, professional: true, enterprise: true },
+  { feature: 'Management Review module', starter: false, professional: true, enterprise: true },
+  { feature: 'Compliance Matrix (gap detection)', starter: true, professional: true, enterprise: true },
+  { feature: 'Records Vault (tamper-proof)', starter: '50 records', professional: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'AI actions per month', starter: '50', professional: '200', enterprise: '500' },
+  { feature: 'Multi-site support', starter: false, professional: '2 sites', enterprise: 'Unlimited' },
+  { feature: 'Custom sentinel training', starter: false, professional: false, enterprise: true },
+  { feature: 'Priority support', starter: false, professional: true, enterprise: true },
+  { feature: 'SSO / SAML', starter: false, professional: false, enterprise: true },
+  { feature: 'Dedicated success manager', starter: false, professional: false, enterprise: true },
 ];
 
-/* ─── Helpers ─── */
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
+const fmt = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const fmtPrice = (cents: number) => `$${cents.toLocaleString()}`;
-
-// Show savings for the most popular plan (Professional) — concrete number, not %.
 const ANNUAL_SAVINGS_LABEL = `You save $${((MONTHLY_PRICES.professional - ANNUAL_PRICES.professional) * 12).toLocaleString()}/year`;
 
-/* ─── Page ─── */
 export default function BillingPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [usage, setUsage]               = useState<BillingUsage | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
-  const [showUpgrade, setShowUpgrade]   = useState(false);
-  const [targetPlan, setTargetPlan]     = useState<PlanType | null>(null);
-  const [upgrading, setUpgrading]       = useState(false);
+  const [usage, setUsage] = useState<BillingUsage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [targetPlan, setTargetPlan] = useState<PlanType | null>(null);
+  const [upgrading, setUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
-  const [annual, setAnnual]             = useState(false);
+  const [annual, setAnnual] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const [subRes, usageRes] = await Promise.all([
-        billingApi.getSubscription(),
-        billingApi.getUsage(),
-      ]);
+      const [subRes, usageRes] = await Promise.all([billingApi.getSubscription(), billingApi.getUsage()]);
       setSubscription(subRes.data as Subscription);
       setUsage(usageRes.data as BillingUsage);
-    } catch {
-      setError('Failed to load billing information. Check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -133,103 +94,52 @@ export default function BillingPage() {
     }
   };
 
-  const creditsBarColor = (pct: number) =>
-    pct >= 90 ? '#dc2626' : pct >= 70 ? '#d97706' : 'var(--sentinel-accent)';
-
+  const creditsBarColor = (pct: number) => pct >= 90 ? '#dc2626' : pct >= 70 ? '#d97706' : '#c2fa69';
   const currentPlan = subscription?.plan ?? 'starter';
   const planOrder: PlanType[] = ['starter', 'professional', 'enterprise'];
   const currentPlanIdx = planOrder.indexOf(currentPlan);
-
-  const isTrialExpiringSoon =
-    !!subscription?.trialEndsAt &&
-    new Date(subscription.trialEndsAt).getTime() - Date.now() < 7 * 24 * 3600 * 1000 &&
-    subscription.status === 'trial';
+  const isTrialExpiringSoon = !!subscription?.trialEndsAt && new Date(subscription.trialEndsAt).getTime() - Date.now() < 7 * 24 * 3600 * 1000 && subscription.status === 'trial';
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-6xl" style={{ color: 'var(--content-text)' }}>
+    <div className="p-6 max-w-[1280px]">
+      <SentinelPageHero
+        sectionLabel="BILLING"
+        title="Your Plan. Your Usage."
+        subtitle="Choose the plan that fits your compliance journey."
+        sentinelColor="#c2fa69"
+        stats={
+          loading || !usage
+            ? undefined
+            : [
+                { value: `${usage.aiCreditsUsed}/${usage.aiCreditsLimit}`, label: 'AI Credits Used' },
+                { value: `${usage.usagePercent}%`, label: 'Utilisation' },
+              ]
+        }
+      />
 
-      {/* ── Header ── */}
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-          ISO Platform › Billing
-        </p>
-        <h1 className="mt-1 text-2xl font-bold">Plans & Billing</h1>
-        <p className="mt-0.5 text-sm" style={{ color: 'var(--content-text-muted)' }}>
-          Choose the plan that fits your compliance journey
-        </p>
-      </div>
-
-      {/* ── Error banner ── */}
-      {error && (
-        <div
-          className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm"
-          style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#F87171' }}
-        >
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span className="flex-1">{error}</span>
-          <button onClick={load} className="ml-2 rounded px-2 py-0.5 text-xs font-medium underline hover:no-underline">
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* ── Loading skeleton ── */}
       {loading ? (
-        <TableSkeleton rows={3} cols={3} />
+        <PageSkeleton rows={4} />
       ) : (
         <>
-          {/* ── Trial expiry warning ── */}
+          {/* Trial warning */}
           {isTrialExpiringSoon && (
-            <div
-              className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm"
-              style={{ borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B' }}
-            >
+            <div className="mb-6 flex items-center gap-3 rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>
-                Your trial expires on{' '}
-                <strong>{fmt(subscription!.trialEndsAt!)}</strong>. Upgrade to keep full access.
-              </span>
+              Your trial expires on <strong>{fmt(subscription!.trialEndsAt!)}</strong>. Upgrade to keep full access.
             </div>
           )}
 
-          {/* ── Annual/Monthly Toggle (centered) ── */}
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className="flex items-center rounded-lg p-1"
-              style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
-            >
-              <button
-                className="rounded-md px-4 py-1.5 text-sm font-medium transition-all"
-                style={
-                  !annual
-                    ? { background: 'var(--sentinel-accent)', color: '#fff' }
-                    : { color: 'var(--content-text-muted)' }
-                }
-                onClick={() => setAnnual(false)}
-              >
-                Monthly
-              </button>
-              <button
-                className="rounded-md px-4 py-1.5 text-sm font-medium transition-all"
-                style={
-                  annual
-                    ? { background: 'var(--sentinel-accent)', color: '#fff' }
-                    : { color: 'var(--content-text-muted)' }
-                }
-                onClick={() => setAnnual(true)}
-              >
-                Annual
-              </button>
+          {/* Annual/Monthly toggle */}
+          <div className="flex flex-col items-center gap-2 mb-8">
+            <div className="flex items-center rounded-full p-1" style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${!annual ? 'text-[#0a0a0a]' : ''}`} style={!annual ? { background: '#c2fa69' } : { color: '#6b7280' }} onClick={() => setAnnual(false)}>Monthly</button>
+              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${annual ? 'text-[#0a0a0a]' : ''}`} style={annual ? { background: '#c2fa69' } : { color: '#6b7280' }} onClick={() => setAnnual(true)}>Annual</button>
             </div>
-            {annual && (
-              <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>
-                {ANNUAL_SAVINGS_LABEL}
-              </span>
-            )}
+            {annual && <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>{ANNUAL_SAVINGS_LABEL}</span>}
           </div>
 
-          {/* ── 3-Column Pricing Grid (Scale | Professional | Starter) ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* 3-Column Pricing Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
             {DISPLAY_ORDER.map((plan) => {
               const price = annual ? ANNUAL_PRICES[plan] : MONTHLY_PRICES[plan];
               const monthlyPrice = MONTHLY_PRICES[plan];
@@ -240,173 +150,78 @@ export default function BillingPage() {
               const canDowngrade = planOrder.indexOf(plan) < currentPlanIdx;
 
               return (
-                <div
-                  key={plan}
-                  className="relative flex flex-col rounded-xl p-6"
-                  style={{
-                    background: 'var(--content-surface)',
-                    border: isPopular
-                      ? '2px solid var(--sentinel-accent)'
-                      : '1px solid var(--content-border)',
-                  }}
-                >
-                  {/* Popular badge */}
+                <div key={plan} className="relative flex flex-col rounded-xl p-6" style={{ background: '#111111', border: isPopular ? '2px solid #c2fa69' : '1px solid rgba(255,255,255,0.08)' }}>
                   {isPopular && (
-                    <div
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white whitespace-nowrap"
-                      style={{ background: 'var(--sentinel-accent)' }}
-                    >
-                      Most Popular — chosen by 8 in 10 teams
-                    </div>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" style={{ background: '#c2fa69', color: '#0a0a0a' }}>Most Popular</div>
                   )}
-
-                  {/* Plan name + description */}
                   <div className="mb-4 mt-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold" style={{ color: 'var(--content-text)' }}>
-                        {DISPLAY_NAMES[plan]}
-                      </h3>
-                      {isCurrent && <Badge variant="success">Current Plan</Badge>}
+                      <h3 className="text-lg font-bold font-heading">{DISPLAY_NAMES[plan]}</h3>
+                      {isCurrent && <Badge variant="success">Current</Badge>}
                     </div>
-                    <p className="text-xs mt-1" style={{ color: 'var(--content-text-dim)' }}>
-                      {PLAN_DESCRIPTIONS[plan]}
-                    </p>
+                    <p className="text-[11px] mt-1" style={{ color: '#6b7280' }}>{PLAN_DESCRIPTIONS[plan]}</p>
                   </div>
-
-                  {/* Price */}
                   <div className="mb-1">
-                    <span className="text-3xl font-bold" style={{ color: 'var(--content-text)' }}>
-                      {fmtPrice(price)}
-                    </span>
-                    <span className="text-sm ml-1" style={{ color: 'var(--content-text-muted)' }}>/mo</span>
+                    <span className="text-3xl font-bold font-heading">{fmtPrice(price)}</span>
+                    <span className="text-sm ml-1" style={{ color: '#6b7280' }}>/mo</span>
                   </div>
-                  {annual && annualSaving > 0 && (
-                    <p className="text-xs font-medium mb-4" style={{ color: '#F59E0B' }}>
-                      Save {fmtPrice(annualSaving)}/year
-                    </p>
-                  )}
-                  {!annual && <div className="mb-4" />}
-
-                  {/* Actions */}
-                  <div
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 mb-5"
-                    style={{ background: 'rgba(255,255,255,0.03)' }}
-                  >
-                    <Zap className="h-3.5 w-3.5" style={{ color: 'var(--sentinel-accent)' }} />
-                    <span className="text-xs font-medium" style={{ color: 'var(--content-text-muted)' }}>
-                      {ACTION_LIMITS[plan]} AI actions/month
-                    </span>
+                  {annual && annualSaving > 0 ? (
+                    <p className="text-xs font-medium mb-4" style={{ color: '#F59E0B' }}>Save {fmtPrice(annualSaving)}/year</p>
+                  ) : <div className="mb-4" />}
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <Zap className="h-3.5 w-3.5" style={{ color: '#c2fa69' }} />
+                    <span className="text-xs font-medium" style={{ color: '#6b7280' }}>{ACTION_LIMITS[plan]} AI actions/month</span>
                   </div>
-
-                  {/* CTA */}
                   <div className="mt-auto">
                     {isCurrent ? (
-                      <div
-                        className="w-full rounded-lg py-2.5 text-center text-sm font-medium"
-                        style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--content-text-muted)' }}
-                      >
-                        Current Plan
-                      </div>
+                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280' }}>Current Plan</div>
                     ) : canUpgrade ? (
-                      <Button
-                        className="w-full"
-                        onClick={() => { setTargetPlan(plan); setShowUpgrade(true); }}
-                      >
-                        <ArrowUp className="mr-1.5 h-3.5 w-3.5" />
-                        Upgrade to {DISPLAY_NAMES[plan]}
-                      </Button>
+                      <button onClick={() => { setTargetPlan(plan); setShowUpgrade(true); }} className="w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.02]" style={{ background: '#c2fa69', color: '#0a0a0a' }}>
+                        <ArrowUp className="h-3.5 w-3.5" /> Upgrade to {DISPLAY_NAMES[plan]}
+                      </button>
                     ) : canDowngrade ? (
-                      <div
-                        className="w-full rounded-lg py-2.5 text-center text-sm font-medium"
-                        style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--content-text-dim)' }}
-                      >
-                        Contact to downgrade
-                      </div>
+                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.05)', color: '#4b5563' }}>Contact to downgrade</div>
                     ) : null}
-
-                    {/* Risk Reversal */}
-                    <p className="text-[10px] text-center mt-2" style={{ color: 'var(--content-text-dim)' }}>
-                      {plan === 'starter'
-                        ? 'No credit card required to start'
-                        : 'Cancel anytime'}
-                    </p>
+                    <p className="text-[10px] text-center mt-2" style={{ color: '#4b5563' }}>{plan === 'starter' ? 'No credit card required to start' : 'Cancel anytime'}</p>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* ── Risk Reversal Banner ── */}
-          <div
-            className="rounded-xl px-6 py-4 text-center"
-            style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
-          >
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Shield className="h-4 w-4" style={{ color: '#22C55E' }} />
-              <span className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>
-                Risk-Free Guarantee
-              </span>
+          {/* Risk Reversal Banner */}
+          <ContentCard className="mb-8">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Shield className="h-4 w-4" style={{ color: '#22C55E' }} />
+                <span className="text-sm font-semibold">Risk-Free Guarantee</span>
+              </div>
+              <p className="text-[12px]" style={{ color: '#6b7280' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
             </div>
-            <p className="text-xs" style={{ color: 'var(--content-text-dim)' }}>
-              Cancel anytime. Full refund within 30 days. No questions asked.
-            </p>
-          </div>
+          </ContentCard>
 
-          {/* ── Feature Comparison Table ── */}
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ background: 'var(--content-surface)', border: '1px solid var(--content-border)' }}
-          >
-            <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--content-border)' }}>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--content-text)' }}>
-                Feature Comparison
-              </h3>
-            </div>
+          {/* Feature Comparison Table */}
+          <SectionLabel>FEATURE COMPARISON</SectionLabel>
+          <ContentCard className="mb-8">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--content-border)' }}>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--content-text-muted)' }}
-                    >
-                      Feature
-                    </th>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Feature</th>
                     {DISPLAY_ORDER.map((plan) => (
-                      <th
-                        key={plan}
-                        className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider"
-                        style={{ color: 'var(--content-text-muted)' }}
-                      >
-                        {DISPLAY_NAMES[plan]}
-                      </th>
+                      <th key={plan} className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>{DISPLAY_NAMES[plan]}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {FEATURES.map((row, i) => (
-                    <tr
-                      key={row.feature}
-                      style={{
-                        borderBottom: i < FEATURES.length - 1 ? '1px solid var(--content-border)' : undefined,
-                      }}
-                    >
-                      <td className="px-6 py-3 text-[13px]" style={{ color: 'var(--content-text)' }}>
-                        {row.feature}
-                      </td>
+                    <tr key={row.feature} style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid rgba(255,255,255,0.08)' : undefined }}>
+                      <td className="px-4 py-3 text-[13px]">{row.feature}</td>
                       {DISPLAY_ORDER.map((plan) => {
                         const val = row[plan];
                         return (
                           <td key={plan} className="px-4 py-3 text-center">
-                            {val === true ? (
-                              <Check className="inline h-4 w-4" style={{ color: '#22C55E' }} />
-                            ) : val === false ? (
-                              <Minus className="inline h-4 w-4" style={{ color: 'var(--content-text-dim)' }} />
-                            ) : (
-                              <span className="text-xs font-medium" style={{ color: 'var(--content-text-muted)' }}>
-                                {val}
-                              </span>
-                            )}
+                            {val === true ? <Check className="inline h-4 w-4" style={{ color: '#22C55E' }} /> : val === false ? <Minus className="inline h-4 w-4" style={{ color: '#4b5563' }} /> : <span className="text-xs font-medium" style={{ color: '#9ca3af' }}>{val}</span>}
                           </td>
                         );
                       })}
@@ -415,179 +230,85 @@ export default function BillingPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </ContentCard>
 
-          {/* ── Current Subscription Detail ── */}
+          {/* Current Subscription Detail */}
           {subscription && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-
-              {/* Subscription card */}
-              <div
-                className="rounded-xl border p-6"
-                style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-              >
+              <ContentCard>
                 <div className="mb-4 flex items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-lg"
-                    style={{ background: 'rgba(99,102,241,0.12)' }}
-                  >
-                    <CreditCard className="h-5 w-5" style={{ color: 'var(--sentinel-accent)' }} />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'rgba(99,102,241,0.12)' }}>
+                    <CreditCard className="h-5 w-5" style={{ color: '#c2fa69' }} />
                   </div>
-                  <p className="font-semibold" style={{ color: 'var(--content-text)' }}>Current Subscription</p>
+                  <p className="font-semibold">Current Subscription</p>
                 </div>
-
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge variant={PLAN_VARIANT[subscription.plan]}>
-                    {PLAN_LABELS[subscription.plan]}
-                  </Badge>
-                  <Badge variant={SUB_STATUS_VARIANT[subscription.status]}>
-                    {SUB_STATUS_LABELS[subscription.status]}
-                  </Badge>
+                  <Badge variant={PLAN_VARIANT[subscription.plan]}>{PLAN_LABELS[subscription.plan]}</Badge>
+                  <Badge variant={SUB_STATUS_VARIANT[subscription.status]}>{SUB_STATUS_LABELS[subscription.status]}</Badge>
                 </div>
-
-                <div className="space-y-2 text-sm" style={{ color: 'var(--content-text-muted)' }}>
+                <div className="space-y-2 text-sm" style={{ color: '#9ca3af' }}>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>
-                      Period:{' '}
-                      <strong style={{ color: 'var(--content-text)' }}>
-                        {fmt(subscription.currentPeriodStart)} – {fmt(subscription.currentPeriodEnd)}
-                      </strong>
-                    </span>
+                    <span>Period: <strong className="text-white">{fmt(subscription.currentPeriodStart)} – {fmt(subscription.currentPeriodEnd)}</strong></span>
                   </div>
-
                   {subscription.trialEndsAt && subscription.status === 'trial' && (
-                    <div
-                      className="flex items-center gap-2 text-sm font-medium"
-                      style={{ color: isTrialExpiringSoon ? '#F59E0B' : 'var(--content-text-muted)' }}
-                    >
-                      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                      Trial expires: {fmt(subscription.trialEndsAt)}
+                    <div className="flex items-center gap-2" style={{ color: isTrialExpiringSoon ? '#F59E0B' : '#9ca3af' }}>
+                      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" /> Trial expires: {fmt(subscription.trialEndsAt)}
                     </div>
                   )}
-
                   {subscription.wiseInvoiceId && (
                     <div className="flex items-center gap-2">
-                      <span>Invoice:</span>
-                      <span
-                        className="rounded px-1.5 py-0.5 font-mono text-xs"
-                        style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--content-text)' }}
-                      >
-                        …{subscription.wiseInvoiceId.slice(-6)}
-                      </span>
+                      Invoice: <span className="rounded px-1.5 py-0.5 font-mono text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>{'\u2026'}{subscription.wiseInvoiceId.slice(-6)}</span>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* AI Credits card */}
+              </ContentCard>
               {usage && (
-                <div
-                  className="rounded-xl border p-6"
-                  style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-                >
+                <ContentCard>
                   <div className="mb-4 flex items-center gap-3">
-                    <div
-                      className="flex h-9 w-9 items-center justify-center rounded-lg"
-                      style={{ background: 'rgba(139,92,246,0.12)' }}
-                    >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'rgba(139,92,246,0.12)' }}>
                       <TrendingUp className="h-5 w-5" style={{ color: '#8B5CF6' }} />
                     </div>
-                    <p className="font-semibold" style={{ color: 'var(--content-text)' }}>AI Credits — This Period</p>
+                    <p className="font-semibold">AI Credits — This Period</p>
                   </div>
-
                   <div className="mb-3 flex items-end justify-between">
-                    <span className="text-2xl font-bold" style={{ color: 'var(--content-text)' }}>
+                    <span className="text-2xl font-bold font-heading">
                       {usage.aiCreditsUsed.toLocaleString()}
-                      <span className="ml-1 text-sm font-normal" style={{ color: 'var(--content-text-muted)' }}>
-                        / {usage.aiCreditsLimit.toLocaleString()} used
-                      </span>
+                      <span className="ml-1 text-sm font-normal" style={{ color: '#6b7280' }}>/ {usage.aiCreditsLimit.toLocaleString()} used</span>
                     </span>
-                    <span
-                      className="text-sm font-semibold"
-                      style={{
-                        color: usage.usagePercent >= 90 ? '#dc2626'
-                             : usage.usagePercent >= 70 ? '#d97706'
-                             : '#22C55E',
-                      }}
-                    >
+                    <span className="text-sm font-semibold" style={{ color: usage.usagePercent >= 90 ? '#dc2626' : usage.usagePercent >= 70 ? '#d97706' : '#22C55E' }}>
                       {usage.usagePercent}%
                     </span>
                   </div>
-
-                  {/* Progress bar */}
-                  <div
-                    className="mb-3 h-2.5 w-full overflow-hidden rounded-full"
-                    style={{ background: 'var(--content-border)' }}
-                  >
-                    <div
-                      className="h-2.5 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(usage.usagePercent, 100)}%`,
-                        background: creditsBarColor(usage.usagePercent),
-                      }}
-                    />
+                  <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-2.5 rounded-full transition-all duration-500" style={{ width: `${Math.min(usage.usagePercent, 100)}%`, background: creditsBarColor(usage.usagePercent) }} />
                   </div>
-
-                  <div className="space-y-1 text-xs" style={{ color: 'var(--content-text-muted)' }}>
-                    <div className="flex justify-between">
-                      <span>{usage.creditsRemaining.toLocaleString()} credits remaining</span>
-                      <span>Resets {fmt(usage.periodEnd)}</span>
-                    </div>
+                  <div className="flex justify-between text-xs" style={{ color: '#6b7280' }}>
+                    <span>{usage.creditsRemaining.toLocaleString()} remaining</span>
+                    <span>Resets {fmt(usage.periodEnd)}</span>
                   </div>
-                </div>
+                </ContentCard>
               )}
             </div>
           )}
         </>
       )}
 
-      {/* ── Upgrade Modal ── */}
-      <Modal
-        open={showUpgrade}
-        onOpenChange={(o) => {
-          setShowUpgrade(o);
-          if (!o) { setTargetPlan(null); setUpgradeError(null); }
-        }}
-        title="Confirm Plan Upgrade"
-      >
+      {/* Upgrade Modal */}
+      <Modal open={showUpgrade} onOpenChange={(o) => { setShowUpgrade(o); if (!o) { setTargetPlan(null); setUpgradeError(null); } }} title="Confirm Plan Upgrade">
         <div className="flex flex-col gap-4">
           {targetPlan && (
-            <p className="text-sm" style={{ color: 'var(--content-text-muted)' }}>
-              You are upgrading to the{' '}
-              <strong style={{ color: 'var(--content-text)' }}>{DISPLAY_NAMES[targetPlan]}</strong> plan
-              at <strong style={{ color: 'var(--content-text)' }}>
-                {fmtPrice(annual ? ANNUAL_PRICES[targetPlan] : MONTHLY_PRICES[targetPlan])}/mo
-              </strong>
-              {annual ? ' (billed annually)' : ''}.
-              The change takes effect immediately.
+            <p className="text-sm" style={{ color: '#9ca3af' }}>
+              You are upgrading to the <strong className="text-white">{DISPLAY_NAMES[targetPlan]}</strong> plan at <strong className="text-white">{fmtPrice(annual ? ANNUAL_PRICES[targetPlan] : MONTHLY_PRICES[targetPlan])}/mo</strong>{annual ? ' (billed annually)' : ''}. The change takes effect immediately.
             </p>
           )}
-
           {upgradeError && (
-            <div
-              className="rounded-lg border px-3 py-2 text-sm"
-              style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#F87171' }}
-            >
-              {upgradeError}
-            </div>
+            <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#F87171', border: '1px solid rgba(239,68,68,0.2)' }}>{upgradeError}</div>
           )}
-
-          <p className="text-[10px]" style={{ color: 'var(--content-text-dim)' }}>
-            Cancel anytime. Full refund within 30 days. No questions asked.
-          </p>
-
+          <p className="text-[10px]" style={{ color: '#4b5563' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
           <div className="flex justify-end gap-3 pt-1">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => { setShowUpgrade(false); setTargetPlan(null); setUpgradeError(null); }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleUpgrade} disabled={upgrading || !targetPlan}>
-              {upgrading ? 'Upgrading…' : `Upgrade to ${targetPlan ? DISPLAY_NAMES[targetPlan] : ''}`}
-            </Button>
+            <Button type="button" variant="ghost" onClick={() => { setShowUpgrade(false); setTargetPlan(null); setUpgradeError(null); }}>Cancel</Button>
+            <Button onClick={handleUpgrade} disabled={upgrading || !targetPlan}>{upgrading ? 'Upgrading...' : `Upgrade to ${targetPlan ? DISPLAY_NAMES[targetPlan] : ''}`}</Button>
           </div>
         </div>
       </Modal>
