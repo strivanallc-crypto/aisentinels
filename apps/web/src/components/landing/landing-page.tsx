@@ -228,7 +228,7 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-3">
             <Link href="/login" className="text-sm text-[var(--muted)] hover:text-white transition-colors">Log In</Link>
             <Link
-              href="/login"
+              href="/signup"
               className="h-9 px-5 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold inline-flex items-center hover:brightness-110 transition-all"
             >
               Start Free Trial
@@ -250,7 +250,7 @@ export default function LandingPage() {
             <Link href="/blog" className="block text-sm text-[var(--muted)] hover:text-white">Blog</Link>
             <div className="pt-4 border-t border-[var(--border)] space-y-3">
               <Link href="/login" className="block text-sm text-white">Log In</Link>
-              <Link href="/login" className="block h-10 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold flex items-center justify-center">
+              <Link href="/signup" className="block h-10 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold flex items-center justify-center">
                 Start Free Trial
               </Link>
             </div>
@@ -287,7 +287,7 @@ export default function LandingPage() {
           {/* CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
             <Link
-              href="/login"
+              href="/signup"
               className="h-12 px-8 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold inline-flex items-center gap-2 hover:brightness-110 transition-all"
             >
               Start Free Trial <ArrowRight size={16} />
@@ -387,7 +387,7 @@ export default function LandingPage() {
                 See how organizations are achieving ISO certification faster with AI Sentinels.
               </p>
               <Link
-                href="/login"
+                href="/signup"
                 className="h-11 px-6 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold inline-flex items-center gap-2 hover:brightness-110 transition-all"
               >
                 Join 50+ compliance teams <ArrowRight size={16} />
@@ -496,7 +496,7 @@ export default function LandingPage() {
                 </ul>
 
                 <Link
-                  href="/login"
+                  href="/signup"
                   className={`block w-full h-11 rounded-full text-sm font-semibold flex items-center justify-center transition-all ${
                     plan.featured
                       ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-110'
@@ -567,7 +567,7 @@ export default function LandingPage() {
             </p>
           </div>
           <Link
-            href="/login"
+            href="/signup"
             className="shrink-0 h-12 px-8 rounded-full bg-[var(--accent-fg)] text-white font-semibold inline-flex items-center gap-2 hover:bg-[#1a1a1a] transition-all"
           >
             Get started for free <ArrowRight size={16} />
@@ -791,7 +791,7 @@ function HeatmapSection() {
         </div>
 
         <Link
-          href="/login"
+          href="/signup"
           className="mt-10 h-11 px-6 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold inline-flex items-center gap-2 hover:brightness-110 transition-all"
         >
           See Your Real Score <ArrowRight size={16} />

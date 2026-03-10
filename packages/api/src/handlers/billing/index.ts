@@ -8,6 +8,7 @@
  *   GET  /api/v1/billing/subscription  → getSubscription  (JWT protected)
  *   GET  /api/v1/billing/usage         → getBillingUsage  (JWT protected)
  *   POST /api/v1/billing/upgrade       → upgradePlan      (JWT protected)
+ *   POST /api/v1/billing/signup        → signup           (public — no JWT)
  *   POST /api/v1/billing/wise/webhook  → wiseWebhook      (public — no JWT)
  */
 import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
@@ -16,6 +17,7 @@ import { getSubscription }  from './get-subscription.ts';
 import { getBillingUsage }  from './get-usage.ts';
 import { upgradePlan }      from './upgrade-plan.ts';
 import { wiseWebhook }      from './wise-webhook.ts';
+import { signup }           from './signup.ts';
 
 // The handler must satisfy both the JWT and non-JWT event shapes because the
 // Wise webhook route has HttpNoneAuthorizer (no JWT context injected).
@@ -38,6 +40,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     // POST /api/v1/billing/upgrade
     if (method === 'POST' && path === '/api/v1/billing/upgrade') {
       return upgradePlan(event as Parameters<APIGatewayProxyHandlerV2WithJWTAuthorizer>[0]);
+    }
+
+    // POST /api/v1/billing/signup  (public — no JWT)
+    if (method === 'POST' && path === '/api/v1/billing/signup') {
+      return signup(event);
     }
 
     // POST /api/v1/billing/wise/webhook  (public — no JWT)

@@ -1,11 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { createDb } from '@aisentinels/db';
-import { subscriptions } from '@aisentinels/db/schema';
+import { tenants, subscriptions, users, orgContext, orgStandards } from '@aisentinels/db/schema';
 import { eq } from 'drizzle-orm';
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { withTenantContext } from '../../middleware/tenant-context.ts';
+import { sendEmail, FROM_NOTIFICATIONS } from '../../lib/mailer.ts';
 
 const dynamo     = new DynamoDBClient({});
 const cloudwatch = new CloudWatchClient({});
@@ -329,6 +330,79 @@ export async function wiseWebhook(event: APIGatewayProxyEventV2): Promise<{ stat
       .set(updateValues)
       .where(eq(subscriptions.tenantId, tenantId)),
   );
+
+  // ── Tenant provisioning on activation ─────────────────────────────────────
+  // On first payment: activate tenant, seed org_context, activate ISO standards,
+  // and send account-activated email. Non-fatal — subscription is already active.
+  if (newStatus === 'active') {
+    try {
+      // Activate tenant
+      await withTenantContext(client, tenantId, async (txDb) =>
+        txDb.update(tenants).set({ status: 'active', updatedAt: now }).where(eq(tenants.id, tenantId)),
+      );
+
+      // Fetch tenant name for org_context seeding
+      const [tenantRow] = await db.select({ name: tenants.name }).from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+      const companyName = tenantRow?.name ?? 'Unknown';
+
+      // Seed org_context (upsert — idempotent for re-processed webhooks)
+      await withTenantContext(client, tenantId, async (txDb) =>
+        txDb.insert(orgContext).values({
+          tenantId,
+          companyName,
+        }).onConflictDoNothing(),
+      );
+
+      // Activate ISO standards based on plan tier
+      const plan = updateValues.plan ?? 'starter';
+      const PLAN_STANDARDS: Record<string, string[]> = {
+        starter:      ['ISO 9001'],
+        professional: ['ISO 9001', 'ISO 14001'],
+        enterprise:   ['ISO 9001', 'ISO 14001', 'ISO 45001'],
+      };
+      const standardCodes = PLAN_STANDARDS[plan] ?? ['ISO 9001'];
+
+      await withTenantContext(client, tenantId, async (txDb) => {
+        for (const code of standardCodes) {
+          await txDb.insert(orgStandards).values({
+            tenantId,
+            standardCode: code,
+          }).onConflictDoNothing();
+        }
+      });
+
+      // Send account-activated email (fire-and-forget)
+      const [ownerRow] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.tenantId, tenantId))
+        .limit(1);
+
+      if (ownerRow?.email) {
+        sendEmail({
+          to: ownerRow.email,
+          from: FROM_NOTIFICATIONS,
+          subject: 'Your AI Sentinels account is active!',
+          html: `<p>Your payment has been received and your account is now active.</p><p>Log in at <a href="https://aisentinels.io/login">aisentinels.io</a> to get started.</p>`,
+          text: `Your payment has been received and your account is now active. Log in at https://aisentinels.io/login to get started.`,
+        });
+      }
+
+      console.log(JSON.stringify({
+        event: 'WiseWebhookTenantProvisioned',
+        tenantId,
+        plan,
+        standards: standardCodes,
+      }));
+    } catch (provErr) {
+      // Non-fatal — subscription is already active, provisioning can be retried manually
+      console.error(JSON.stringify({
+        event: 'WiseWebhookProvisioningError',
+        tenantId,
+        error: String(provErr),
+      }));
+    }
+  }
 
   // ── Audit log to DynamoDB ───────────────────────────────────────────────────
   try {
