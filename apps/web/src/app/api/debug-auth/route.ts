@@ -1,64 +1,71 @@
 import { NextResponse } from 'next/server';
+import { Auth, raw, skipCSRFCheck, setEnvDefaults } from '@auth/core';
+import Cognito from '@auth/core/providers/cognito';
 
 /**
- * Temporary diagnostic endpoint to debug auth Configuration error.
- * Tests: env vars, OIDC discovery fetch, and provider config.
+ * Diagnostic: reproduce the exact Auth.js signin flow and catch the real error.
  * DELETE THIS FILE once auth is working.
  */
 export async function GET() {
-  const results: Record<string, unknown> = {};
-
-  // 1. Check env vars
-  results.envVars = {
-    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ? 'SET (' + process.env.COGNITO_CLIENT_ID!.substring(0, 8) + '...)' : 'MISSING',
-    COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET ? 'SET (length: ' + process.env.COGNITO_CLIENT_SECRET!.length + ')' : 'MISSING',
-    COGNITO_ISSUER: process.env.COGNITO_ISSUER ?? 'MISSING',
-    COGNITO_DOMAIN: process.env.COGNITO_DOMAIN ?? 'MISSING',
-    AUTH_SECRET: process.env.AUTH_SECRET ? 'SET (length: ' + process.env.AUTH_SECRET!.length + ')' : 'MISSING',
-    AUTH_URL: process.env.AUTH_URL ?? 'MISSING',
-    AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST ?? 'MISSING',
-    NODE_ENV: process.env.NODE_ENV ?? 'MISSING',
+  const cognitoDomain = process.env.COGNITO_DOMAIN!;
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const config: any = {
+    providers: [
+      Cognito({
+        clientId:     process.env.COGNITO_CLIENT_ID!,
+        clientSecret: process.env.COGNITO_CLIENT_SECRET ?? '',
+        issuer:       process.env.COGNITO_ISSUER!,
+        authorization: {
+          url: `https://${cognitoDomain}/oauth2/authorize`,
+          params: { scope: 'openid email profile' },
+        },
+        token:    `https://${cognitoDomain}/oauth2/token`,
+        userinfo: `https://${cognitoDomain}/oauth2/userInfo`,
+      }),
+    ],
+    pages: { signIn: '/login' },
+    debug: true,
   };
 
-  // 2. Test OIDC discovery fetch
-  const issuer = process.env.COGNITO_ISSUER;
-  if (issuer) {
-    try {
-      const wellKnownUrl = `${issuer}/.well-known/openid-configuration`;
-      results.oidcDiscoveryUrl = wellKnownUrl;
-      const startMs = Date.now();
-      const resp = await fetch(wellKnownUrl, { cache: 'no-store' });
-      const durationMs = Date.now() - startMs;
-      results.oidcDiscoveryStatus = resp.status;
-      results.oidcDiscoveryDurationMs = durationMs;
-      if (resp.ok) {
-        const config = await resp.json();
-        results.oidcDiscoveryIssuer = config.issuer;
-        results.oidcDiscoveryAuthEndpoint = config.authorization_endpoint;
-        results.oidcDiscoveryTokenEndpoint = config.token_endpoint;
-      } else {
-        results.oidcDiscoveryError = `HTTP ${resp.status}`;
-      }
-    } catch (err: unknown) {
-      results.oidcDiscoveryError = err instanceof Error ? err.message : String(err);
+  config.secret = process.env.AUTH_SECRET;
+  config.basePath = '/api/auth';
+  config.trustHost = true;
+
+  setEnvDefaults(process.env as Record<string, string | undefined>, config, true);
+
+  // Simulate the signin POST request
+  const url = 'https://aisentinels.io/api/auth/signin/cognito?';
+  const headers = new Headers();
+  headers.set('host', 'aisentinels.io');
+  headers.set('Content-Type', 'application/x-www-form-urlencoded');
+  headers.set('x-forwarded-proto', 'https');
+  const body = new URLSearchParams({ callbackUrl: '/dashboard' });
+  const req = new Request(url, { method: 'POST', headers, body });
+
+  try {
+    const res = await Auth(req, { ...config, raw, skipCSRFCheck });
+    if (res instanceof Response) {
+      return NextResponse.json({
+        result: 'Response object (masked error)',
+        status: res.status,
+        location: res.headers.get('Location'),
+      });
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawRes = res as any;
+    return NextResponse.json({
+      result: 'Raw response (SUCCESS)',
+      redirect: rawRes.redirect,
+      cookieCount: rawRes.cookies?.length,
+      success: typeof rawRes.redirect === 'string' && rawRes.redirect.includes('oauth2/authorize'),
+    });
+  } catch (err: unknown) {
+    return NextResponse.json({
+      result: 'CAUGHT ERROR (thrown back by Auth raw mode)',
+      errorType: (err as Error).constructor?.name ?? 'Unknown',
+      errorMessage: (err as Error).message ?? String(err),
+      errorStack: (err as Error).stack?.split('\n').slice(0, 8),
+    }, { status: 500 });
   }
-
-  // 3. Test Cognito domain endpoints
-  const domain = process.env.COGNITO_DOMAIN;
-  if (domain) {
-    results.cognitoDomainUrls = {
-      authorize: `https://${domain}/oauth2/authorize`,
-      token: `https://${domain}/oauth2/token`,
-      userinfo: `https://${domain}/oauth2/userInfo`,
-    };
-  }
-
-  // 4. Check crypto.subtle availability
-  results.cryptoSubtleAvailable = typeof globalThis.crypto?.subtle !== 'undefined';
-
-  // 5. Node.js version
-  results.nodeVersion = process.version;
-
-  return NextResponse.json(results, { status: 200 });
 }
