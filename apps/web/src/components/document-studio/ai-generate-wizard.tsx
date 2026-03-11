@@ -15,9 +15,8 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
+import { useRouter } from 'next/navigation';
 import { aiApi, documentsApi } from '@/lib/api';
-import { generateIsoTemplate } from '@/lib/iso-templates';
-import { createLocalDocument } from '@/lib/local-store';
 import type { DocType, IsoStandard } from '@/lib/types';
 import { DOC_TYPE_LABELS, ISO_STANDARD_LABELS } from '@/lib/types';
 
@@ -48,6 +47,7 @@ const DEFAULT_SECTIONS: Record<string, string[]> = {
 };
 
 export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('config');
   const [docType, setDocType] = useState<DocType>('procedure');
   const [standards, setStandards] = useState<IsoStandard[]>(['iso_9001']);
@@ -124,22 +124,8 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
       setClauseRefs(data.clauseRefs ?? []);
       setStep('preview');
     } catch {
-      // AI backend unavailable — generate professional ISO template locally
-      try {
-        const template = generateIsoTemplate({
-          documentType: DOC_TYPE_LABELS[docType],
-          standards,
-          orgContext: orgContext || 'Generic organisation seeking ISO compliance',
-          sections,
-          title: title || undefined,
-        });
-        setGeneratedContent(template.content);
-        setClauseRefs(template.clauseRefs);
-        setStep('preview');
-      } catch {
-        setError('Doki could not generate the document. Please try again.');
-        setStep('sections');
-      }
+      setError('Doki could not generate the document. Please try again.');
+      setStep('sections');
     }
   };
 
@@ -147,40 +133,23 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await documentsApi.create({
+      const res = await documentsApi.create({
         title: title || `${DOC_TYPE_LABELS[docType]} — AI Generated`,
         docType,
         content: generatedContent,
         standards,
         clauseRefs,
       });
+      const created = res.data as { id?: string; document?: { id?: string } };
+      const newId = created.id ?? created.document?.id;
       onCreated();
       onOpenChange(false);
       reset();
-    } catch {
-      // Backend unavailable — save to localStorage
-      try {
-        const template = generateIsoTemplate({
-          documentType: DOC_TYPE_LABELS[docType],
-          standards,
-          orgContext: orgContext || 'Generic organisation seeking ISO compliance',
-          sections,
-          title: title || undefined,
-        });
-        createLocalDocument({
-          title: title || `${DOC_TYPE_LABELS[docType]} — AI Generated`,
-          docType,
-          content: generatedContent,
-          standards,
-          clauseRefs,
-          bodyJsonb: template.bodyJsonb as Record<string, unknown>,
-        });
-        onCreated();
-        onOpenChange(false);
-        reset();
-      } catch {
-        setError('Failed to save document.');
+      if (newId) {
+        router.push(`/document-studio/${newId}`);
       }
+    } catch {
+      setError('Failed to save document. Please check your connection and try again.');
     } finally {
       setSaving(false);
     }

@@ -13,7 +13,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import { documentsApi } from '@/lib/api';
-import { getLocalDocument, updateLocalDocument } from '@/lib/local-store';
 import type { Document, DocStatus } from '@/lib/types';
 import {
   DOC_TYPE_LABELS,
@@ -52,13 +51,7 @@ export default function DocumentDetailPage() {
       const res = await documentsApi.get(id);
       setDoc(res.data as Document);
     } catch {
-      // Backend unavailable — try localStorage
-      const localDoc = getLocalDocument(id);
-      if (localDoc) {
-        setDoc(localDoc as unknown as Document);
-      } else {
-        setError('Document not found or access denied.');
-      }
+      setError('Document not found or access denied.');
     } finally {
       setLoading(false);
     }
@@ -190,14 +183,7 @@ export default function DocumentDetailPage() {
             content={doc.bodyJsonb as Record<string, unknown> | null | undefined}
             editable={doc.status === 'draft'}
             onSave={async (json) => {
-              try {
-                await documentsApi.update(doc.id, { bodyJsonb: json });
-              } catch {
-                // Backend unavailable — save to localStorage
-                if (doc.id.startsWith('local_')) {
-                  updateLocalDocument(doc.id, { bodyJsonb: json as Record<string, unknown> });
-                }
-              }
+              await documentsApi.update(doc.id, { bodyJsonb: json });
             }}
           />
         </div>
