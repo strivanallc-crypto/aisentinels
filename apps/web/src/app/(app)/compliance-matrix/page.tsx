@@ -167,16 +167,26 @@ export default function ComplianceMatrixPage() {
       </div>
 
       {/* ── View tabs ── */}
-      <div className="flex gap-1 rounded-full border p-1 mb-6 w-fit" style={{ borderColor: 'var(--border)', background: 'var(--row-hover)' }}>
+      <div className="flex gap-1 rounded-full border p-1 mb-6 w-fit" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
         <button
           onClick={() => setActiveTab('matrix')}
-          className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200 ${activeTab === 'matrix' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
+          className="flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200"
+          style={{
+            background: activeTab === 'matrix' ? 'var(--card-bg)' : 'transparent',
+            color: activeTab === 'matrix' ? 'var(--text)' : 'var(--muted)',
+            boxShadow: activeTab === 'matrix' ? 'var(--card-shadow)' : 'none',
+          }}
         >
           <Grid3X3 className="h-3.5 w-3.5" /> Matrix
         </button>
         <button
           onClick={() => setActiveTab('heatmap')}
-          className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200 ${activeTab === 'heatmap' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
+          className="flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200"
+          style={{
+            background: activeTab === 'heatmap' ? 'var(--card-bg)' : 'transparent',
+            color: activeTab === 'heatmap' ? 'var(--text)' : 'var(--muted)',
+            boxShadow: activeTab === 'heatmap' ? 'var(--card-shadow)' : 'none',
+          }}
         >
           <BarChart3 className="h-3.5 w-3.5" /> Heat Map
         </button>
