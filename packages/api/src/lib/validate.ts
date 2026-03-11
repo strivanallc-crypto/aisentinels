@@ -80,6 +80,13 @@ export const CreateDocumentSchema = z.object({
   clauseRefs: z.array(z.string().max(100)).max(50).optional().default([]),
 });
 
+export const UpdateDocumentSchema = z.object({
+  title:      z.string().min(1).max(500).transform((s) => s.trim()).optional(),
+  bodyJsonb:  z.record(z.unknown()).optional(),
+  standards:  z.array(z.enum(ISO_STANDARDS)).max(10).optional(),
+  clauseRefs: z.array(z.string().max(100)).max(50).optional(),
+});
+
 export const CreateRecordSchema = z.object({
   title:          z.string().min(1).max(500).transform((s) => s.trim()),
   category:       z.enum(RECORD_CATEGORIES),

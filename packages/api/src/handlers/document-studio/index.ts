@@ -5,16 +5,18 @@
  * Routes by HTTP method + rawPath to individual operation modules.
  *
  * Routes handled:
- *   GET  /api/v1/document-studio/documents                       → listDocuments
- *   POST /api/v1/document-studio/documents                       → createDocument
- *   GET  /api/v1/document-studio/documents/{id}                  → getDocument
- *   POST /api/v1/document-studio/documents/{id}/submit-for-approval → submitDocument
- *   POST /api/v1/document-studio/approvals/{approvalId}/decide   → decideDocument
+ *   GET   /api/v1/document-studio/documents                       → listDocuments
+ *   POST  /api/v1/document-studio/documents                       → createDocument
+ *   GET   /api/v1/document-studio/documents/{id}                  → getDocument
+ *   PATCH /api/v1/document-studio/documents/{id}                  → updateDocument
+ *   POST  /api/v1/document-studio/documents/{id}/submit-for-approval → submitDocument
+ *   POST  /api/v1/document-studio/approvals/{approvalId}/decide   → decideDocument
  */
 import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { listDocuments } from './list.ts';
 import { createDocument } from './create.ts';
 import { getDocument } from './get.ts';
+import { updateDocument } from './update.ts';
 import { submitDocument } from './submit.ts';
 import { decideDocument } from './decide.ts';
 
@@ -41,6 +43,11 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
     // POST /api/v1/document-studio/approvals/{approvalId}/decide
     if (method === 'POST' && path.includes('/approvals/') && path.endsWith('/decide')) {
       return decideDocument(event);
+    }
+
+    // PATCH /api/v1/document-studio/documents/{id} (update document)
+    if (method === 'PATCH' && path.startsWith('/api/v1/document-studio/documents/')) {
+      return updateDocument(event);
     }
 
     // GET /api/v1/document-studio/documents/{id}

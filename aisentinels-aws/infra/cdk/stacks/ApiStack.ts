@@ -641,7 +641,7 @@ export class ApiStack extends cdk.Stack {
     });
     this.httpApi.addRoutes({
       path: '/api/v1/document-studio/documents/{id}',
-      methods: [HttpMethod.GET],
+      methods: [HttpMethod.GET, HttpMethod.PATCH],
       integration: documentsIntegration,
     });
     this.httpApi.addRoutes({
