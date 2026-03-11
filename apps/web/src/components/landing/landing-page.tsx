@@ -193,7 +193,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-white font-body">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-body">
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* NAVBAR                                                             */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
@@ -375,7 +375,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* TESTIMONIALS                                                       */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-[var(--bg)]">
+      <section className="py-24 bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-start">
             <div>
@@ -397,7 +397,7 @@ export default function LandingPage() {
               {TESTIMONIALS.map((t) => (
                 <div
                   key={t.author}
-                  className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6"
+                  className="bg-[#111111] border border-[var(--border)] rounded-[var(--radius)] p-6"
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white">
@@ -521,7 +521,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* FAQ                                                                */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-[var(--bg)]">
+      <section className="py-24 bg-[#0a0a0a]">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--accent)]">FAQ</span>
@@ -578,7 +578,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* FOOTER                                                             */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <footer className="bg-[var(--bg)] border-t border-[var(--border)] py-16">
+      <footer className="bg-[#0a0a0a] border-t border-[var(--border)] py-16">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
@@ -667,7 +667,7 @@ function FeatureSection({ feature, index }: { feature: typeof FEATURES[number]; 
 
   const mockupBlock = (
     <div className={`rounded-2xl border overflow-hidden ${
-      isWhite ? 'bg-[#111111] border-gray-200' : 'bg-[var(--surface)] border-[var(--border)]'
+      isWhite ? 'bg-[#111111] border-gray-200' : 'bg-[#111111] border-[var(--border)]'
     }`}>
       <div className="aspect-[4/3] flex items-center justify-center p-8">
         <div className="w-full max-w-xs space-y-4">
@@ -684,7 +684,7 @@ function FeatureSection({ feature, index }: { feature: typeof FEATURES[number]; 
   );
 
   return (
-    <section className={`py-24 ${isWhite ? 'bg-white' : 'bg-[var(--bg)]'}`}>
+    <section className={`py-24 ${isWhite ? 'bg-white' : 'bg-[#0a0a0a]'}`}>
       <div ref={ref} className="max-w-6xl mx-auto px-6 opacity-0">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {feature.flip ? (
@@ -707,11 +707,11 @@ function FeatureSection({ feature, index }: { feature: typeof FEATURES[number]; 
 function ImsFeatureSection() {
   const ref = useFadeInRef();
   return (
-    <section id="sentinels" className="py-24 bg-[var(--bg)]">
+    <section id="sentinels" className="py-24 bg-[#0a0a0a]">
       <div ref={ref} className="max-w-6xl mx-auto px-6 opacity-0">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Mockup: 3 shields */}
-          <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] aspect-[4/3] flex items-center justify-center gap-6">
+          <div className="rounded-2xl bg-[#111111] border border-[var(--border)] aspect-[4/3] flex items-center justify-center gap-6">
             <SentinelShield sentinel="qualy" size="lg" glow />
             <SentinelShield sentinel="envi" size="lg" glow />
             <SentinelShield sentinel="saffy" size="lg" glow />
@@ -751,7 +751,7 @@ function HeatmapSection() {
   const statuses = ['bg-green-500', 'bg-green-500', 'bg-amber-500', 'bg-green-500', 'bg-red-500', 'bg-green-500'];
 
   return (
-    <section className="py-24 bg-[var(--surface)]">
+    <section className="py-24 bg-[#111111]">
       <div ref={ref} className="max-w-5xl mx-auto px-6 text-center opacity-0">
         <h2 className="text-4xl md:text-5xl font-bold mb-4">Your Compliance at a Glance</h2>
         <p className="text-[var(--muted)] mb-12">Real-time visibility across every ISO clause</p>
