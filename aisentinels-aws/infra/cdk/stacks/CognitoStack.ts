@@ -18,6 +18,7 @@
  *  • SSM Parameters + CfnOutputs for all IDs/ARNs
  */
 import * as cdk from 'aws-cdk-lib';
+import { SecretValue } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -240,6 +241,38 @@ export class CognitoStack extends cdk.Stack {
     tag(this.userPoolDomain);
 
     // ══════════════════════════════════════════════════════════════════════════
+    // Google Federated Identity Provider
+    //
+    // Google sign-in flows through Cognito's hosted UI so that users get a
+    // proper Cognito JWT (access_token + id_token) that API Gateway can
+    // validate.  Credentials are stored in SSM Parameter Store.
+    // ══════════════════════════════════════════════════════════════════════════
+    const googleClientId = ssm.StringParameter.valueForStringParameter(
+      this, `/aisentinels/${envName}/auth/google-client-id`,
+    );
+
+
+    const googleClientSecret = ssm.StringParameter.valueForStringParameter(
+      this, `/aisentinels/${envName}/auth/google-client-secret`,
+    );
+
+    const googleProvider = new cognito.UserPoolIdentityProviderGoogle(
+      this, 'GoogleProvider', {
+        userPool: this.userPool,
+        clientId: googleClientId,
+        clientSecretValue: SecretValue.unsafePlainText(googleClientSecret),
+        scopes: ['openid', 'email', 'profile'],
+        attributeMapping: {
+          email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+          givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+          familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+        },
+      },
+    );
+    tag(googleProvider);
+
+
+    // ══════════════════════════════════════════════════════════════════════════
     // App Client 1 — Web SPA  (PKCE, Authorization Code, no secret)
     //
     // Used by the Next.js frontend via Auth.js / Amazon Cognito provider.
@@ -249,6 +282,12 @@ export class CognitoStack extends cdk.Stack {
     this.webAppClient = this.userPool.addClient('WebAppClient', {
       userPoolClientName: `aisentinels-web-${envName}`,
       generateSecret: false, // SPA — secret not safe to embed in browser
+
+      // Identity providers — both native Cognito email/password and Google federation
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        cognito.UserPoolClientIdentityProvider.GOOGLE,
+      ],
 
       authFlows: {
         // PKCE Authorization Code flow only — most secure for SPAs
@@ -302,6 +341,9 @@ export class CognitoStack extends cdk.Stack {
         .withStandardAttributes({ email: true, fullname: true }),
       // Custom attributes (tenantId, role) are set by admin flow — not user self-write
     });
+
+    // Ensure Google IdP is created before the app client references it
+    this.webAppClient.node.addDependency(googleProvider);
 
     // ══════════════════════════════════════════════════════════════════════════
     // App Client 2 — M2M / API Gateway  (client credentials, with secret)
