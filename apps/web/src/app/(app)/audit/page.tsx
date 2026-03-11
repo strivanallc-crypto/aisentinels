@@ -116,14 +116,14 @@ export default function AuditPage() {
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: '#4b5563' }} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search audits..."
               className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </div>
           <SecondaryButton onClick={() => setShowAiPlan(true)}>
@@ -157,7 +157,7 @@ export default function AuditPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
             {filtered.map((s, i) => (
               <div
                 key={s.id}
@@ -166,13 +166,13 @@ export default function AuditPage() {
               >
                 <span
                   className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
-                  style={{ color: 'rgba(255,255,255,0.12)' }}
+                  style={{ color: 'var(--row-number)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold truncate">{s.title}</p>
-                  <p className="text-[11px]" style={{ color: '#6b7280' }}>
+                  <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                     {AUDIT_TYPE_LABELS[s.auditType]} · {s.scope}
                   </p>
                 </div>
@@ -185,10 +185,10 @@ export default function AuditPage() {
                 >
                   {AUDIT_STATUS_LABELS[s.status] ?? s.status}
                 </span>
-                <span className="text-[11px] flex-shrink-0 w-24 text-right tabular-nums" style={{ color: '#4b5563' }}>
+                <span className="text-[11px] flex-shrink-0 w-24 text-right tabular-nums" style={{ color: 'var(--content-text-dim)' }}>
                   {new Date(s.auditDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: 'var(--content-text-dim)' }} />
               </div>
             ))}
           </div>
@@ -203,52 +203,52 @@ export default function AuditPage() {
       >
         <form onSubmit={handleCreateAudit} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Audit Title</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Audit Title</label>
             <input
               type="text"
               required
               value={auditForm.title}
               onChange={(e) => setAuditForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Annual ISO 9001 Internal Audit"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-white/20"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-white/20"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Type</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Type</label>
               <select
                 required
                 value={auditForm.auditType}
                 onChange={(e) => setAuditForm((f) => ({ ...f, auditType: e.target.value as AuditType }))}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-                style={{ color: '#fff' }}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
               >
                 {AUDIT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Date</label>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Date</label>
               <input
                 type="date"
                 required
                 value={auditForm.auditDate}
                 onChange={(e) => setAuditForm((f) => ({ ...f, auditDate: e.target.value }))}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-                style={{ color: '#fff' }}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Scope</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Scope</label>
             <textarea
               required
               rows={3}
               value={auditForm.scope}
               onChange={(e) => setAuditForm((f) => ({ ...f, scope: e.target.value }))}
               placeholder="Describe what will be covered in this audit..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

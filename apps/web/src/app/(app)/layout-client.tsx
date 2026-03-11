@@ -4,10 +4,11 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, LogOut, Zap } from 'lucide-react';
+import { ChevronRight, LogOut, Zap, Sun, Moon } from 'lucide-react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { CommandPalette } from '@/components/layout/command-palette';
 import { ToastProvider } from '@/components/ui/toast';
+import { useTheme } from '@/components/theme-provider';
 import { billingApi, api } from '@/lib/api';
 import type { PlanType } from '@/lib/types';
 import { hasAcceptedAllCurrentVersions } from '@/lib/legal-versions';
@@ -44,15 +45,59 @@ function LoadingScreen() {
   return (
     <div
       className="flex h-screen items-center justify-center"
-      style={{ background: 'var(--sidebar-bg)' }}
+      style={{ background: 'var(--content-bg)' }}
     >
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-6 w-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-        <p className="text-sm" style={{ color: 'var(--sidebar-text-dim)' }}>
-          Loading…
+      <div className="flex flex-col items-center gap-4">
+        {/* Neon pulse loader */}
+        <div className="relative">
+          <div
+            className="h-8 w-8 rounded-full border-2 animate-spin"
+            style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
+          />
+          <div
+            className="absolute inset-0 rounded-full animate-neon-pulse"
+            style={{ background: 'var(--accent)', opacity: 0.1 }}
+          />
+        </div>
+        <p className="text-sm font-medium" style={{ color: 'var(--muted)' }}>
+          Loading...
         </p>
       </div>
     </div>
+  );
+}
+
+/* ── Theme Toggle Button ─────────────────────────────────────────────────── */
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="relative flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-300 hover:scale-105 active:scale-95"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+      }}
+      title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+    >
+      <Sun
+        className="h-4 w-4 absolute transition-all duration-300"
+        style={{
+          color: '#F59E0B',
+          opacity: theme === 'light' ? 1 : 0,
+          transform: theme === 'light' ? 'rotate(0deg) scale(1)' : 'rotate(90deg) scale(0)',
+        }}
+      />
+      <Moon
+        className="h-4 w-4 absolute transition-all duration-300"
+        style={{
+          color: '#818CF8',
+          opacity: theme === 'dark' ? 1 : 0,
+          transform: theme === 'dark' ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0)',
+        }}
+      />
+    </button>
   );
 }
 
@@ -147,24 +192,27 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
           {/* ── Header bar ── */}
           <header
             className="flex items-center justify-between px-6 lg:px-8 py-3 flex-shrink-0"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            style={{
+              borderBottom: '1px solid var(--content-border)',
+              background: 'var(--content-bg)',
+            }}
           >
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-[13px]">
               {breadcrumbs.map((bc, i) => (
                 <Fragment key={bc.href}>
                   {i > 0 && (
-                    <ChevronRight className="h-3 w-3" style={{ color: '#4b5563' }} />
+                    <ChevronRight className="h-3 w-3" style={{ color: 'var(--muted)' }} />
                   )}
                   {bc.isLast ? (
-                    <span className="font-medium" style={{ color: '#ffffff' }}>
+                    <span className="font-medium" style={{ color: 'var(--text)' }}>
                       {bc.label}
                     </span>
                   ) : (
                     <Link
                       href={bc.href}
-                      className="transition-colors hover:text-white"
-                      style={{ color: '#6b7280' }}
+                      className="transition-colors"
+                      style={{ color: 'var(--muted)' }}
                     >
                       {bc.label}
                     </Link>
@@ -173,19 +221,25 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
 
-            {/* Right side: usage badge + user avatar */}
-            <div className="flex items-center gap-4">
+            {/* Right side: theme toggle + usage badge + user avatar */}
+            <div className="flex items-center gap-3">
+              {/* Theme toggle */}
+              <ThemeToggle />
+
               {/* Actions remaining badge */}
               <div
                 className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
-                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                }}
               >
-                <Zap className="h-3.5 w-3.5" style={{ color: '#c2fa69' }} />
-                <span className="text-[12px]" style={{ color: '#6b7280' }}>
-                  Actions remaining:
+                <Zap className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />
+                <span className="text-[12px]" style={{ color: 'var(--muted)' }}>
+                  AI Credits:
                 </span>
-                <span className="text-[12px] font-semibold" style={{ color: '#c2fa69' }}>
-                  {actionsRemaining} / {actionsLimit}
+                <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
+                  {actionsRemaining}/{actionsLimit}
                 </span>
               </div>
 
@@ -193,8 +247,11 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen((prev) => !prev)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold text-white transition-colors hover:ring-2 hover:ring-white/20"
-                  style={{ background: '#3B82F6' }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold text-white transition-all hover:ring-2"
+                  style={{
+                    background: '#3B82F6',
+                    outlineColor: 'var(--accent)',
+                  }}
                   title={email}
                 >
                   {initial}
@@ -202,23 +259,25 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
 
                 {userMenuOpen && (
                   <div
-                    className="absolute right-0 top-10 z-50 w-56 rounded-xl py-1 shadow-2xl"
+                    className="absolute right-0 top-10 z-50 w-56 rounded-xl py-1 animate-scale-in"
                     style={{
-                      background: '#111111',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
                     }}
                   >
-                    <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                      <p className="text-[12px] font-medium text-white truncate">{email}</p>
-                      <p className="text-[11px] capitalize" style={{ color: '#6b7280' }}>
+                    <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <p className="text-[12px] font-medium truncate" style={{ color: 'var(--text)' }}>
+                        {email}
+                      </p>
+                      <p className="text-[11px] capitalize" style={{ color: 'var(--muted)' }}>
                         {currentPlan} plan
                       </p>
                     </div>
                     <button
                       onClick={() => signOut({ callbackUrl: '/login' })}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-[13px] transition-colors hover:bg-white/5"
-                      style={{ color: '#9ca3af' }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-[13px] transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
                     >
                       <LogOut className="h-3.5 w-3.5" />
                       Log out

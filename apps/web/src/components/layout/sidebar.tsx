@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
-import { LogOut, Shield, Lock, Calendar, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LogOut, Lock, Calendar, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { NAV_GROUPS } from './nav-items';
 import type { PlanType } from '@/lib/types';
 
@@ -20,6 +20,65 @@ declare global {
 
 const PLAN_ORDER: PlanType[] = ['starter', 'professional', 'enterprise'];
 
+/* ── Animated Neon Logo (Sadewa circuit-board style) ────────────────────── */
+function NeonLogo({ size = 32 }: { size?: number }) {
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      {/* Glow backdrop */}
+      <div
+        className="absolute inset-0 rounded-xl animate-neon-pulse"
+        style={{ background: 'var(--accent)', opacity: 0.15 }}
+      />
+      {/* Circuit-board style shield */}
+      <svg
+        viewBox="0 0 32 32"
+        fill="none"
+        className="relative z-10 animate-neon-pulse"
+        style={{ width: size, height: size }}
+      >
+        {/* Shield body */}
+        <path
+          d="M16 2L4 8v8c0 7.18 5.12 13.88 12 16 6.88-2.12 12-8.82 12-16V8L16 2z"
+          fill="var(--accent)"
+          fillOpacity="0.15"
+          stroke="var(--accent)"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+        {/* Circuit traces */}
+        <path
+          d="M16 8v6m0 0h4m-4 0h-4"
+          stroke="var(--accent)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          className="animate-circuit-trace"
+        />
+        <circle cx="16" cy="14" r="1.5" fill="var(--accent)" />
+        <circle cx="20" cy="14" r="1" fill="var(--accent)" fillOpacity="0.6" />
+        <circle cx="12" cy="14" r="1" fill="var(--accent)" fillOpacity="0.6" />
+        {/* Bottom circuit nodes */}
+        <path
+          d="M12 18h8"
+          stroke="var(--accent)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeOpacity="0.4"
+        />
+        <circle cx="12" cy="18" r="0.8" fill="var(--accent)" fillOpacity="0.4" />
+        <circle cx="20" cy="18" r="0.8" fill="var(--accent)" fillOpacity="0.4" />
+        <circle cx="16" cy="22" r="0.8" fill="var(--accent)" fillOpacity="0.3" />
+        <path
+          d="M16 18v4"
+          stroke="var(--accent)"
+          strokeWidth="0.8"
+          strokeOpacity="0.3"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/* ── Sidebar Component ──────────────────────────────────────────────────── */
 interface SidebarProps {
   session: Session;
   currentPlan?: PlanType;
@@ -51,27 +110,28 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
   return (
     <aside
       className={`flex flex-shrink-0 flex-col h-screen transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-[248px]'
+        collapsed ? 'w-16' : 'w-[260px]'
       }`}
-      style={{ background: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+      style={{
+        background: 'var(--sidebar-bg)',
+        borderRight: '1px solid var(--sidebar-border)',
+      }}
     >
       {/* ── Logo ── */}
       <div
         className={`flex items-center gap-3 py-5 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--sidebar-border)' }}
       >
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
-        >
-          <Shield className="h-4 w-4 text-white" />
-        </div>
+        <NeonLogo size={collapsed ? 28 : 32} />
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-bold text-white leading-tight font-heading tracking-tight">
+            <p
+              className="text-[13px] font-bold leading-tight font-heading tracking-tight"
+              style={{ color: 'var(--text)' }}
+            >
               AI Sentinels
             </p>
-            <p className="text-[10px] leading-tight" style={{ color: '#4b5563' }}>
+            <p className="text-[10px] leading-tight" style={{ color: 'var(--sidebar-text-dim)' }}>
               ISO Compliance Platform
             </p>
           </div>
@@ -79,8 +139,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="flex-shrink-0 rounded-lg p-1.5 transition-all duration-200 hover:bg-white/5"
-            style={{ color: '#4b5563' }}
+            className="flex-shrink-0 rounded-lg p-1.5 transition-all duration-200"
+            style={{ color: 'var(--sidebar-text-dim)' }}
             title="Collapse sidebar"
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -92,8 +152,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="mx-auto mt-3 flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-white/5"
-          style={{ color: '#4b5563' }}
+          className="mx-auto mt-3 flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+          style={{ color: 'var(--sidebar-text-dim)' }}
           title="Expand sidebar"
         >
           <PanelLeft className="h-4 w-4" />
@@ -107,7 +167,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
             {!collapsed && (
               <p
                 className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em]"
-                style={{ color: '#4b5563' }}
+                style={{ color: 'var(--sidebar-text-dim)' }}
               >
                 {group.label}
               </p>
@@ -128,7 +188,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                       className={`flex items-center gap-3 rounded-xl py-2 text-[13px] opacity-35 cursor-not-allowed select-none ${
                         collapsed ? 'justify-center px-0' : 'px-3'
                       }`}
-                      style={{ color: '#6b7280' }}
+                      style={{ color: 'var(--sidebar-text-dim)' }}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       {!collapsed && <span className="truncate flex-1">{label}</span>}
@@ -144,17 +204,16 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                     title={collapsed ? label : undefined}
                     className={`flex items-center gap-3 rounded-xl py-2.5 text-[13px] transition-all duration-200 ${
                       collapsed ? 'justify-center px-0' : 'px-3'
-                    } ${active ? 'font-semibold' : 'hover:bg-white/[0.04] hover:translate-x-0.5'}`}
+                    } ${active ? 'font-semibold' : 'hover:translate-x-0.5'}`}
                     style={{
-                      borderLeft: collapsed ? 'none' : `2px solid ${active ? '#c2fa69' : 'transparent'}`,
-                      color: active ? '#c2fa69' : '#9ca3af',
-                      ...(active ? { background: 'rgba(194, 250, 105, 0.06)' } : {}),
-                      ...(collapsed && active ? { background: 'rgba(194, 250, 105, 0.10)' } : {}),
+                      borderLeft: collapsed ? 'none' : `2px solid ${active ? 'var(--sidebar-active-icon)' : 'transparent'}`,
+                      color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+                      background: active ? 'var(--sidebar-active-bg)' : 'transparent',
                     }}
                   >
                     <Icon
                       className="h-4 w-4 flex-shrink-0"
-                      style={{ color: active ? '#c2fa69' : '#6b7280' }}
+                      style={{ color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-dim)' }}
                     />
                     {!collapsed && <span className="truncate flex-1">{label}</span>}
                   </Link>
@@ -168,7 +227,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
       {/* ── Bottom section ── */}
       <div
         className={`mt-auto pb-3 space-y-3 ${collapsed ? 'px-1.5' : 'px-3'}`}
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderTop: '1px solid var(--sidebar-border)' }}
       >
         {/* Book a Demo */}
         <button
@@ -178,9 +237,9 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
             collapsed ? 'mx-auto h-10 w-10 px-0' : 'w-full px-3 py-2.5'
           }`}
           style={{
-            border: '1px solid rgba(194,250,105,0.4)',
-            color: '#c2fa69',
-            background: 'rgba(194,250,105,0.04)',
+            border: '1px solid var(--btn-secondary-border)',
+            color: 'var(--text-secondary)',
+            background: 'transparent',
           }}
         >
           <Calendar className="h-4 w-4 flex-shrink-0" />
@@ -188,7 +247,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
         </button>
 
         {/* User info */}
-        <div className={`flex items-center gap-2.5 rounded-md py-2 ${collapsed ? 'justify-center px-0' : 'px-2'}`}>
+        <div className={`flex items-center gap-2.5 rounded-lg py-2 ${collapsed ? 'justify-center px-0' : 'px-2'}`}>
           <div
             className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
             style={{ background: '#3B82F6' }}
@@ -198,7 +257,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium" style={{ color: '#9ca3af' }}>
+              <p className="truncate text-[11px] font-medium" style={{ color: 'var(--sidebar-text)' }}>
                 {email}
               </p>
             </div>
@@ -207,8 +266,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
               title="Log out"
-              className="flex-shrink-0 rounded p-1 transition-colors hover:bg-white/5"
-              style={{ color: '#6b7280' }}
+              className="flex-shrink-0 rounded p-1 transition-colors"
+              style={{ color: 'var(--sidebar-text-dim)' }}
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
@@ -220,8 +279,8 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             title="Log out"
-            className="mx-auto flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-white/5"
-            style={{ color: '#6b7280' }}
+            className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            style={{ color: 'var(--sidebar-text-dim)' }}
           >
             <LogOut className="h-4 w-4" />
           </button>

@@ -93,12 +93,15 @@ function formatPeriod(period: string): string {
   }
 }
 
-/* Skeleton shimmer block */
+/* Skeleton shimmer block — theme-aware */
 function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-xl ${className}`}
-      style={{ background: 'linear-gradient(90deg, #111111 25%, #191919 50%, #111111 75%)', backgroundSize: '200% 100%' }}
+      className={`animate-shimmer rounded-xl ${className}`}
+      style={{
+        background: `linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%)`,
+        backgroundSize: '200% 100%',
+      }}
     />
   );
 }
@@ -119,6 +122,48 @@ function activityColor(entry: TrailEntry): string {
     if (type.includes(key)) return color;
   }
   return '#818CF8';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* KPI Card — reusable themed card                                           */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+function KpiCard({
+  label,
+  icon: Icon,
+  iconColor,
+  children,
+}: {
+  label: string;
+  icon: typeof Zap;
+  iconColor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-0.5"
+      style={{
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        boxShadow: 'var(--card-shadow)',
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className="text-[12px] font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--muted)' }}
+        >
+          {label}
+        </span>
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
+          style={{ background: `${iconColor}12` }}
+        >
+          <Icon className="h-4 w-4" style={{ color: iconColor }} />
+        </div>
+      </div>
+      {children}
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -184,7 +229,6 @@ export default function DashboardPage() {
         setScheduledAudits(list.filter((a) => a.status === 'scheduled').length);
         setCompletedAudits(list.filter((a) => a.status === 'completed').length);
         setAuditCount(list.length);
-        // Next audit = earliest future scheduled date
         const futureDates = list
           .filter((a) => a.status === 'scheduled')
           .map((a) => a.auditDate ?? a.scheduledDate)
@@ -257,11 +301,14 @@ export default function DashboardPage() {
           {loading ? (
             <Skeleton className="h-10 w-80" />
           ) : (
-            <h1 className="text-2xl lg:text-[34px] font-bold font-heading tracking-tight leading-[1.1]">
+            <h1
+              className="text-2xl lg:text-[34px] font-bold font-heading tracking-tight leading-[1.1]"
+              style={{ color: 'var(--text)' }}
+            >
               {greeting}{orgName ? `, ${orgName}` : ''}
             </h1>
           )}
-          <p className="text-sm" style={{ color: '#6b7280' }}>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>
             Your integrated management system at a glance.
           </p>
         </div>
@@ -282,7 +329,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={code}
-                  className="flex items-center gap-2 rounded-xl px-3.5 py-2 transition-shadow duration-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+                  className="flex items-center gap-2 rounded-xl px-3.5 py-2 transition-all duration-300"
                   style={{
                     background: `${color}0d`,
                     border: `1px solid ${color}25`,
@@ -299,8 +346,8 @@ export default function DashboardPage() {
           ) : (
             <Link
               href="/settings"
-              className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[12px] font-medium transition-colors hover:bg-white/5"
-              style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#6b7280' }}
+              className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[12px] font-medium transition-colors"
+              style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
             >
               <Shield className="h-3.5 w-3.5" />
               Activate standards
@@ -332,135 +379,69 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* 1 — Open CAPAs */}
-            <div
-              className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
-                  Open CAPAs
-                </span>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: 'rgba(139,92,246,0.12)' }}
-                >
-                  <AlertTriangle className="h-4 w-4" style={{ color: '#8B5CF6' }} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold font-heading tabular-nums">{openCapas}</p>
-              <p className="text-[11px]" style={{ color: '#4b5563' }}>requiring action</p>
-            </div>
+            <KpiCard label="Open CAPAs" icon={AlertTriangle} iconColor="#8B5CF6">
+              <p className="text-3xl font-bold font-heading tabular-nums" style={{ color: 'var(--text)' }}>
+                {openCapas}
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--muted)' }}>requiring action</p>
+            </KpiCard>
 
             {/* 2 — Audits */}
-            <div
-              className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
-                  Audits
-                </span>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: 'rgba(244,63,94,0.12)' }}
-                >
-                  <ClipboardCheck className="h-4 w-4" style={{ color: '#F43F5E' }} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold font-heading tabular-nums">
+            <KpiCard label="Audits" icon={ClipboardCheck} iconColor="#F43F5E">
+              <p className="text-3xl font-bold font-heading tabular-nums" style={{ color: 'var(--text)' }}>
                 {scheduledAudits + completedAudits > 0
                   ? scheduledAudits + completedAudits
-                  : <span className="text-2xl" style={{ color: '#4b5563' }}>&mdash;</span>}
+                  : <span className="text-2xl" style={{ color: 'var(--muted)' }}>&mdash;</span>}
               </p>
-              <p className="text-[11px]" style={{ color: '#4b5563' }}>
+              <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                 {scheduledAudits} scheduled / {completedAudits} completed
               </p>
-            </div>
+            </KpiCard>
 
             {/* 3 — Documents */}
-            <div
-              className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
-                  Documents
-                </span>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: 'rgba(99,102,241,0.12)' }}
-                >
-                  <FileText className="h-4 w-4" style={{ color: '#6366F1' }} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold font-heading tabular-nums">{totalDocs}</p>
-              <p className="text-[11px]" style={{ color: '#4b5563' }}>in library</p>
-            </div>
+            <KpiCard label="Documents" icon={FileText} iconColor="#6366F1">
+              <p className="text-3xl font-bold font-heading tabular-nums" style={{ color: 'var(--text)' }}>
+                {totalDocs}
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--muted)' }}>in library</p>
+            </KpiCard>
 
             {/* 4 — AI Credits */}
-            <div
-              className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
-                  AI Credits
-                </span>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: 'rgba(194,250,105,0.12)' }}
-                >
-                  <Zap className="h-4 w-4" style={{ color: '#c2fa69' }} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold font-heading tabular-nums">
+            <KpiCard label="AI Credits" icon={Zap} iconColor="#c2fa69">
+              <p className="text-3xl font-bold font-heading tabular-nums" style={{ color: 'var(--text)' }}>
                 {creditsUsed}
-                <span className="text-base font-normal ml-1" style={{ color: '#6b7280' }}>
+                <span className="text-base font-normal ml-1" style={{ color: 'var(--muted)' }}>
                   / {creditsTotal}
                 </span>
               </p>
               <div>
                 <div
                   className="h-1.5 w-full overflow-hidden rounded-full"
-                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                  style={{ background: 'var(--surface-2)' }}
                 >
                   <div
                     className="h-1.5 rounded-full transition-all duration-700"
                     style={{
                       width: `${Math.min(creditsPct, 100)}%`,
-                      background: creditsPct >= 90 ? '#dc2626' : creditsPct >= 70 ? '#d97706' : '#c2fa69',
+                      background: creditsPct >= 90 ? '#dc2626' : creditsPct >= 70 ? '#d97706' : '#22C55E',
                     }}
                   />
                 </div>
-                <p className="text-[10px] mt-1.5" style={{ color: '#4b5563' }}>used this period</p>
+                <p className="text-[10px] mt-1.5" style={{ color: 'var(--muted)' }}>used this period</p>
               </div>
-            </div>
+            </KpiCard>
 
             {/* 5 — Next Audit */}
-            <div
-              className="group rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
-                  Next Audit
-                </span>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: 'rgba(59,130,246,0.12)' }}
-                >
-                  <CalendarClock className="h-4 w-4" style={{ color: '#3B82F6' }} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold font-heading tabular-nums">
+            <KpiCard label="Next Audit" icon={CalendarClock} iconColor="#3B82F6">
+              <p className="text-3xl font-bold font-heading tabular-nums" style={{ color: 'var(--text)' }}>
                 {nextAuditDate
                   ? new Date(nextAuditDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                     })
-                  : <span className="text-2xl" style={{ color: '#4b5563' }}>&mdash;</span>}
+                  : <span className="text-2xl" style={{ color: 'var(--muted)' }}>&mdash;</span>}
               </p>
-              <p className="text-[11px]" style={{ color: '#4b5563' }}>
+              <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                 {nextAuditDate
                   ? new Date(nextAuditDate).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -469,7 +450,7 @@ export default function DashboardPage() {
                     })
                   : 'No audits scheduled'}
               </p>
-            </div>
+            </KpiCard>
           </>
         )}
       </div>
@@ -478,26 +459,32 @@ export default function DashboardPage() {
       {!loading && !allWizardDone && (
         <div
           className="rounded-2xl p-6"
-          style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: 'var(--card-shadow)',
+          }}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-4 w-0.5 rounded-full" style={{ background: '#c2fa69' }} />
-              <h2 className="text-sm font-semibold font-heading uppercase tracking-wide">Getting Started</h2>
+              <div className="h-4 w-[3px] rounded-full" style={{ background: 'var(--accent)' }} />
+              <h2 className="text-sm font-semibold font-heading uppercase tracking-wide" style={{ color: 'var(--text)' }}>
+                Getting Started
+              </h2>
             </div>
-            <span className="text-sm font-bold tabular-nums" style={{ color: '#c2fa69' }}>
+            <span className="text-sm font-bold tabular-nums" style={{ color: 'var(--accent)' }}>
               {wizardDone}/{wizardTotal}
             </span>
           </div>
 
-          {/* Progress bar — lime fill */}
+          {/* Progress bar */}
           <div
             className="h-1.5 w-full overflow-hidden rounded-full mb-5"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
+            style={{ background: 'var(--surface-2)' }}
           >
             <div
               className="h-1.5 rounded-full transition-all duration-700"
-              style={{ width: `${wizardPct}%`, background: '#c2fa69' }}
+              style={{ width: `${wizardPct}%`, background: 'var(--accent)' }}
             />
           </div>
 
@@ -508,12 +495,12 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors">
                   <StepIcon
                     className="h-4 w-4 flex-shrink-0"
-                    style={{ color: step.done ? '#22C55E' : '#4b5563' }}
+                    style={{ color: step.done ? '#22C55E' : 'var(--muted)' }}
                   />
                   <span
                     className="text-[13px]"
                     style={{
-                      color: step.done ? '#6b7280' : '#fff',
+                      color: step.done ? 'var(--muted)' : 'var(--text)',
                       textDecoration: step.done ? 'line-through' : 'none',
                     }}
                   >
@@ -528,7 +515,10 @@ export default function DashboardPage() {
                 <Link
                   key={step.label}
                   href={step.href}
-                  className="block hover:bg-white/5 rounded-xl transition-colors"
+                  className="block rounded-xl transition-colors"
+                  style={{ background: 'transparent' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--row-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   {inner}
                 </Link>
@@ -543,12 +533,18 @@ export default function DashboardPage() {
 
         {/* ── Left (8 col): Recent Activity ── */}
         <div
-          className="lg:col-span-8 rounded-2xl p-6 transition-shadow duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
-          style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
+          className="lg:col-span-8 rounded-2xl p-6 transition-shadow duration-300"
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: 'var(--card-shadow)',
+          }}
         >
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="h-4 w-0.5 rounded-full" style={{ background: '#c2fa69' }} />
-            <h2 className="text-sm font-semibold font-heading uppercase tracking-wide">Recent Activity</h2>
+            <div className="h-4 w-[3px] rounded-full" style={{ background: 'var(--accent)' }} />
+            <h2 className="text-sm font-semibold font-heading uppercase tracking-wide" style={{ color: 'var(--text)' }}>
+              Recent Activity
+            </h2>
           </div>
 
           {!activityLoaded ? (
@@ -560,10 +556,13 @@ export default function DashboardPage() {
           ) : activity.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
               <div className="relative">
-                <div className="absolute inset-0 -m-3 rounded-full animate-pulse" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)' }} />
-                <Activity className="relative h-8 w-8" style={{ color: '#4b5563' }} />
+                <div
+                  className="absolute inset-0 -m-3 rounded-full animate-pulse"
+                  style={{ background: 'radial-gradient(circle, var(--row-hover) 0%, transparent 70%)' }}
+                />
+                <Activity className="relative h-8 w-8" style={{ color: 'var(--muted)' }} />
               </div>
-              <p className="text-sm" style={{ color: '#6b7280' }}>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
                 No activity yet. Start by uploading a document.
               </p>
             </div>
@@ -574,7 +573,10 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={entry.id ?? i}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.03]"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors"
+                    style={{ background: 'transparent' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--row-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div
                       className="flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0"
@@ -583,11 +585,11 @@ export default function DashboardPage() {
                       <Activity className="h-3.5 w-3.5" style={{ color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium truncate">
+                      <p className="text-[13px] font-medium truncate" style={{ color: 'var(--text)' }}>
                         {entry.action ?? entry.eventType ?? 'Activity'}
                       </p>
                       {(entry.actorName || entry.actorEmail) && (
-                        <p className="text-[10px] truncate" style={{ color: '#6b7280' }}>
+                        <p className="text-[10px] truncate" style={{ color: 'var(--muted)' }}>
                           {entry.actorName ?? entry.actorEmail}
                           {entry.entityType ? ` \u00B7 ${entry.entityType}` : ''}
                         </p>
@@ -595,7 +597,7 @@ export default function DashboardPage() {
                     </div>
                     <span
                       className="text-[10px] font-medium tabular-nums flex-shrink-0"
-                      style={{ color: '#4b5563' }}
+                      style={{ color: 'var(--content-text-dim)' }}
                     >
                       {timeAgo(entry.createdAt)}
                     </span>
@@ -608,13 +610,19 @@ export default function DashboardPage() {
 
         {/* ── Right (4 col): Last Board Report ── */}
         <div
-          className="lg:col-span-4 rounded-2xl p-6 transition-shadow duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
-          style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
+          className="lg:col-span-4 rounded-2xl p-6 transition-shadow duration-300"
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: 'var(--card-shadow)',
+          }}
         >
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="h-4 w-0.5 rounded-full" style={{ background: '#818CF8' }} />
+            <div className="h-4 w-[3px] rounded-full" style={{ background: '#818CF8' }} />
             <BarChart3 className="h-4 w-4" style={{ color: '#818CF8' }} />
-            <h2 className="text-sm font-semibold font-heading uppercase tracking-wide">Board Report</h2>
+            <h2 className="text-sm font-semibold font-heading uppercase tracking-wide" style={{ color: 'var(--text)' }}>
+              Board Report
+            </h2>
           </div>
 
           {loading ? (
@@ -622,11 +630,11 @@ export default function DashboardPage() {
           ) : latestReport ? (
             <div className="space-y-4">
               <div>
-                <p className="text-[14px] font-semibold">
+                <p className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
                   {formatPeriod(latestReport.period)}
                 </p>
                 {latestReport.generatedAt && (
-                  <p className="text-[11px] mt-1" style={{ color: '#6b7280' }}>
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--muted)' }}>
                     Generated {timeAgo(latestReport.generatedAt)}
                   </p>
                 )}
@@ -647,7 +655,7 @@ export default function DashboardPage() {
               <Link
                 href="/board-report"
                 className="flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
-                style={{ color: '#9ca3af' }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 View all reports
                 <ArrowUpRight className="h-3 w-3" />
@@ -656,16 +664,19 @@ export default function DashboardPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-10 gap-3">
               <div className="relative">
-                <div className="absolute inset-0 -m-3 rounded-full animate-pulse" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)' }} />
-                <BarChart3 className="relative h-8 w-8" style={{ color: '#4b5563' }} />
+                <div
+                  className="absolute inset-0 -m-3 rounded-full animate-pulse"
+                  style={{ background: 'radial-gradient(circle, var(--row-hover) 0%, transparent 70%)' }}
+                />
+                <BarChart3 className="relative h-8 w-8" style={{ color: 'var(--muted)' }} />
               </div>
-              <p className="text-sm text-center" style={{ color: '#6b7280' }}>
+              <p className="text-sm text-center" style={{ color: 'var(--muted)' }}>
                 No reports yet.
               </p>
               <Link
                 href="/board-report"
                 className="flex items-center gap-1 text-xs font-semibold transition-colors hover:opacity-80"
-                style={{ color: '#c2fa69' }}
+                style={{ color: 'var(--accent)' }}
               >
                 Generate Report
                 <ArrowUpRight className="h-3 w-3" />

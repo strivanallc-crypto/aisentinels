@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Hero                                                                       */
+/* Hero — Sadewa-inspired premium page hero                                  */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 interface HeroStat {
   value: string;
@@ -30,48 +30,61 @@ export function SentinelPageHero({
 }: SentinelPageHeroProps) {
   return (
     <div
-      className="relative space-y-8 pb-8 mb-8 overflow-hidden rounded-2xl px-8 pt-8"
+      className="relative space-y-6 pb-8 mb-8 overflow-hidden rounded-2xl px-8 pt-8"
       style={{
-        background: `linear-gradient(135deg, rgba(17,17,17,0.9) 0%, rgba(10,10,10,0.95) 100%)`,
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--hero-bg)',
+        border: '1px solid var(--hero-border)',
+        boxShadow: 'var(--card-shadow)',
       }}
     >
       {/* Decorative gradient blob */}
       <div
-        className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full blur-[120px] opacity-[0.07]"
+        className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-[120px] opacity-[0.08]"
         style={{ background: sentinelColor }}
       />
+
+      {/* Accent line */}
+      <div className="w-12 h-[3px] rounded-full" style={{ background: sentinelColor, opacity: 0.5 }} />
 
       {/* Section label — Sadewa "/" prefix pattern */}
       <p
         className="relative text-[11px] font-semibold uppercase tracking-[0.25em]"
-        style={{ color: sentinelColor, opacity: 0.7 }}
+        style={{ color: 'var(--muted)' }}
       >
         / {sectionLabel}
       </p>
 
       {/* Title + subtitle */}
       <div className="relative space-y-3">
-        <h1 className="text-3xl lg:text-[42px] font-bold font-heading leading-[1.08] tracking-tight">
+        <h1
+          className="text-3xl lg:text-[42px] font-bold font-heading leading-[1.08] tracking-tight"
+          style={{ color: 'var(--text)' }}
+        >
           {title}
         </h1>
-        <p className="text-[15px] max-w-2xl leading-relaxed" style={{ color: '#9ca3af' }}>
+        <p
+          className="text-[15px] max-w-2xl leading-relaxed"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           {subtitle}
         </p>
       </div>
 
       {/* Stats row */}
       {stats && stats.length > 0 && (
-        <div className="relative flex flex-wrap gap-12">
+        <div className="relative flex flex-wrap gap-12 pt-2">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col gap-1.5">
               <span
                 className="text-3xl lg:text-[40px] font-bold font-heading tabular-nums tracking-tight"
-                style={{ color: sentinelColor }}
+                style={{ color: 'var(--text)' }}
               >
                 {stat.value}
               </span>
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>
+              <span
+                className="text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--muted)' }}
+              >
                 {stat.label}
               </span>
             </div>
@@ -86,7 +99,7 @@ export function SentinelPageHero({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Buttons                                                                    */
+/* Primary Button — Sadewa lime-green style with arrow box                   */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export function PrimaryButton({
   children,
@@ -103,11 +116,11 @@ export function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+      className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
       style={{
-        background: '#c2fa69',
-        color: '#0a0a0a',
-        boxShadow: '0 0 20px rgba(194,250,105,0.15)',
+        background: 'var(--btn-primary-bg)',
+        color: 'var(--btn-primary-text)',
+        boxShadow: '0 2px 12px var(--accent-glow)',
       }}
     >
       {loading && (
@@ -118,6 +131,9 @@ export function PrimaryButton({
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Secondary Button — outline style                                          */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 export function SecondaryButton({
   children,
   onClick,
@@ -131,8 +147,12 @@ export function SecondaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.03] hover:bg-white/5 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-      style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
+      className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+      style={{
+        border: '1px solid var(--btn-secondary-border)',
+        color: 'var(--btn-secondary-text)',
+        background: 'transparent',
+      }}
     >
       {children}
     </button>
@@ -140,7 +160,7 @@ export function SecondaryButton({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Empty state                                                                */
+/* Empty state — with Sadewa /01 numbering and pulsing ring                  */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export function SadewaEmptyState({
   number = '00',
@@ -159,17 +179,19 @@ export function SadewaEmptyState({
       <div className="relative">
         <div
           className="absolute inset-0 -m-4 rounded-full animate-pulse"
-          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, var(--row-hover) 0%, transparent 70%)' }}
         />
         <span
           className="relative text-6xl font-bold font-heading"
-          style={{ color: 'rgba(255,255,255,0.05)' }}
+          style={{ color: 'var(--row-number)' }}
         >
           /{number}
         </span>
       </div>
-      <h3 className="text-lg font-semibold tracking-tight">{heading}</h3>
-      <p className="text-sm max-w-md leading-relaxed" style={{ color: '#6b7280' }}>
+      <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text)' }}>
+        {heading}
+      </h3>
+      <p className="text-sm max-w-md leading-relaxed" style={{ color: 'var(--muted)' }}>
         {description}
       </p>
       {action && <div className="mt-2">{action}</div>}
@@ -178,15 +200,15 @@ export function SadewaEmptyState({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Section label                                                              */
+/* Section label — with accent bar                                           */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export function SectionLabel({ children }: { children: string }) {
   return (
     <div className="flex items-center gap-2.5 mb-4">
-      <div className="h-4 w-0.5 rounded-full" style={{ background: '#c2fa69' }} />
+      <div className="h-4 w-[3px] rounded-full" style={{ background: 'var(--accent)' }} />
       <p
         className="text-[11px] font-semibold uppercase tracking-[0.2em]"
-        style={{ color: '#6b7280' }}
+        style={{ color: 'var(--muted)' }}
       >
         / {children}
       </p>
@@ -195,7 +217,7 @@ export function SectionLabel({ children }: { children: string }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Content card                                                               */
+/* Content card — theme-aware                                                */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export function ContentCard({
   children,
@@ -206,11 +228,11 @@ export function ContentCard({
 }) {
   return (
     <div
-      className={`rounded-2xl p-6 transition-shadow duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.3)] ${className}`}
+      className={`rounded-2xl p-6 transition-all duration-300 hover:shadow-lg ${className}`}
       style={{
-        background: '#111111',
-        border: '1px solid rgba(255,255,255,0.07)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        boxShadow: 'var(--card-shadow)',
       }}
     >
       {children}
@@ -219,7 +241,7 @@ export function ContentCard({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Skeleton shimmer                                                           */
+/* Skeleton shimmer — theme-aware                                            */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export function PageSkeleton({ rows = 5 }: { rows?: number }) {
   return (
@@ -227,9 +249,9 @@ export function PageSkeleton({ rows = 5 }: { rows?: number }) {
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
-          className="h-12 rounded-xl animate-pulse"
+          className="h-12 rounded-xl animate-shimmer"
           style={{
-            background: 'linear-gradient(90deg, #111111 25%, #191919 50%, #111111 75%)',
+            background: `linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%)`,
             backgroundSize: '200% 100%',
           }}
         />

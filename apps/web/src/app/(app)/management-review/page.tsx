@@ -111,14 +111,14 @@ export default function ManagementReviewPage() {
         <SectionLabel>REVIEWS</SectionLabel>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: '#4b5563' }} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search reviews..."
               className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </div>
           <SecondaryButton onClick={handleAiReview} disabled={aiLoading}>
@@ -142,25 +142,25 @@ export default function ManagementReviewPage() {
             action={reviews.length === 0 ? (<PrimaryButton onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Schedule Review</PrimaryButton>) : undefined}
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
             {filtered.map((rev, i) => {
               const statusKey = rev.status.toLowerCase();
               const color = STATUS_COLORS[statusKey] ?? '#6b7280';
               const label = statusKey === 'completed' ? 'Completed' : statusKey === 'in_progress' ? 'In Progress' : 'Scheduled';
               return (
                 <div key={rev.id} className="flex items-center gap-4 px-4 py-4 transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group">
-                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'rgba(255,255,255,0.12)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'var(--row-number)' }}>/{String(i + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-semibold truncate">{rev.title}</p>
-                    <p className="text-[11px]" style={{ color: '#6b7280' }}>
+                    <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                       {rev.scheduledDate ? new Date(rev.scheduledDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '\u2014'}
                     </p>
                     {rev.conclusions && (
-                      <p className="text-[11px] mt-1 truncate max-w-xl" style={{ color: '#4b5563' }}>{rev.conclusions}</p>
+                      <p className="text-[11px] mt-1 truncate max-w-xl" style={{ color: 'var(--content-text-dim)' }}>{rev.conclusions}</p>
                     )}
                   </div>
                   <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0" style={{ color, background: `${color}1a` }}>{label}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
+                  <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: 'var(--content-text-dim)' }} />
                 </div>
               );
             })}
@@ -172,20 +172,20 @@ export default function ManagementReviewPage() {
       <Modal open={showForm} onOpenChange={(o) => { setShowForm(o); if (!o) setForm({ title: '', scheduledDate: '', agenda: '', attendees: '' }); }} title="Schedule Management Review">
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Title</label>
-            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Q1 2026 Management Review" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Title</label>
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Q1 2026 Management Review" className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Date</label>
-            <input type="date" required value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Date</label>
+            <input type="date" required value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Agenda</label>
-            <textarea rows={3} value={form.agenda} onChange={(e) => setForm({ ...form, agenda: e.target.value })} placeholder="Agenda items..." className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Agenda</label>
+            <textarea rows={3} value={form.agenda} onChange={(e) => setForm({ ...form, agenda: e.target.value })} placeholder="Agenda items..." className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Attendees</label>
-            <input value={form.attendees} onChange={(e) => setForm({ ...form, attendees: e.target.value })} placeholder="Comma-separated names" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Attendees</label>
+            <input value={form.attendees} onChange={(e) => setForm({ ...form, attendees: e.target.value })} placeholder="Comma-separated names" className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
           </div>
           <div className="flex justify-end gap-3 pt-1">
             <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -197,7 +197,7 @@ export default function ManagementReviewPage() {
       {/* AI Review Result Modal */}
       <Modal open={showAiResult} onOpenChange={setShowAiResult} title="AI Management Review Input">
         <div className="max-h-[60vh] overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: '#fff' }}>{aiResult}</pre>
+          <pre className="whitespace-pre-wrap text-sm leading-relaxed" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}>{aiResult}</pre>
         </div>
         <div className="flex justify-end pt-4">
           <Button variant="ghost" onClick={() => setShowAiResult(false)}>Close</Button>

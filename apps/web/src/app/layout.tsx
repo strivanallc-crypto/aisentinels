@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${syne.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <head>
         <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
       </head>

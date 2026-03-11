@@ -1,17 +1,22 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* ── AI Sentinels Design Tokens ──────────────────────────────────────────── */
+/* ── AI Sentinels Design System — Sadewa-Inspired Premium Tokens ──────── */
+
 @layer base {
+  /* ── LIGHT MODE (default) ────────────────────────────────────────────── */
   :root {
-    /* Core palette */
-    --bg:         #0a0a0a;
-    --surface:    #111111;
-    --border:     rgba(255, 255, 255, 0.08);
-    --text:       #ffffff;
-    --muted:      #6b7280;
-    --accent:     #c2fa69;
-    --accent-fg:  #0a0a0a;
+    --bg:          #FAFAFA;
+    --surface:     #F5F5F5;
+    --surface-2:   #EFEFEF;
+    --border:      rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --text:        #1A1A1A;
+    --text-secondary: #4B5563;
+    --muted:       #6B7280;
+    --accent:      #c2fa69;
+    --accent-fg:   #0a0a0a;
+    --accent-glow: rgba(194, 250, 105, 0.25);
 
     /* Sentinel identity colors */
     --qualy:  #3B82F6;
@@ -25,48 +30,137 @@
     --radius:    12px;
     --radius-sm: 8px;
     --radius-lg: 16px;
+    --radius-xl: 20px;
 
     /* Sidebar (app shell) */
-    --sidebar-bg:          #0a0a0a;
-    --sidebar-surface:     #111111;
-    --sidebar-border:      rgba(255, 255, 255, 0.08);
-    --sidebar-text:        #9ca3af;
-    --sidebar-text-dim:    #6b7280;
-    --sidebar-text-muted:  #4b5563;
-    --sidebar-active-bg:   rgba(194, 250, 105, 0.10);
-    --sidebar-active-text: #c2fa69;
-    --sidebar-active-icon: #c2fa69;
+    --sidebar-bg:          #FFFFFF;
+    --sidebar-surface:     #F5F5F5;
+    --sidebar-border:      rgba(0, 0, 0, 0.06);
+    --sidebar-text:        #4B5563;
+    --sidebar-text-dim:    #9CA3AF;
+    --sidebar-text-muted:  #D1D5DB;
+    --sidebar-active-bg:   rgba(194, 250, 105, 0.12);
+    --sidebar-active-text: #15803D;
+    --sidebar-active-icon: #15803D;
 
-    /* Content area (app shell) */
-    --content-bg:         #0a0a0a;
-    --content-surface:    #111111;
-    --content-border:     rgba(255, 255, 255, 0.08);
-    --content-text:       #ffffff;
-    --content-text-muted: #9ca3af;
-    --content-text-dim:   #6b7280;
-    --input-bg:           #1a1a1a;
+    /* Content area */
+    --content-bg:         #FAFAFA;
+    --content-surface:    #FFFFFF;
+    --content-border:     rgba(0, 0, 0, 0.06);
+    --content-text:       #1A1A1A;
+    --content-text-muted: #6B7280;
+    --content-text-dim:   #9CA3AF;
+    --input-bg:           #F5F5F5;
 
-    /* shadcn/ui semantic vars (dark palette) */
-    --background:          0 0% 4%;
-    --foreground:          0 0% 100%;
-    --primary:             84 93% 70%;
-    --primary-foreground:  0 0% 4%;
-    --muted:               0 0% 7%;
-    --muted-foreground:    220 9% 46%;
-    --border:              0 0% 100% / 0.08;
-    --ring:                84 93% 70%;
+    /* Card design */
+    --card-bg:            #FFFFFF;
+    --card-border:        rgba(0, 0, 0, 0.06);
+    --card-shadow:        0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --card-hover-shadow:  0 10px 40px rgba(0, 0, 0, 0.08);
+
+    /* Hero */
+    --hero-bg:            #FFFFFF;
+    --hero-border:        rgba(0, 0, 0, 0.06);
+
+    /* Row hover */
+    --row-hover:          rgba(0, 0, 0, 0.02);
+    --row-divider:        rgba(0, 0, 0, 0.06);
+    --row-number:         rgba(0, 0, 0, 0.08);
+    --row-number-hover:   rgba(0, 0, 0, 0.15);
+
+    /* Scrollbar */
+    --scrollbar-track:    #FAFAFA;
+    --scrollbar-thumb:    rgba(0, 0, 0, 0.12);
+    --scrollbar-hover:    rgba(0, 0, 0, 0.2);
+
+    /* Button colors in light mode */
+    --btn-primary-bg:     #1A1A1A;
+    --btn-primary-text:   #FFFFFF;
+    --btn-secondary-border: rgba(0, 0, 0, 0.15);
+    --btn-secondary-text: #1A1A1A;
 
     /* Status */
-    --status-success: #22c55e;
-    --status-warning: #f59e0b;
-    --status-error:   #ef4444;
-    --status-info:    #3b82f6;
+    --status-success:  #22c55e;
+    --status-warning:  #f59e0b;
+    --status-error:    #ef4444;
+    --status-info:     #3b82f6;
 
-    /* Backward-compat aliases (referenced by existing app pages + sidebar) */
+    /* shadcn/ui semantic vars */
+    --background:          0 0% 98%;
+    --foreground:          0 0% 10%;
+    --primary:             84 93% 70%;
+    --primary-foreground:  0 0% 4%;
+    --muted:               0 0% 96%;
+    --muted-foreground:    220 9% 46%;
+    --border:              0 0% 0% / 0.08;
+    --ring:                84 93% 70%;
+
+    /* Backward-compat aliases */
     --sentinel-blue:       #3B82F6;
     --sentinel-blue-hover: #2563EB;
     --sentinel-accent:     #c2fa69;
     --font-inter:          var(--font-body, 'DM Sans', system-ui, sans-serif);
+  }
+
+  /* ── DARK MODE ───────────────────────────────────────────────────────── */
+  .dark {
+    --bg:          #0A0A0A;
+    --surface:     #111111;
+    --surface-2:   #1A1A1A;
+    --border:      rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text:        #FFFFFF;
+    --text-secondary: #9CA3AF;
+    --muted:       #6B7280;
+    --accent:      #c2fa69;
+    --accent-fg:   #0a0a0a;
+    --accent-glow: rgba(194, 250, 105, 0.15);
+
+    --sidebar-bg:          #0A0A0A;
+    --sidebar-surface:     #111111;
+    --sidebar-border:      rgba(255, 255, 255, 0.06);
+    --sidebar-text:        #9CA3AF;
+    --sidebar-text-dim:    #6B7280;
+    --sidebar-text-muted:  #4B5563;
+    --sidebar-active-bg:   rgba(194, 250, 105, 0.08);
+    --sidebar-active-text: #c2fa69;
+    --sidebar-active-icon: #c2fa69;
+
+    --content-bg:         #0A0A0A;
+    --content-surface:    #111111;
+    --content-border:     rgba(255, 255, 255, 0.06);
+    --content-text:       #FFFFFF;
+    --content-text-muted: #9CA3AF;
+    --content-text-dim:   #6B7280;
+    --input-bg:           #1A1A1A;
+
+    --card-bg:            #111111;
+    --card-border:        rgba(255, 255, 255, 0.07);
+    --card-shadow:        0 1px 3px rgba(0, 0, 0, 0.4);
+    --card-hover-shadow:  0 10px 40px rgba(0, 0, 0, 0.4);
+
+    --hero-bg:            #111111;
+    --hero-border:        rgba(255, 255, 255, 0.06);
+
+    --row-hover:          rgba(255, 255, 255, 0.02);
+    --row-divider:        rgba(255, 255, 255, 0.06);
+    --row-number:         rgba(255, 255, 255, 0.08);
+    --row-number-hover:   rgba(255, 255, 255, 0.15);
+
+    --scrollbar-track:    #0A0A0A;
+    --scrollbar-thumb:    rgba(255, 255, 255, 0.12);
+    --scrollbar-hover:    rgba(255, 255, 255, 0.2);
+
+    --btn-primary-bg:     #c2fa69;
+    --btn-primary-text:   #0a0a0a;
+    --btn-secondary-border: rgba(255, 255, 255, 0.15);
+    --btn-secondary-text: #FFFFFF;
+
+    --background:          0 0% 4%;
+    --foreground:          0 0% 100%;
+    --muted:               0 0% 7%;
+    --muted-foreground:    220 9% 46%;
+    --border:              0 0% 100% / 0.08;
   }
 }
 
@@ -87,6 +181,7 @@ body {
   color: var(--content-text);
   font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -106,7 +201,8 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
 }
 
-/* Sentinel glow effects */
+/* ── Sentinel glow effects ───────────────────────────────────────────────── */
+
 .glow-qualy  { filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.4)); }
 .glow-envi   { filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.4)); }
 .glow-saffy  { filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.4)); }
@@ -114,7 +210,38 @@ h1, h2, h3, h4, h5, h6 {
 .glow-audie  { filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.4)); }
 .glow-nexus  { filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.4)); }
 
-/* Floating animation for hero sentinels */
+/* ── Neon Logo Animation (Sadewa circuit board effect) ───────────────────── */
+
+@keyframes neonPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(194, 250, 105, 0.6))
+            drop-shadow(0 0 20px rgba(194, 250, 105, 0.3))
+            drop-shadow(0 0 40px rgba(194, 250, 105, 0.1));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(194, 250, 105, 0.8))
+            drop-shadow(0 0 30px rgba(194, 250, 105, 0.5))
+            drop-shadow(0 0 60px rgba(194, 250, 105, 0.2));
+  }
+}
+
+@keyframes circuitTrace {
+  0%   { stroke-dashoffset: 100; opacity: 0.3; }
+  50%  { stroke-dashoffset: 0;   opacity: 1; }
+  100% { stroke-dashoffset: -100; opacity: 0.3; }
+}
+
+.animate-neon-pulse {
+  animation: neonPulse 3s ease-in-out infinite;
+}
+
+.animate-circuit-trace {
+  animation: circuitTrace 4s linear infinite;
+  stroke-dasharray: 100;
+}
+
+/* ── Floating animation ──────────────────────────────────────────────────── */
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-12px); }
@@ -124,7 +251,8 @@ h1, h2, h3, h4, h5, h6 {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Fade-in on scroll */
+/* ── Fade-in on scroll ───────────────────────────────────────────────────── */
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -134,17 +262,74 @@ h1, h2, h3, h4, h5, h6 {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
-/* Custom scrollbar */
+/* ── Shimmer / skeleton loading ──────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
+/* ── Subtle scale-in entrance ────────────────────────────────────────────── */
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+/* ── Speed lines animation (Sadewa-style) ────────────────────────────────── */
+
+@keyframes speedLine {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.6; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+.animate-speed-line {
+  animation: speedLine 3s linear infinite;
+}
+
+/* ── Gradient border glow ────────────────────────────────────────────────── */
+
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.7; }
+}
+
+.animate-border-glow {
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg);
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-hover);
+}
+
+/* ── Theme transition smoothing ──────────────────────────────────────────── */
+
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
 }

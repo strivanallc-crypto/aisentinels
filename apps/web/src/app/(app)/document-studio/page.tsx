@@ -113,14 +113,14 @@ export default function DocumentStudioPage() {
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: '#4b5563' }} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search documents..."
               className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </div>
           <SecondaryButton onClick={() => setShowUpload(true)}>
@@ -154,7 +154,7 @@ export default function DocumentStudioPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
             {filtered.map((doc, i) => (
               <div
                 key={doc.id}
@@ -164,7 +164,7 @@ export default function DocumentStudioPage() {
                 {/* Number */}
                 <span
                   className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
-                  style={{ color: 'rgba(255,255,255,0.12)' }}
+                  style={{ color: 'var(--row-number)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
@@ -172,7 +172,7 @@ export default function DocumentStudioPage() {
                 {/* Title */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold truncate">{doc.title}</p>
-                  <p className="text-[11px]" style={{ color: '#6b7280' }}>
+                  <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                     {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
                   </p>
                 </div>
@@ -202,11 +202,11 @@ export default function DocumentStudioPage() {
                 </span>
 
                 {/* Date */}
-                <span className="text-[11px] flex-shrink-0 w-20 text-right tabular-nums" style={{ color: '#4b5563' }}>
+                <span className="text-[11px] flex-shrink-0 w-20 text-right tabular-nums" style={{ color: 'var(--content-text-dim)' }}>
                   {new Date(doc.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
 
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: 'var(--content-text-dim)' }} />
               </div>
             ))}
           </div>
@@ -221,38 +221,38 @@ export default function DocumentStudioPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Title</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Title</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Supplier Qualification Procedure"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-white/20"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-white/20"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Type</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Type</label>
             <select
               required
               value={form.docType}
               onChange={(e) => setForm((f) => ({ ...f, docType: e.target.value as DocType }))}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             >
               {DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Content <span style={{ color: '#4b5563' }}>(optional)</span></label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Content <span style={{ color: 'var(--content-text-dim)' }}>(optional)</span></label>
             <textarea
               rows={4}
               value={form.content}
               onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
               placeholder="Enter content or leave blank..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">

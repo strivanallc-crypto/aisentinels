@@ -119,7 +119,7 @@ export default function BoardReportPage() {
           <button
             onClick={fetchReports}
             className="flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors hover:bg-white/5"
-            style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#6b7280' }}
+            style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </button>
@@ -145,19 +145,19 @@ export default function BoardReportPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
             {reports.map((report, i) => {
               const color = STATUS_COLORS[report.status] ?? '#6b7280';
               const label = STATUS_LABELS[report.status] ?? report.status;
               const StatusIcon = report.status === 'ready' ? CheckCircle2 : report.status === 'generating' ? Clock : AlertCircle;
               return (
                 <div key={report.reportId} className="flex items-center gap-4 px-4 py-4 transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group">
-                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'rgba(255,255,255,0.12)' }}>/{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25" style={{ color: 'var(--row-number)' }}>/{String(i + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-semibold">{formatPeriod(report.period)}</p>
-                    <p className="text-[11px]" style={{ color: '#6b7280' }}>{formatDate(report.generatedAt)}</p>
+                    <p className="text-[11px]" style={{ color: 'var(--muted)' }}>{formatDate(report.generatedAt)}</p>
                   </div>
-                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold flex-shrink-0" style={{ color: report.generatedBy === 'scheduled' ? '#818CF8' : '#6b7280', background: report.generatedBy === 'scheduled' ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold flex-shrink-0" style={{ color: report.generatedBy === 'scheduled' ? '#818CF8' : 'var(--muted)', background: report.generatedBy === 'scheduled' ? 'rgba(99,102,241,0.1)' : 'var(--surface)' }}>
                     {report.generatedBy === 'scheduled' ? 'Scheduled' : 'Manual'}
                   </span>
                   <span className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0" style={{ color, background: `${color}1a` }}>
@@ -187,7 +187,7 @@ export default function BoardReportPage() {
           </div>
           <div>
             <p className="text-sm font-semibold" style={{ color: '#818CF8' }}>Automated Monthly Reports</p>
-            <p className="text-[12px] mt-1 leading-relaxed" style={{ color: '#6b7280' }}>
+            <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--muted)' }}>
               Board reports are automatically generated on the 1st of every month at 08:00 UTC.
               Each report includes compliance scores, CAPA status, audit findings, document completion,
               and an AI-generated executive summary.

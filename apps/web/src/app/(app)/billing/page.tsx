@@ -131,9 +131,9 @@ export default function BillingPage() {
 
           {/* Annual/Monthly toggle */}
           <div className="flex flex-col items-center gap-2 mb-8">
-            <div className="flex items-center rounded-full p-1" style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${!annual ? 'text-[#0a0a0a]' : ''}`} style={!annual ? { background: '#c2fa69' } : { color: '#6b7280' }} onClick={() => setAnnual(false)}>Monthly</button>
-              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${annual ? 'text-[#0a0a0a]' : ''}`} style={annual ? { background: '#c2fa69' } : { color: '#6b7280' }} onClick={() => setAnnual(true)}>Annual</button>
+            <div className="flex items-center rounded-full p-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${!annual ? 'text-[#0a0a0a]' : ''}`} style={!annual ? { background: '#c2fa69' } : { color: 'var(--muted)' }} onClick={() => setAnnual(false)}>Monthly</button>
+              <button className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${annual ? 'text-[#0a0a0a]' : ''}`} style={annual ? { background: '#c2fa69' } : { color: 'var(--muted)' }} onClick={() => setAnnual(true)}>Annual</button>
             </div>
             {annual && <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>{ANNUAL_SAVINGS_LABEL}</span>}
           </div>
@@ -150,7 +150,7 @@ export default function BillingPage() {
               const canDowngrade = planOrder.indexOf(plan) < currentPlanIdx;
 
               return (
-                <div key={plan} className="relative flex flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(0,0,0,0.4)]" style={{ background: '#111111', border: isPopular ? '2px solid #c2fa69' : '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                <div key={plan} className="relative flex flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(0,0,0,0.4)]" style={{ background: 'var(--card-bg)', border: isPopular ? '2px solid #c2fa69' : '1px solid var(--card-border)', boxShadow: 'var(--card-shadow)' }}>
                   {isPopular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" style={{ background: '#c2fa69', color: '#0a0a0a' }}>Most Popular</div>
                   )}
@@ -159,30 +159,30 @@ export default function BillingPage() {
                       <h3 className="text-lg font-bold font-heading">{DISPLAY_NAMES[plan]}</h3>
                       {isCurrent && <Badge variant="success">Current</Badge>}
                     </div>
-                    <p className="text-[11px] mt-1" style={{ color: '#6b7280' }}>{PLAN_DESCRIPTIONS[plan]}</p>
+                    <p className="text-[11px] mt-1" style={{ color: 'var(--muted)' }}>{PLAN_DESCRIPTIONS[plan]}</p>
                   </div>
                   <div className="mb-1">
                     <span className="text-3xl font-bold font-heading">{fmtPrice(price)}</span>
-                    <span className="text-sm ml-1" style={{ color: '#6b7280' }}>/mo</span>
+                    <span className="text-sm ml-1" style={{ color: 'var(--muted)' }}>/mo</span>
                   </div>
                   {annual && annualSaving > 0 ? (
                     <p className="text-xs font-medium mb-4" style={{ color: '#F59E0B' }}>Save {fmtPrice(annualSaving)}/year</p>
                   ) : <div className="mb-4" />}
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-5" style={{ background: 'var(--row-hover)' }}>
                     <Zap className="h-3.5 w-3.5" style={{ color: '#c2fa69' }} />
-                    <span className="text-xs font-medium" style={{ color: '#6b7280' }}>{ACTION_LIMITS[plan]} AI actions/month</span>
+                    <span className="text-xs font-medium" style={{ color: 'var(--muted)' }}>{ACTION_LIMITS[plan]} AI actions/month</span>
                   </div>
                   <div className="mt-auto">
                     {isCurrent ? (
-                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280' }}>Current Plan</div>
+                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'var(--surface)', color: 'var(--muted)' }}>Current Plan</div>
                     ) : canUpgrade ? (
                       <button onClick={() => { setTargetPlan(plan); setShowUpgrade(true); }} className="w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.02]" style={{ background: '#c2fa69', color: '#0a0a0a' }}>
                         <ArrowUp className="h-3.5 w-3.5" /> Upgrade to {DISPLAY_NAMES[plan]}
                       </button>
                     ) : canDowngrade ? (
-                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.05)', color: '#4b5563' }}>Contact to downgrade</div>
+                      <div className="w-full rounded-full py-2.5 text-center text-sm font-semibold" style={{ background: 'var(--surface)', color: 'var(--content-text-dim)' }}>Contact to downgrade</div>
                     ) : null}
-                    <p className="text-[10px] text-center mt-2" style={{ color: '#4b5563' }}>{plan === 'starter' ? 'No credit card required to start' : 'Cancel anytime'}</p>
+                    <p className="text-[10px] text-center mt-2" style={{ color: 'var(--content-text-dim)' }}>{plan === 'starter' ? 'No credit card required to start' : 'Cancel anytime'}</p>
                   </div>
                 </div>
               );
@@ -196,7 +196,7 @@ export default function BillingPage() {
                 <Shield className="h-4 w-4" style={{ color: '#22C55E' }} />
                 <span className="text-sm font-semibold">Risk-Free Guarantee</span>
               </div>
-              <p className="text-[12px]" style={{ color: '#6b7280' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
+              <p className="text-[12px]" style={{ color: 'var(--muted)' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
             </div>
           </ContentCard>
 
@@ -206,22 +206,22 @@ export default function BillingPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Feature</th>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Feature</th>
                     {DISPLAY_ORDER.map((plan) => (
-                      <th key={plan} className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>{DISPLAY_NAMES[plan]}</th>
+                      <th key={plan} className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>{DISPLAY_NAMES[plan]}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {FEATURES.map((row, i) => (
-                    <tr key={row.feature} style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid rgba(255,255,255,0.08)' : undefined }}>
+                    <tr key={row.feature} style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid var(--border)' : undefined }}>
                       <td className="px-4 py-3 text-[13px]">{row.feature}</td>
                       {DISPLAY_ORDER.map((plan) => {
                         const val = row[plan];
                         return (
                           <td key={plan} className="px-4 py-3 text-center">
-                            {val === true ? <Check className="inline h-4 w-4" style={{ color: '#22C55E' }} /> : val === false ? <Minus className="inline h-4 w-4" style={{ color: '#4b5563' }} /> : <span className="text-xs font-medium" style={{ color: '#9ca3af' }}>{val}</span>}
+                            {val === true ? <Check className="inline h-4 w-4" style={{ color: '#22C55E' }} /> : val === false ? <Minus className="inline h-4 w-4" style={{ color: 'var(--content-text-dim)' }} /> : <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{val}</span>}
                           </td>
                         );
                       })}
@@ -246,19 +246,19 @@ export default function BillingPage() {
                   <Badge variant={PLAN_VARIANT[subscription.plan]}>{PLAN_LABELS[subscription.plan]}</Badge>
                   <Badge variant={SUB_STATUS_VARIANT[subscription.status]}>{SUB_STATUS_LABELS[subscription.status]}</Badge>
                 </div>
-                <div className="space-y-2 text-sm" style={{ color: '#9ca3af' }}>
+                <div className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Period: <strong className="text-white">{fmt(subscription.currentPeriodStart)} – {fmt(subscription.currentPeriodEnd)}</strong></span>
                   </div>
                   {subscription.trialEndsAt && subscription.status === 'trial' && (
-                    <div className="flex items-center gap-2" style={{ color: isTrialExpiringSoon ? '#F59E0B' : '#9ca3af' }}>
+                    <div className="flex items-center gap-2" style={{ color: isTrialExpiringSoon ? '#F59E0B' : 'var(--text-secondary)' }}>
                       <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" /> Trial expires: {fmt(subscription.trialEndsAt)}
                     </div>
                   )}
                   {subscription.wiseInvoiceId && (
                     <div className="flex items-center gap-2">
-                      Invoice: <span className="rounded px-1.5 py-0.5 font-mono text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>{'\u2026'}{subscription.wiseInvoiceId.slice(-6)}</span>
+                      Invoice: <span className="rounded px-1.5 py-0.5 font-mono text-xs" style={{ background: 'var(--surface)' }}>{'\u2026'}{subscription.wiseInvoiceId.slice(-6)}</span>
                     </div>
                   )}
                 </div>
@@ -274,16 +274,16 @@ export default function BillingPage() {
                   <div className="mb-3 flex items-end justify-between">
                     <span className="text-2xl font-bold font-heading">
                       {usage.aiCreditsUsed.toLocaleString()}
-                      <span className="ml-1 text-sm font-normal" style={{ color: '#6b7280' }}>/ {usage.aiCreditsLimit.toLocaleString()} used</span>
+                      <span className="ml-1 text-sm font-normal" style={{ color: 'var(--muted)' }}>/ {usage.aiCreditsLimit.toLocaleString()} used</span>
                     </span>
                     <span className="text-sm font-semibold" style={{ color: usage.usagePercent >= 90 ? '#dc2626' : usage.usagePercent >= 70 ? '#d97706' : '#22C55E' }}>
                       {usage.usagePercent}%
                     </span>
                   </div>
-                  <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--border)' }}>
                     <div className="h-2.5 rounded-full transition-all duration-500" style={{ width: `${Math.min(usage.usagePercent, 100)}%`, background: creditsBarColor(usage.usagePercent) }} />
                   </div>
-                  <div className="flex justify-between text-xs" style={{ color: '#6b7280' }}>
+                  <div className="flex justify-between text-xs" style={{ color: 'var(--muted)' }}>
                     <span>{usage.creditsRemaining.toLocaleString()} remaining</span>
                     <span>Resets {fmt(usage.periodEnd)}</span>
                   </div>
@@ -298,14 +298,14 @@ export default function BillingPage() {
       <Modal open={showUpgrade} onOpenChange={(o) => { setShowUpgrade(o); if (!o) { setTargetPlan(null); setUpgradeError(null); } }} title="Confirm Plan Upgrade">
         <div className="flex flex-col gap-4">
           {targetPlan && (
-            <p className="text-sm" style={{ color: '#9ca3af' }}>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               You are upgrading to the <strong className="text-white">{DISPLAY_NAMES[targetPlan]}</strong> plan at <strong className="text-white">{fmtPrice(annual ? ANNUAL_PRICES[targetPlan] : MONTHLY_PRICES[targetPlan])}/mo</strong>{annual ? ' (billed annually)' : ''}. The change takes effect immediately.
             </p>
           )}
           {upgradeError && (
             <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#F87171', border: '1px solid rgba(239,68,68,0.2)' }}>{upgradeError}</div>
           )}
-          <p className="text-[10px]" style={{ color: '#4b5563' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
+          <p className="text-[10px]" style={{ color: 'var(--content-text-dim)' }}>Cancel anytime. Full refund within 30 days. No questions asked.</p>
           <div className="flex justify-end gap-3 pt-1">
             <Button type="button" variant="ghost" onClick={() => { setShowUpgrade(false); setTargetPlan(null); setUpgradeError(null); }}>Cancel</Button>
             <Button onClick={handleUpgrade} disabled={upgrading || !targetPlan}>{upgrading ? 'Upgrading...' : `Upgrade to ${targetPlan ? DISPLAY_NAMES[targetPlan] : ''}`}</Button>

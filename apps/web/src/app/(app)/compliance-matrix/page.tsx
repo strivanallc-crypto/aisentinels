@@ -117,7 +117,7 @@ export default function ComplianceMatrixPage() {
   const getSeverityBg = (severity: string) => {
     if (severity === 'high') return { color: '#EF4444', bg: '#EF44441a' };
     if (severity === 'medium') return { color: '#F59E0B', bg: '#F59E0B1a' };
-    return { color: '#6b7280', bg: 'rgba(255,255,255,0.05)' };
+    return { color: 'var(--muted)', bg: 'var(--surface)' };
   };
 
   return (
@@ -149,9 +149,9 @@ export default function ComplianceMatrixPage() {
                 onClick={() => toggleStandard(s.value)}
                 className="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-all hover:scale-[1.02]"
                 style={{
-                  borderColor: selectedStandards.includes(s.value) ? s.color : 'rgba(255,255,255,0.1)',
+                  borderColor: selectedStandards.includes(s.value) ? s.color : 'var(--border)',
                   background: selectedStandards.includes(s.value) ? `${s.color}1a` : 'transparent',
-                  color: selectedStandards.includes(s.value) ? s.color : '#6b7280',
+                  color: selectedStandards.includes(s.value) ? s.color : 'var(--muted)',
                 }}
               >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -167,7 +167,7 @@ export default function ComplianceMatrixPage() {
       </div>
 
       {/* ── View tabs ── */}
-      <div className="flex gap-1 rounded-full border p-1 mb-6 w-fit" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+      <div className="flex gap-1 rounded-full border p-1 mb-6 w-fit" style={{ borderColor: 'var(--border)', background: 'var(--row-hover)' }}>
         <button
           onClick={() => setActiveTab('matrix')}
           className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200 ${activeTab === 'matrix' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
@@ -195,8 +195,8 @@ export default function ComplianceMatrixPage() {
         ) : (
           <ContentCard>
             <div className="py-12 text-center">
-              <BarChart3 className="mx-auto h-8 w-8 mb-3" style={{ color: '#4b5563' }} />
-              <p className="text-sm" style={{ color: '#6b7280' }}>Run AI Gap Analysis first to generate the heat map.</p>
+              <BarChart3 className="mx-auto h-8 w-8 mb-3" style={{ color: 'var(--content-text-dim)' }} />
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>Run AI Gap Analysis first to generate the heat map.</p>
             </div>
           </ContentCard>
         )
@@ -218,7 +218,7 @@ export default function ComplianceMatrixPage() {
                     </div>
                     <div className="flex items-end gap-2">
                       <span className="text-3xl font-bold font-heading" style={{ color: s.color }}>{pct}%</span>
-                      <span className="text-[11px] mb-1" style={{ color: '#6b7280' }}>coverage</span>
+                      <span className="text-[11px] mb-1" style={{ color: 'var(--muted)' }}>coverage</span>
                     </div>
                     <div className="mt-2 h-2 rounded-full bg-white/10">
                       <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: s.color }} />
@@ -232,7 +232,7 @@ export default function ComplianceMatrixPage() {
           {/* Annex SL Clause Grid */}
           <ContentCard>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#6b7280' }}>/ ANNEX SL CLAUSE STRUCTURE</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>/ ANNEX SL CLAUSE STRUCTURE</p>
               {result && (
                 <Button variant="ghost" size="sm" onClick={handleCopy}>
                   {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
@@ -240,7 +240,7 @@ export default function ComplianceMatrixPage() {
                 </Button>
               )}
             </div>
-            <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
               {ANNEX_SL_CLAUSES.map((clause) => {
                 const clauseGaps = result?.gaps.filter((g) => g.clause.startsWith(clause.id)) ?? [];
                 const hasGaps = clauseGaps.length > 0;
@@ -249,7 +249,7 @@ export default function ComplianceMatrixPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold">Clause {clause.id}</span>
-                        <span className="text-sm" style={{ color: '#6b7280' }}>{clause.title}</span>
+                        <span className="text-sm" style={{ color: 'var(--muted)' }}>{clause.title}</span>
                       </div>
                       {result && (
                         hasGaps ? (
@@ -266,7 +266,7 @@ export default function ComplianceMatrixPage() {
                     <div className="flex gap-2 flex-wrap">
                       {clause.subclauses.map((sub) => {
                         const subGap = result?.gaps.find((g) => g.clause === sub);
-                        const style = subGap ? getSeverityBg(subGap.severity) : result ? { color: '#22C55E', bg: '#22C55E1a' } : { color: '#4b5563', bg: 'rgba(255,255,255,0.05)' };
+                        const style = subGap ? getSeverityBg(subGap.severity) : result ? { color: '#22C55E', bg: '#22C55E1a' } : { color: 'var(--content-text-dim)', bg: 'var(--surface)' };
                         return (
                           <div key={sub} className="rounded-lg border px-3 py-1.5 text-xs font-medium" style={{ color: style.color, background: style.bg, borderColor: `${style.color}30` }} title={subGap?.description}>
                             {sub}
@@ -280,7 +280,7 @@ export default function ComplianceMatrixPage() {
                         {clauseGaps.map((g, idx) => {
                           const s = getSeverityBg(g.severity);
                           return (
-                            <div key={idx} className="flex items-start gap-2 text-xs" style={{ color: '#6b7280' }}>
+                            <div key={idx} className="flex items-start gap-2 text-xs" style={{ color: 'var(--muted)' }}>
                               <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0 mt-0.5" style={{ color: s.color, background: s.bg }}>
                                 {g.severity}
                               </span>
@@ -299,7 +299,7 @@ export default function ComplianceMatrixPage() {
           {/* Suggestions */}
           {result && result.suggestions && result.suggestions.length > 0 && (
             <ContentCard className="mt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: '#6b7280' }}>/ AI RECOMMENDATIONS</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--muted)' }}>/ AI RECOMMENDATIONS</p>
               <div className="space-y-2">
                 {result.suggestions.slice(0, 10).map((s, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">

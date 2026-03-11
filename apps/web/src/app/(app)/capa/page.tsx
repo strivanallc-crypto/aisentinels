@@ -148,14 +148,14 @@ export default function CapaPage() {
         <SectionLabel>ALL CAPAs</SectionLabel>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: '#4b5563' }} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search CAPAs..."
               className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </div>
           <PrimaryButton onClick={() => setShowCreate(true)}>
@@ -186,7 +186,7 @@ export default function CapaPage() {
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
             {filtered.map((c, i) => (
               <div
                 key={c.id}
@@ -195,13 +195,13 @@ export default function CapaPage() {
               >
                 <span
                   className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
-                  style={{ color: 'rgba(255,255,255,0.12)' }}
+                  style={{ color: 'var(--row-number)' }}
                 >
                   /{String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold truncate">{c.problemDescription}</p>
-                  <p className="text-[11px]" style={{ color: '#6b7280' }}>
+                  <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
                     {CAPA_SOURCE_TYPE_LABELS[c.sourceType]}
                   </p>
                 </div>
@@ -226,7 +226,7 @@ export default function CapaPage() {
                 <span
                   className="text-[11px] flex-shrink-0 w-24 text-right tabular-nums"
                   style={{
-                    color: isOverdue(c) ? '#EF4444' : '#4b5563',
+                    color: isOverdue(c) ? '#EF4444' : 'var(--content-text-dim)',
                     fontWeight: isOverdue(c) ? 600 : 400,
                   }}
                 >
@@ -234,7 +234,7 @@ export default function CapaPage() {
                     ? new Date(c.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     : '\u2014'}
                 </span>
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: '#4b5563' }} />
+                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: 'var(--content-text-dim)' }} />
               </div>
             ))}
           </div>
@@ -249,53 +249,53 @@ export default function CapaPage() {
       >
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Problem Description</label>
+            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Problem Description</label>
             <textarea
               required
               rows={3}
               value={form.problemDescription}
               onChange={(e) => setForm((f) => ({ ...f, problemDescription: e.target.value }))}
               placeholder="Describe the nonconformity or issue..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-              style={{ color: '#fff' }}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Source</label>
-              <select required value={form.sourceType} onChange={(e) => setForm((f) => ({ ...f, sourceType: e.target.value as CapaSourceType }))} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }}>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Source</label>
+              <select required value={form.sourceType} onChange={(e) => setForm((f) => ({ ...f, sourceType: e.target.value as CapaSourceType }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}>
                 {SOURCE_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Severity</label>
-              <select required value={form.severity} onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value as FindingSeverity }))} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }}>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Severity</label>
+              <select required value={form.severity} onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value as FindingSeverity }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}>
                 {SEVERITIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Standard</label>
-              <select required value={form.standard} onChange={(e) => setForm((f) => ({ ...f, standard: e.target.value as IsoStandard }))} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }}>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Standard</label>
+              <select required value={form.standard} onChange={(e) => setForm((f) => ({ ...f, standard: e.target.value as IsoStandard }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}>
                 {ISO_STANDARDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Clause Ref</label>
-              <input type="text" value={form.clauseRef} onChange={(e) => setForm((f) => ({ ...f, clauseRef: e.target.value }))} placeholder="e.g. 8.4.1" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Clause Ref</label>
+              <input type="text" value={form.clauseRef} onChange={(e) => setForm((f) => ({ ...f, clauseRef: e.target.value }))} placeholder="e.g. 8.4.1" className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>RCA Method</label>
-              <select value={form.rootCauseMethod} onChange={(e) => setForm((f) => ({ ...f, rootCauseMethod: e.target.value as RootCauseMethod }))} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }}>
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>RCA Method</label>
+              <select value={form.rootCauseMethod} onChange={(e) => setForm((f) => ({ ...f, rootCauseMethod: e.target.value as RootCauseMethod }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}>
                 {ROOT_METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium" style={{ color: '#9ca3af' }}>Due Date</label>
-              <input type="date" required value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none" style={{ color: '#fff' }} />
+              <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Due Date</label>
+              <input type="date" required value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-1">
