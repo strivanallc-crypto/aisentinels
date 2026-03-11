@@ -20,6 +20,7 @@ import {
 import { AiGenerateWizard } from '@/components/document-studio/ai-generate-wizard';
 import { UploadClassifyModal } from '@/components/document-studio/upload-classify-modal';
 import { BulkUploadModal } from '@/components/document-studio/bulk-upload-modal';
+import { listLocalDocuments } from '@/lib/local-store';
 
 const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
 
@@ -55,9 +56,15 @@ export default function DocumentStudioPage() {
     try {
       const res = await documentsApi.list();
       const data = res.data;
-      setDocuments(Array.isArray(data) ? data : ((data as Record<string, unknown>)?.documents as Document[] ?? []));
+      const apiDocs = Array.isArray(data) ? data : ((data as Record<string, unknown>)?.documents as Document[] ?? []);
+      // Merge with local-store documents
+      const localDocs = listLocalDocuments().map((d) => d as unknown as Document);
+      const allDocs = [...apiDocs, ...localDocs.filter((ld) => !apiDocs.some((ad) => ad.id === ld.id))];
+      setDocuments(allDocs);
     } catch {
-      setDocuments([]);
+      // Backend unavailable — load from localStorage only
+      const localDocs = listLocalDocuments().map((d) => d as unknown as Document);
+      setDocuments(localDocs);
     } finally {
       setLoading(false);
     }

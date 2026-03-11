@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { aiApi, documentsApi } from '@/lib/api';
+import { generateIsoTemplate } from '@/lib/iso-templates';
+import { createLocalDocument } from '@/lib/local-store';
 import type { DocType, IsoStandard } from '@/lib/types';
 import { DOC_TYPE_LABELS, ISO_STANDARD_LABELS } from '@/lib/types';
 
@@ -122,8 +124,22 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
       setClauseRefs(data.clauseRefs ?? []);
       setStep('preview');
     } catch {
-      setError('Doki could not generate the document. Please try again.');
-      setStep('sections');
+      // AI backend unavailable — generate professional ISO template locally
+      try {
+        const template = generateIsoTemplate({
+          documentType: DOC_TYPE_LABELS[docType],
+          standards,
+          orgContext: orgContext || 'Generic organisation seeking ISO compliance',
+          sections,
+          title: title || undefined,
+        });
+        setGeneratedContent(template.content);
+        setClauseRefs(template.clauseRefs);
+        setStep('preview');
+      } catch {
+        setError('Doki could not generate the document. Please try again.');
+        setStep('sections');
+      }
     }
   };
 
@@ -142,7 +158,29 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
       onOpenChange(false);
       reset();
     } catch {
-      setError('Failed to save document.');
+      // Backend unavailable — save to localStorage
+      try {
+        const template = generateIsoTemplate({
+          documentType: DOC_TYPE_LABELS[docType],
+          standards,
+          orgContext: orgContext || 'Generic organisation seeking ISO compliance',
+          sections,
+          title: title || undefined,
+        });
+        createLocalDocument({
+          title: title || `${DOC_TYPE_LABELS[docType]} — AI Generated`,
+          docType,
+          content: generatedContent,
+          standards,
+          clauseRefs,
+          bodyJsonb: template.bodyJsonb as Record<string, unknown>,
+        });
+        onCreated();
+        onOpenChange(false);
+        reset();
+      } catch {
+        setError('Failed to save document.');
+      }
     } finally {
       setSaving(false);
     }
