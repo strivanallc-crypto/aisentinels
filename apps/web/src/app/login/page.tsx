@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         {/* Continue with Google */}
         <button
-          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+          onClick={() => signIn('cognito', { callbackUrl: '/dashboard' }, { identity_provider: 'Google' })}
           className="w-full h-11 bg-white text-[#111111] font-medium text-sm
                      rounded-xl border border-black/[0.12] flex items-center
                      justify-center gap-3 hover:bg-gray-50 transition-colors
