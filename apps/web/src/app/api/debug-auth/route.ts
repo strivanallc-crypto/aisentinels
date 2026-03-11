@@ -1,73 +1,93 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { handlers } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 import { Auth, raw, skipCSRFCheck, setEnvDefaults } from '@auth/core';
 import Cognito from '@auth/core/providers/cognito';
 
 /**
- * Inline copy of next-auth/lib/env.js reqWithEnvURL
- */
-function reqWithEnvURL(req: NextRequest): NextRequest {
-  const url = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
-  if (!url) return req;
-  const { origin: envOrigin } = new URL(url);
-  const { href, origin } = req.nextUrl;
-  return new NextRequest(href.replace(origin, envOrigin), req);
-}
-
-/**
- * Diagnostic v4: isolate whether the problem is reqWithEnvURL or the config.
+ * Diagnostic v5: Why does GET fail but POST succeeds?
  * DELETE THIS FILE once auth is working.
  */
 export async function GET() {
   const results: Record<string, unknown> = {};
   const cognitoDomain = process.env.COGNITO_DOMAIN!;
 
-  // ── Build fresh config (known working) ──
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const freshConfig: any = {
-    providers: [
-      Cognito({
-        clientId:     process.env.COGNITO_CLIENT_ID!,
-        clientSecret: process.env.COGNITO_CLIENT_SECRET ?? '',
-        issuer:       process.env.COGNITO_ISSUER!,
-        authorization: {
-          url: `https://${cognitoDomain}/oauth2/authorize`,
-          params: { scope: 'openid email profile' },
-        },
-        token:    `https://${cognitoDomain}/oauth2/token`,
-        userinfo: `https://${cognitoDomain}/oauth2/userInfo`,
-      }),
-    ],
-    pages: { signIn: '/login' },
-    basePath: '/api/auth',
-    secret: process.env.AUTH_SECRET,
-    trustHost: true,
-  };
-  setEnvDefaults(process.env as Record<string, string | undefined>, freshConfig, true);
+  function makeFreshConfig() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cfg: any = {
+      providers: [
+        Cognito({
+          clientId:     process.env.COGNITO_CLIENT_ID!,
+          clientSecret: process.env.COGNITO_CLIENT_SECRET ?? '',
+          issuer:       process.env.COGNITO_ISSUER!,
+          authorization: {
+            url: `https://${cognitoDomain}/oauth2/authorize`,
+            params: { scope: 'openid email profile' },
+          },
+          token:    `https://${cognitoDomain}/oauth2/token`,
+          userinfo: `https://${cognitoDomain}/oauth2/userInfo`,
+        }),
+      ],
+      pages: { signIn: '/login' },
+      basePath: '/api/auth',
+      secret: process.env.AUTH_SECRET,
+      trustHost: true,
+    };
+    setEnvDefaults(process.env as Record<string, string | undefined>, cfg, true);
+    return cfg;
+  }
 
-  // ── Test A: Inspect what reqWithEnvURL does to the request ──
+  // ── Test A: GET + raw + skipCSRF (does raw mode change the GET behavior?) ──
   try {
-    const testReq = new NextRequest('https://aisentinels.io/api/auth/signin/cognito', {
+    const cfg = makeFreshConfig();
+    const req = new Request('https://aisentinels.io/api/auth/signin/cognito', {
       method: 'GET',
       headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
     });
-    const modified = reqWithEnvURL(testReq);
-    results.testA_reqWithEnvURL = {
-      originalUrl: testReq.url,
-      originalNextUrl: testReq.nextUrl?.href,
-      modifiedUrl: modified.url,
-      modifiedNextUrl: modified.nextUrl?.href,
+    const res = await Auth(req, { ...cfg, raw, skipCSRFCheck });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawRes = res as any;
+    results.testA_GET_raw = {
+      redirect: rawRes.redirect,
+      status: rawRes.status,
+      cookies: rawRes.cookies?.length,
+      headers: rawRes.headers ? Object.fromEntries(
+        Object.entries(rawRes.headers).map(([k, v]) => [k, String(v).substring(0, 100)])
+      ) : undefined,
+      body: typeof rawRes.body === 'string' ? rawRes.body.substring(0, 200) : typeof rawRes.body,
     };
   } catch (err: unknown) {
-    results.testA_reqWithEnvURL = {
+    results.testA_GET_raw = {
       error: (err as Error).message,
       type: (err as Error).constructor?.name,
+      stack: (err as Error).stack?.split('\n').slice(0, 8),
     };
   }
 
-  // ── Test B: Auth() with reqWithEnvURL-modified request + FRESH config + raw/skipCSRF ──
+  // ── Test B: GET without raw/skipCSRF — as a Response object ──
   try {
-    const testReq = new NextRequest('https://aisentinels.io/api/auth/signin/cognito?', {
+    const cfg = makeFreshConfig();
+    const req = new Request('https://aisentinels.io/api/auth/signin/cognito', {
+      method: 'GET',
+      headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await (Auth as any)(req, cfg) as Response;
+    results.testB_GET_noRaw = {
+      status: res.status,
+      location: res.headers?.get?.('Location') ?? res.headers?.get?.('location'),
+      contentType: res.headers?.get?.('content-type'),
+    };
+  } catch (err: unknown) {
+    results.testB_GET_noRaw = {
+      error: (err as Error).message,
+      type: (err as Error).constructor?.name,
+      stack: (err as Error).stack?.split('\n').slice(0, 8),
+    };
+  }
+
+  // ── Test C: POST without raw/skipCSRF (same as handler.POST path) ──
+  try {
+    const cfg = makeFreshConfig();
+    const req = new Request('https://aisentinels.io/api/auth/signin/cognito?', {
       method: 'POST',
       headers: {
         host: 'aisentinels.io',
@@ -76,59 +96,55 @@ export async function GET() {
       },
       body: new URLSearchParams({ callbackUrl: '/dashboard' }),
     });
-    const modified = reqWithEnvURL(testReq);
-    results.testB_modifiedUrl = modified.url;
-    const res = await Auth(modified, { ...freshConfig, raw, skipCSRFCheck });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawRes = res as any;
-    results.testB_reqWithEnvURL_freshConfig = {
-      redirect: typeof rawRes.redirect === 'string' ? rawRes.redirect.substring(0, 80) + '...' : undefined,
-      success: typeof rawRes.redirect === 'string' && rawRes.redirect.includes('oauth2/authorize'),
-    };
-  } catch (err: unknown) {
-    results.testB_reqWithEnvURL_freshConfig = {
-      error: (err as Error).message,
-      type: (err as Error).constructor?.name,
-      stack: (err as Error).stack?.split('\n').slice(0, 5),
-    };
-  }
-
-  // ── Test C: Auth() with reqWithEnvURL-modified GET request + FRESH config (no raw/skipCSRF) ──
-  // This is EXACTLY what the actual handler.GET does (minus the shared config object)
-  try {
-    const testReq = new NextRequest('https://aisentinels.io/api/auth/signin/cognito', {
-      method: 'GET',
-      headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
-    });
-    const modified = reqWithEnvURL(testReq);
-    const res = await Auth(modified, freshConfig);
-    if (res instanceof Response) {
-      results.testC_GET_freshConfig = {
-        status: res.status,
-        location: res.headers.get('Location') ?? res.headers.get('location'),
-      };
-    }
-  } catch (err: unknown) {
-    results.testC_GET_freshConfig = {
-      error: (err as Error).message,
-      type: (err as Error).constructor?.name,
-      stack: (err as Error).stack?.split('\n').slice(0, 5),
-    };
-  }
-
-  // ── Test D: handler GET (control — expected to fail) ──
-  try {
-    const testReq = new NextRequest('https://aisentinels.io/api/auth/signin/cognito', {
-      method: 'GET',
-      headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
-    });
-    const res = await handlers.GET(testReq);
-    results.testD_handler_GET = {
+    const res = await (Auth as any)(req, cfg) as Response;
+    results.testC_POST_noRaw = {
       status: res.status,
-      location: res.headers.get('Location') ?? res.headers.get('location'),
+      location: res.headers?.get?.('Location') ?? res.headers?.get?.('location'),
     };
   } catch (err: unknown) {
-    results.testD_handler_GET = {
+    results.testC_POST_noRaw = {
+      error: (err as Error).message,
+      type: (err as Error).constructor?.name,
+    };
+  }
+
+  // ── Test D: GET /api/auth/signin (no provider) ──
+  try {
+    const cfg = makeFreshConfig();
+    const req = new Request('https://aisentinels.io/api/auth/signin', {
+      method: 'GET',
+      headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await (Auth as any)(req, cfg) as Response;
+    results.testD_GET_signin = {
+      status: res.status,
+      location: res.headers?.get?.('Location') ?? res.headers?.get?.('location'),
+    };
+  } catch (err: unknown) {
+    results.testD_GET_signin = {
+      error: (err as Error).message,
+      type: (err as Error).constructor?.name,
+    };
+  }
+
+  // ── Test E: GET /api/auth/providers ──
+  try {
+    const cfg = makeFreshConfig();
+    const req = new Request('https://aisentinels.io/api/auth/providers', {
+      method: 'GET',
+      headers: { host: 'aisentinels.io', 'x-forwarded-proto': 'https' },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await (Auth as any)(req, cfg) as Response;
+    const body = await res.text();
+    results.testE_providers = {
+      status: res.status,
+      body: body.substring(0, 300),
+    };
+  } catch (err: unknown) {
+    results.testE_providers = {
       error: (err as Error).message,
       type: (err as Error).constructor?.name,
     };
