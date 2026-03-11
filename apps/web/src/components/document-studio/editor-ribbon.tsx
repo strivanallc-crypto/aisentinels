@@ -3,38 +3,43 @@
 /**
  * EditorRibbon — MS Word-style toolbar for TipTap editor.
  *
- * 5 sections (left → right):
- *   1. Text style dropdown (Normal / H1 / H2 / H3)
- *   2. Basic formatting (Bold / Italic / Underline)
- *   3. Lists (Bullet / Ordered)
- *   4. Text alignment (Left / Center / Right / Justify)
- *   5. Document actions (Copy / Word count)
- *
- * Theme: --content-bg background, --content-border dividers, --content-text text.
- * Disabled state: all buttons disabled + 50% opacity when readOnly.
+ * 5 groups: History | Format | Paragraph | Insert | Doki AI
  */
 import type { Editor } from '@tiptap/react';
 import {
+  Undo2,
+  Redo2,
   Bold,
   Italic,
   Underline,
+  Strikethrough,
   List,
   ListOrdered,
+  Quote,
+  Code2,
   AlignLeft,
   AlignCenter,
   AlignRight,
   AlignJustify,
-  Copy,
-  Check,
+  Minus,
+  WrapText,
   ChevronDown,
+  Sparkles,
+  RotateCcw,
+  BookOpen,
+  Palette,
+  Highlighter,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────────────────
 
 interface EditorRibbonProps {
   editor: Editor | null;
   readOnly?: boolean;
+  onAskDoki?: () => void;
+  onImprove?: () => void;
+  onIsoClauses?: () => void;
 }
 
 type HeadingLevel = 1 | 2 | 3;
@@ -52,7 +57,25 @@ const STYLE_OPTIONS: StyleOption[] = [
   { label: 'Heading 3', value: 'heading', level: 3 },
 ];
 
-// ── Ribbon button ─────────────────────────────────────────────────────────────
+const TEXT_COLORS = [
+  { label: 'Default', color: null as string | null },
+  { label: 'Red', color: '#dc2626' },
+  { label: 'Orange', color: '#ea580c' },
+  { label: 'Yellow', color: '#ca8a04' },
+  { label: 'Green', color: '#16a34a' },
+  { label: 'Blue', color: '#2563eb' },
+  { label: 'Purple', color: '#7c3aed' },
+  { label: 'Gray', color: '#6b7280' },
+];
+
+const HIGHLIGHT_COLORS = [
+  { label: 'None', color: null as string | null },
+  { label: 'Yellow', color: '#fef08a' },
+  { label: 'Green', color: '#bbf7d0' },
+  { label: 'Red', color: '#fecaca' },
+];
+
+// ── Ribbon button ─────────────────────────────────────────────────────────────────────
 
 function RibbonBtn({
   active,
@@ -73,16 +96,16 @@ function RibbonBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-7 w-7 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
+      className="flex h-7 w-7 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-40"
       style={{
-        background: active ? 'rgba(99,102,241,0.25)' : 'transparent',
-        color: active ? '#a5b4fc' : 'var(--content-text-muted)',
+        background: active ? 'rgba(194,250,105,0.15)' : 'transparent',
+        color: active ? '#c2fa69' : 'var(--content-text-muted)',
       }}
       onMouseEnter={(e) => {
-        if (!active && !disabled) (e.currentTarget.style.background = 'rgba(255,255,255,0.07)');
+        if (!active && !disabled) e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
       }}
       onMouseLeave={(e) => {
-        if (!active) (e.currentTarget.style.background = 'transparent');
+        if (!active) e.currentTarget.style.background = active ? 'rgba(194,250,105,0.15)' : 'transparent';
       }}
     >
       {children}
@@ -90,18 +113,18 @@ function RibbonBtn({
   );
 }
 
-// ── Separator ─────────────────────────────────────────────────────────────────
+// ── Separator ─────────────────────────────────────────────────────────────────────
 
-function Separator() {
+function Sep() {
   return (
     <div
-      className="mx-1.5 h-5 w-px flex-shrink-0"
-      style={{ background: 'var(--content-border)' }}
+      className="mx-1 h-5 w-px flex-shrink-0"
+      style={{ background: 'rgba(255,255,255,0.08)' }}
     />
   );
 }
 
-// ── Text style dropdown ──────────────────────────────────────────────────────
+// ── Text style dropdown ─────────────────────────────────────────────────────────────────
 
 function StyleDropdown({
   editor,
@@ -113,7 +136,6 @@ function StyleDropdown({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -146,9 +168,9 @@ function StyleDropdown({
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex h-7 items-center gap-1 rounded px-2 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
         style={{ color: 'var(--content-text)', background: 'transparent' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
       >
         <span className="min-w-[4.5rem] text-left">{currentLabel}</span>
@@ -158,13 +180,10 @@ function StyleDropdown({
       {open && (
         <div
           className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border py-1 shadow-xl"
-          style={{
-            background: 'var(--content-bg)',
-            borderColor: 'var(--content-border)',
-          }}
+          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
           {STYLE_OPTIONS.map((opt) => {
-            const active =
+            const isActive =
               opt.value === 'paragraph'
                 ? !editor.isActive('heading')
                 : editor.isActive('heading', { level: opt.level });
@@ -175,14 +194,14 @@ function StyleDropdown({
                 onClick={() => apply(opt)}
                 className="flex w-full items-center px-3 py-1.5 text-xs transition-colors"
                 style={{
-                  color: active ? '#a5b4fc' : 'var(--content-text)',
-                  background: active ? 'rgba(99,102,241,0.15)' : 'transparent',
+                  color: isActive ? '#c2fa69' : 'var(--text)',
+                  background: isActive ? 'rgba(194,250,105,0.1)' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+                  if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                 }}
                 onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.background = 'transparent';
+                  if (!isActive) e.currentTarget.style.background = isActive ? 'rgba(194,250,105,0.1)' : 'transparent';
                 }}
               >
                 {opt.label}
@@ -195,39 +214,106 @@ function StyleDropdown({
   );
 }
 
+// ── Color picker dropdown ─────────────────────────────────────────────────────────────
+
+function ColorPicker({
+  colors,
+  onSelect,
+  disabled,
+  icon: Icon,
+  title,
+  activeColor,
+}: {
+  colors: Array<{ label: string; color: string | null }>;
+  onSelect: (color: string | null) => void;
+  disabled?: boolean;
+  icon: React.ElementType;
+  title: string;
+  activeColor?: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <RibbonBtn
+        active={!!activeColor}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        title={title}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </RibbonBtn>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 rounded-lg border p-2 shadow-xl"
+          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="grid grid-cols-4 gap-1">
+            {colors.map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                onClick={() => { onSelect(c.color); setOpen(false); }}
+                className="h-6 w-6 rounded-md border transition-transform hover:scale-110"
+                style={{
+                  background: c.color ?? 'var(--text)',
+                  borderColor: activeColor === c.color ? '#c2fa69' : 'rgba(255,255,255,0.1)',
+                  borderWidth: activeColor === c.color ? '2px' : '1px',
+                }}
+                title={c.label}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main ribbon ──────────────────────────────────────────────────────────────
 
-export function EditorRibbon({ editor, readOnly }: EditorRibbonProps) {
-  const [copied, setCopied] = useState(false);
-
+export function EditorRibbon({ editor, readOnly, onAskDoki, onImprove, onIsoClauses }: EditorRibbonProps) {
   if (!editor) return null;
 
   const disabled = readOnly ?? false;
-
-  const handleCopy = () => {
-    const text = editor.getText();
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const charCount = editor.storage.characterCount?.characters() ?? 0;
-  const wordCount = editor.storage.characterCount?.words() ?? 0;
 
   return (
     <div
       className="flex flex-wrap items-center gap-0.5 px-3 py-1.5"
       style={{
-        background: 'var(--content-bg)',
-        borderBottom: '1px solid var(--content-border)',
+        background: 'var(--card-bg)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
     >
-      {/* §1 — Text style dropdown */}
-      <StyleDropdown editor={editor} disabled={disabled} />
+      {/* §1 — History */}
+      <RibbonBtn
+        disabled={disabled || !editor.can().undo()}
+        onClick={() => editor.chain().focus().undo().run()}
+        title="Undo (Ctrl+Z)"
+      >
+        <Undo2 className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
+        disabled={disabled || !editor.can().redo()}
+        onClick={() => editor.chain().focus().redo().run()}
+        title="Redo (Ctrl+Y)"
+      >
+        <Redo2 className="h-3.5 w-3.5" />
+      </RibbonBtn>
 
-      <Separator />
+      <Sep />
 
-      {/* §2 — Basic formatting */}
+      {/* §2 — Format */}
       <RibbonBtn
         active={editor.isActive('bold')}
         disabled={disabled}
@@ -252,30 +338,47 @@ export function EditorRibbon({ editor, readOnly }: EditorRibbonProps) {
       >
         <Underline className="h-3.5 w-3.5" />
       </RibbonBtn>
-
-      <Separator />
-
-      {/* §3 — Lists */}
       <RibbonBtn
-        active={editor.isActive('bulletList')}
+        active={editor.isActive('strike')}
         disabled={disabled}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        title="Bullet List"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        title="Strikethrough"
       >
-        <List className="h-3.5 w-3.5" />
-      </RibbonBtn>
-      <RibbonBtn
-        active={editor.isActive('orderedList')}
-        disabled={disabled}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        title="Ordered List"
-      >
-        <ListOrdered className="h-3.5 w-3.5" />
+        <Strikethrough className="h-3.5 w-3.5" />
       </RibbonBtn>
 
-      <Separator />
+      <Sep />
 
-      {/* §4 — Text alignment */}
+      <StyleDropdown editor={editor} disabled={disabled} />
+
+      <Sep />
+
+      <ColorPicker
+        colors={TEXT_COLORS}
+        onSelect={(color) => {
+          if (color) editor.chain().focus().setColor(color).run();
+          else editor.chain().focus().unsetColor().run();
+        }}
+        disabled={disabled}
+        icon={Palette}
+        title="Text Color"
+        activeColor={(editor.getAttributes('textStyle').color as string) ?? null}
+      />
+      <ColorPicker
+        colors={HIGHLIGHT_COLORS}
+        onSelect={(color) => {
+          if (color) editor.chain().focus().toggleHighlight({ color }).run();
+          else editor.chain().focus().unsetHighlight().run();
+        }}
+        disabled={disabled}
+        icon={Highlighter}
+        title="Highlight"
+        activeColor={(editor.getAttributes('highlight').color as string) ?? null}
+      />
+
+      <Sep />
+
+      {/* §3 — Paragraph */}
       <RibbonBtn
         active={editor.isActive({ textAlign: 'left' })}
         disabled={disabled}
@@ -309,23 +412,96 @@ export function EditorRibbon({ editor, readOnly }: EditorRibbonProps) {
         <AlignJustify className="h-3.5 w-3.5" />
       </RibbonBtn>
 
-      <Separator />
+      <Sep />
 
-      {/* §5 — Document actions */}
       <RibbonBtn
-        active={false}
-        disabled={false}
-        onClick={handleCopy}
-        title="Copy all text"
+        active={editor.isActive('bulletList')}
+        disabled={disabled}
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        title="Bullet List"
       >
-        {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+        <List className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
+        active={editor.isActive('orderedList')}
+        disabled={disabled}
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        title="Ordered List"
+      >
+        <ListOrdered className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
+        active={editor.isActive('blockquote')}
+        disabled={disabled}
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        title="Blockquote"
+      >
+        <Quote className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
+        active={editor.isActive('codeBlock')}
+        disabled={disabled}
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        title="Code Block"
+      >
+        <Code2 className="h-3.5 w-3.5" />
       </RibbonBtn>
 
-      {/* Word/char count — right side */}
-      <div className="ml-auto flex items-center gap-2 text-[10px] tabular-nums" style={{ color: 'var(--content-text-dim)' }}>
-        <span>{wordCount.toLocaleString()} words</span>
-        <span>&middot;</span>
-        <span>{charCount.toLocaleString()} chars</span>
+      <Sep />
+
+      {/* §4 — Insert */}
+      <RibbonBtn
+        disabled={disabled}
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        title="Horizontal Rule"
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
+        disabled={disabled}
+        onClick={() => editor.chain().focus().setHardBreak().run()}
+        title="Hard Break"
+      >
+        <WrapText className="h-3.5 w-3.5" />
+      </RibbonBtn>
+
+      <Sep />
+
+      {/* §5 — Doki AI */}
+      <div className="flex items-center gap-1 ml-auto">
+        <button
+          type="button"
+          onClick={onAskDoki}
+          disabled={disabled}
+          className="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-all disabled:pointer-events-none disabled:opacity-40 hover:brightness-110"
+          style={{ background: '#c2fa69', color: '#0a0a0a' }}
+          title="Ask Doki AI"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Ask Doki
+        </button>
+        <button
+          type="button"
+          onClick={onImprove}
+          disabled={disabled || editor.state.selection.empty}
+          className="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all disabled:pointer-events-none disabled:opacity-40"
+          style={{ background: 'rgba(194,250,105,0.12)', color: '#c2fa69' }}
+          title="Improve selected text with AI"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Improve
+        </button>
+        <button
+          type="button"
+          onClick={onIsoClauses}
+          disabled={disabled}
+          className="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all disabled:pointer-events-none disabled:opacity-40"
+          style={{ background: 'rgba(194,250,105,0.12)', color: '#c2fa69' }}
+          title="Highlight ISO clause references"
+        >
+          <BookOpen className="h-3 w-3" />
+          ISO Clauses
+        </button>
       </div>
     </div>
   );

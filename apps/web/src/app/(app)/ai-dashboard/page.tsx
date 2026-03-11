@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { sentinelsApi } from '@/lib/api';
+import { aiApi } from '@/lib/api';
 import { Bot, Sparkles, AlertTriangle, CheckCircle2, XCircle, Loader2, ChevronRight, BarChart2 } from 'lucide-react';
 
 type Mode = 'qms' | 'ohs';
@@ -15,9 +15,9 @@ interface AnalysisResult {
 }
 
 const SEV_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  HIGH:   { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
-  MEDIUM: { bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
-  LOW:    { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+  HIGH:   { bg: 'rgba(220,38,38,0.06)', color: '#dc2626', border: 'rgba(220,38,38,0.2)' },
+  MEDIUM: { bg: 'rgba(217,119,6,0.06)', color: '#d97706', border: 'rgba(217,119,6,0.2)' },
+  LOW:    { bg: 'rgba(22,163,74,0.06)', color: '#16a34a', border: 'rgba(22,163,74,0.2)' },
 };
 
 const FIELD = 'w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
@@ -33,18 +33,30 @@ export default function AiDashboardPage() {
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setResult(null);
     try {
-      const res = mode === 'qms'
-        ? await sentinelsApi.analyzeDocument(input, extra || undefined)
-        : await sentinelsApi.identifyHazards(input, extra || undefined);
-      setResult(res.data);
+      if (mode === 'qms') {
+        const res = await aiApi.gapDetect({
+          standards: [extra || 'iso_9001'],
+          existingControls: [],
+          auditResults: [],
+        });
+        setResult(res.data as AnalysisResult);
+      } else {
+        const res = await aiApi.documentGenerate({
+          documentType: 'hazard_identification',
+          standards: ['iso_45001'],
+          orgContext: input,
+          sections: ['hazards'],
+        });
+        setResult(res.data as AnalysisResult);
+      }
     } catch {
-      setError('Analysis failed. Verify the backend is running and GEMINI_API_KEY is configured.');
+      setError('Analysis failed. Verify the backend is running and AI credentials are configured.');
     }
     setLoading(false);
   };
 
   const scoreColor = (score?: number) => {
-    if (!score) return '#6b7280';
+    if (!score) return 'var(--muted)';
     if (score >= 80) return '#16a34a';
     if (score >= 60) return '#d97706';
     return '#dc2626';
@@ -55,18 +67,18 @@ export default function AiDashboardPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#111827' }}>AI Sentinels</h1>
-        <p className="text-sm mt-0.5" style={{ color: '#6b7280' }}>AI-powered compliance gap analysis and hazard identification</p>
+        <h1 className="text-2xl font-bold font-heading" style={{ color: 'var(--text)' }}>AI Sentinels</h1>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--muted)' }}>AI-powered compliance gap analysis and hazard identification</p>
       </div>
 
       {/* Mode Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: '#f3f4f6' }}>
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--surface)' }}>
         {([['qms', 'QMS Gap Analysis', BarChart2], ['ohs', 'OHS Hazard ID', AlertTriangle]] as [Mode, string, React.ElementType][]).map(([m, label, Icon]) => (
           <button key={m} onClick={() => { setMode(m); setResult(null); setInput(''); setExtra(''); }}
             className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all"
             style={mode === m
-              ? { background: '#fff', color: '#111827', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
-              : { color: '#6b7280', background: 'transparent' }}>
+              ? { background: 'var(--card-bg)', color: 'var(--text)', boxShadow: 'var(--card-shadow)' }
+              : { color: 'var(--muted)', background: 'transparent' }}>
             <Icon className="h-3.5 w-3.5" />
             {label}
           </button>
@@ -74,64 +86,64 @@ export default function AiDashboardPage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleAnalyze} className="rounded-xl p-6 space-y-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+      <form onSubmit={handleAnalyze} className="rounded-xl p-6 space-y-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
         <div>
-          <label className="block text-xs font-semibold mb-2" style={{ color: '#374151' }}>
+          <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text)' }}>
             {mode === 'qms' ? 'Document / Process Content' : 'Activity Description'}
           </label>
           <textarea required value={input} onChange={e => setInput(e.target.value)} rows={7}
             placeholder={mode === 'qms'
               ? 'Paste your procedure, policy, or process description here…'
               : 'Describe the work activity (e.g. "Operating a forklift in the warehouse to move pallets")…'}
-            className={FIELD} style={{ borderColor: '#e5e7eb', color: '#111827', resize: 'vertical' }} />
+            className={FIELD} style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--input-bg)', resize: 'vertical' }} />
         </div>
         <div>
-          <label className="block text-xs font-semibold mb-2" style={{ color: '#374151' }}>
+          <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text)' }}>
             {mode === 'qms' ? 'Standard (optional)' : 'Location (optional)'}
           </label>
           <input value={extra} onChange={e => setExtra(e.target.value)}
             placeholder={mode === 'qms' ? 'e.g. ISO 9001:2015' : 'e.g. Warehouse Floor 2'}
-            className={FIELD} style={{ borderColor: '#e5e7eb', color: '#111827' }} />
+            className={FIELD} style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--input-bg)' }} />
         </div>
         <button type="submit" disabled={loading}
           className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-opacity disabled:opacity-60"
-          style={{ background: '#2563eb' }}>
+          style={{ background: 'var(--btn-primary-bg)', color: 'var(--btn-primary-text)' }}>
           {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing…</> : <><Sparkles className="h-4 w-4" /> Run Analysis</>}
         </button>
       </form>
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)' }}>
           <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#dc2626' }} />
-          <p className="text-sm" style={{ color: '#991b1b' }}>{error}</p>
+          <p className="text-sm" style={{ color: '#dc2626' }}>{error}</p>
         </div>
       )}
 
       {/* Results */}
       {result && (
-        <div className="rounded-xl overflow-hidden" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
 
           {/* Score header */}
-          <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid #f3f4f6', background: '#fafafa' }}>
+          <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: '#eff6ff' }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'rgba(37,99,235,0.08)' }}>
                 <Bot className="h-5 w-5" style={{ color: '#2563eb' }} />
               </div>
               <div>
-                <p className="font-semibold text-sm" style={{ color: '#111827' }}>Analysis Complete</p>
-                <p className="text-xs" style={{ color: '#9ca3af' }}>Powered by Gemini AI</p>
+                <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>Analysis Complete</p>
+                <p className="text-xs" style={{ color: 'var(--muted)' }}>Powered by Gemini AI</p>
               </div>
             </div>
             {mode === 'qms' && result.complianceScore !== undefined && (
               <div className="text-right">
                 <p className="text-3xl font-bold" style={{ color: scoreColor(result.complianceScore) }}>{result.complianceScore}%</p>
-                <p className="text-xs" style={{ color: '#9ca3af' }}>Compliance Score</p>
+                <p className="text-xs" style={{ color: 'var(--muted)' }}>Compliance Score</p>
               </div>
             )}
             {mode === 'ohs' && result.overallRiskRating && (
               <span className="rounded-lg px-3 py-1.5 text-sm font-semibold"
-                style={SEV_STYLE[result.overallRiskRating] ?? { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' }}>
+                style={SEV_STYLE[result.overallRiskRating] ?? { bg: 'var(--surface)', color: 'var(--text)', border: 'var(--border)' }}>
                 {result.overallRiskRating} Risk
               </span>
             )}
@@ -139,7 +151,7 @@ export default function AiDashboardPage() {
 
           {/* QMS Results */}
           {mode === 'qms' && (
-            <div className="divide-y" style={{ borderColor: '#f3f4f6' }}>
+            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
               {result.gaps && result.gaps.length > 0 && (
                 <div className="px-6 py-5">
                   <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#dc2626' }}>
@@ -147,7 +159,7 @@ export default function AiDashboardPage() {
                   </p>
                   <ul className="space-y-2">
                     {result.gaps.map((g, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: '#374151' }}>
+                      <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--text)' }}>
                         <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} /> {g}
                       </li>
                     ))}
@@ -161,7 +173,7 @@ export default function AiDashboardPage() {
                   </p>
                   <ul className="space-y-2">
                     {result.recommendations.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: '#374151' }}>
+                      <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--text)' }}>
                         <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#22c55e' }} /> {r}
                       </li>
                     ))}
@@ -174,7 +186,7 @@ export default function AiDashboardPage() {
           {/* OHS Results */}
           {mode === 'ohs' && result.hazards && (
             <div className="px-6 py-5 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: '#6b7280' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--muted)' }}>
                 Identified Hazards ({result.hazards.length})
               </p>
               {result.hazards.map((h, i) => {
@@ -182,15 +194,15 @@ export default function AiDashboardPage() {
                 return (
                   <div key={i} className="rounded-xl p-4" style={{ background: sev.bg, border: `1px solid ${sev.border}` }}>
                     <div className="flex items-start justify-between gap-4 mb-2">
-                      <p className="font-medium text-sm" style={{ color: '#111827' }}>{h.hazard}</p>
-                      <span className="flex-shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: '#fff', color: sev.color, border: `1px solid ${sev.border}` }}>
+                      <p className="font-medium text-sm" style={{ color: 'var(--text)' }}>{h.hazard}</p>
+                      <span className="flex-shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: 'var(--card-bg)', color: sev.color, border: `1px solid ${sev.border}` }}>
                         {h.severity}
                       </span>
                     </div>
                     {h.controls.length > 0 && (
                       <ul className="space-y-1 mt-3 pt-3" style={{ borderTop: `1px solid ${sev.border}` }}>
                         {h.controls.map((c, j) => (
-                          <li key={j} className="flex items-start gap-2 text-xs" style={{ color: '#4b5563' }}>
+                          <li key={j} className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                             <ChevronRight className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: sev.color }} /> {c}
                           </li>
                         ))}

@@ -23,6 +23,7 @@ export const documentsApi = {
   list:   (params?: object) => api.get('/api/v1/document-studio/documents', { params }),
   get:    (id: string)      => api.get(`/api/v1/document-studio/documents/${id}`),
   create: (data: object)    => api.post('/api/v1/document-studio/documents', data),
+  update: (id: string, data: object) => api.patch(`/api/v1/document-studio/documents/${id}`, data),
   submit: (id: string, approverIds: string[]) =>
     api.post(`/api/v1/document-studio/documents/${id}/submit-for-approval`, { approverIds }),
   decide: (approvalId: string, decision: 'APPROVED' | 'REJECTED', comments?: string) =>

@@ -182,6 +182,9 @@ export default function DocumentDetailPage() {
           <TipTapEditor
             content={doc.bodyJsonb as Record<string, unknown> | null | undefined}
             editable={doc.status === 'draft'}
+            onSave={async (json) => {
+              await documentsApi.update(doc.id, { bodyJsonb: json });
+            }}
           />
         </div>
 

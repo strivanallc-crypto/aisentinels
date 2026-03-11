@@ -9,6 +9,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { CommandPalette } from '@/components/layout/command-palette';
 import { ToastProvider } from '@/components/ui/toast';
 import { useTheme } from '@/components/theme-provider';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { billingApi, api } from '@/lib/api';
 import type { PlanType } from '@/lib/types';
 import { hasAcceptedAllCurrentVersions } from '@/lib/legal-versions';
@@ -289,7 +290,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
           </header>
 
           {/* ── Page content ── */}
-          <div className="flex-1 overflow-y-auto">{children}</div>
+          <div className="flex-1 overflow-y-auto"><ErrorBoundary>{children}</ErrorBoundary></div>
         </main>
       </div>
     </ToastProvider>
