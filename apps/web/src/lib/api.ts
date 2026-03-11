@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { getSession } from 'next-auth/react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -22,7 +23,7 @@ api.interceptors.request.use(async (config) => {
 export const documentsApi = {
   list:   (params?: object) => api.get('/api/v1/document-studio/documents', { params }),
   get:    (id: string)      => api.get(`/api/v1/document-studio/documents/${id}`),
-  create: (data: object)    => api.post('/api/v1/document-studio/documents', data),
+  create: (data: object, config?: AxiosRequestConfig) => api.post('/api/v1/document-studio/documents', data, config),
   update: (id: string, data: object) => api.patch(`/api/v1/document-studio/documents/${id}`, data),
   submit: (id: string, approverIds: string[]) =>
     api.post(`/api/v1/document-studio/documents/${id}/submit-for-approval`, { approverIds }),
@@ -42,9 +43,10 @@ export const recordsApi = {
 // ==================== AI Sentinels ====================
 export const aiApi = {
   /** Doki generates ISO documents channeling domain sentinels */
-  documentGenerate: (data: {
-    documentType: string; standards: string[]; orgContext: string; sections: string[];
-  }) => api.post('/api/v1/ai/document-generate', data),
+  documentGenerate: (
+    data: { documentType: string; standards: string[]; orgContext: string; sections: string[] },
+    config?: AxiosRequestConfig,
+  ) => api.post('/api/v1/ai/document-generate', data, config),
 
   /** Doki classifies uploaded document text by ISO clause */
   clauseClassify: (data: { documentText: string; fileName: string }) =>

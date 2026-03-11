@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import type { AxiosRequestConfig } from 'axios';
 import { aiApi, documentsApi } from '@/lib/api';
 import type { DocType, IsoStandard } from '@/lib/types';
 import { DOC_TYPE_LABELS, ISO_STANDARD_LABELS } from '@/lib/types';
@@ -48,6 +50,7 @@ const DEFAULT_SECTIONS: Record<string, string[]> = {
 
 export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [step, setStep] = useState<Step>('config');
   const [docType, setDocType] = useState<DocType>('procedure');
   const [standards, setStandards] = useState<IsoStandard[]>(['iso_9001']);
@@ -109,6 +112,15 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
     });
   };
 
+  /** Build per-request axios config with Authorization header from the live session.
+   *  This supplements the global interceptor in api.ts and guarantees the JWT is
+   *  sent even when getSession() returns a stale session without accessToken. */
+  const getAuthConfig = (): AxiosRequestConfig | undefined => {
+    const s = session as { accessToken?: string; idToken?: string } | null;
+    const token = s?.accessToken ?? s?.idToken;
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+  };
+
   const handleGenerate = async () => {
     setStep('generating');
     setError(null);
@@ -118,7 +130,7 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
         standards,
         orgContext: orgContext || 'Generic organisation seeking ISO compliance',
         sections,
-      });
+      }, getAuthConfig());
       const data = res.data as { content: string; clauseRefs: string[] };
       setGeneratedContent(data.content);
       setClauseRefs(data.clauseRefs ?? []);
@@ -139,7 +151,7 @@ export function AiGenerateWizard({ open, onOpenChange, onCreated }: Props) {
         content: generatedContent,
         standards,
         clauseRefs,
-      });
+      }, getAuthConfig());
       const created = res.data as { id?: string; document?: { id?: string } };
       const newId = created.id ?? created.document?.id;
       onCreated();
