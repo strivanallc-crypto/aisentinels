@@ -6,6 +6,10 @@
  * Assigns a new tenantId UUID and sets the 'owner' role on Cognito user
  * attributes so the pre-token trigger can inject them into every JWT.
  *
+ * Guard: If custom:tenantId is ALREADY set (e.g. by an invite flow that called
+ * AdminCreateUser with the attribute pre-populated), this trigger skips the
+ * write to avoid overwriting the invited tenant with a new random UUID.
+ *
  * DB provisioning is intentionally deferred to POST /api/v1/tenants/provision
  * (called from the frontend onboarding flow) to avoid VPC cold-start latency
  * during the email confirmation UX.
@@ -22,8 +26,21 @@ const cognitoClient = new CognitoIdentityProviderClient({
 });
 
 export const handler: PostConfirmationTriggerHandler = async (event) => {
-  // Only act on email sign-up confirmation — not on password reset confirmation
+  // Only act on sign-up confirmation — not on password reset confirmation
   if (event.triggerSource !== 'PostConfirmation_ConfirmSignUp') {
+    return event;
+  }
+
+  // If tenantId is already set (e.g. by invite flow), do NOT overwrite
+  const existingTenantId = event.request.userAttributes['custom:tenantId'];
+  if (existingTenantId) {
+    console.log(
+      JSON.stringify({
+        event: 'PostConfirmation_SkipExisting',
+        user: event.userName,
+        tenantId: existingTenantId,
+      }),
+    );
     return event;
   }
 

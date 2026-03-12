@@ -111,8 +111,8 @@ export class CognitoStack extends cdk.Stack {
       entry: path.join(__dirname, '../../../../packages/api/src/triggers/pre-token-generation.ts'),
       handler: 'handler',
       role: triggerRole,
-      timeout: cdk.Duration.seconds(5),
-      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
       environment: { ENV_NAME: envName },
       logGroup: preTokenLogGroup,
       bundling: {
@@ -215,16 +215,16 @@ export class CognitoStack extends cdk.Stack {
       cognito.LambdaVersion.V2_0,
     );
 
-    // PostConfirmation trigger needs to call AdminUpdateUserAttributes to set
-    // custom:tenantId and custom:role on the newly confirmed user.
-    // Uses a constructed ARN pattern (not this.userPool.userPoolArn) to break
-    // circular dependency: UserPool → PostConfirmFn → TriggerRole → Policy → UserPool
+    // Trigger Lambdas share triggerRole. This policy grants both postConfirmFn
+    // and preTokenFn permission to call AdminUpdateUserAttributes.
+    // Uses ${region}_* pattern (not this.userPool.userPoolArn) to break
+    // circular dependency: UserPool -> PostConfirmFn -> Role -> Policy -> UserPool
     postConfirmFn.addToRolePolicy(
       new iam.PolicyStatement({
         sid: 'AllowCognitoUpdateAttributes',
         actions: ['cognito-idp:AdminUpdateUserAttributes'],
         resources: [
-          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/aisentinels-${envName}*`,
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.region}_*`,
         ],
       }),
     );
@@ -250,8 +250,6 @@ export class CognitoStack extends cdk.Stack {
     const googleClientId = ssm.StringParameter.valueForStringParameter(
       this, `/aisentinels/${envName}/auth/google-client-id`,
     );
-
-
     const googleClientSecret = ssm.StringParameter.valueForStringParameter(
       this, `/aisentinels/${envName}/auth/google-client-secret`,
     );
@@ -270,8 +268,6 @@ export class CognitoStack extends cdk.Stack {
       },
     );
     tag(googleProvider);
-
-
     // ══════════════════════════════════════════════════════════════════════════
     // App Client 1 — Web SPA  (PKCE, Authorization Code, no secret)
     //
