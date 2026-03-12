@@ -12,7 +12,7 @@ const ContentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
   // Allow connections to the production domain, API Gateway, and Cognito
-  "connect-src 'self' https://aisentinels.io https://www.aisentinels.io https://*.amazonaws.com https://cognito-idp.*.amazonaws.com https://*.execute-api.*.amazonaws.com https://*.lambda-url.*.on.aws",
+  "connect-src 'self' https://aisentinels.io https://www.aisentinels.io https://*.amazonaws.com https://cognito-idp.*.amazonaws.com https://*.execute-api.*.amazonaws.com https://*.lambda-url.us-east-1.on.aws",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
