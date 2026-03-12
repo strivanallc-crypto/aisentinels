@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
-import { getSession } from 'next-auth/react';
+import { getSession, signOut } from 'next-auth/react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -18,6 +18,17 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Force re-login when API returns 401 (expired token that refresh couldn't fix).
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await signOut({ callbackUrl: '/login' });
+    }
+    return Promise.reject(error);
+  },
+);
 
 // ==================== Document Studio ====================
 export const documentsApi = {
