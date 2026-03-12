@@ -16,6 +16,12 @@
  *   generated tenantId into the current token. The AdminUpdateUserAttributes
  *   call is wrapped in try/catch — failure is logged but never thrown.
  *
+ * Auto-provision pipeline:
+ *   After backfilling tenantId, this trigger asynchronously invokes the
+ *   tenant-provision Lambda (InvocationType: 'Event') to create Aurora
+ *   rows (tenants + users + subscriptions). The provision Lambda is fully
+ *   idempotent — ON CONFLICT DO NOTHING on all three inserts.
+ *
  * Wired as V2_0 in CognitoStack via:
  *   userPool.addTrigger(
  *     cognito.UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG,
@@ -28,9 +34,14 @@ import {
   CognitoIdentityProviderClient,
   AdminUpdateUserAttributesCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { randomUUID } from 'crypto';
 
 const cognitoClient = new CognitoIdentityProviderClient({
+  region: process.env.AWS_REGION ?? 'us-east-1',
+});
+
+const lambdaClient = new LambdaClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
 });
 
@@ -80,6 +91,47 @@ export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
           error: String(err),
         }),
       );
+    }
+
+    // ── Auto-provision Aurora rows (async, fire-and-forget) ────────────────
+    // The provision Lambda creates tenants + users + subscriptions rows.
+    // InvocationType: 'Event' = async — pre-token does NOT wait for completion.
+    // All three DB inserts use ON CONFLICT DO NOTHING — safe to retry/duplicate.
+    const provisionFnName = process.env.PROVISION_FUNCTION_NAME;
+    if (provisionFnName) {
+      try {
+        await lambdaClient.send(
+          new InvokeCommand({
+            FunctionName: provisionFnName,
+            InvocationType: 'Event',
+            Payload: JSON.stringify({
+              source: 'pre-token-generation',
+              sub: event.userName,
+              email,
+              tenantId,
+              role,
+            }),
+          }),
+        );
+        console.log(
+          JSON.stringify({
+            event: 'PreTokenGeneration_ProvisionInvoked',
+            user: event.userName,
+            tenantId,
+            functionName: provisionFnName,
+          }),
+        );
+      } catch (err) {
+        // Log but do NOT throw — provision will retry on next login
+        console.error(
+          JSON.stringify({
+            event: 'PreTokenGeneration_ProvisionInvokeFailed',
+            user: event.userName,
+            tenantId,
+            error: String(err),
+          }),
+        );
+      }
     }
   }
 

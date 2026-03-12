@@ -30,6 +30,36 @@ api.interceptors.response.use(
   },
 );
 
+// ==================== AI Function URL (bypasses API GW 30s timeout) ========
+// AI inference (Gemini 2.5 Pro) routinely takes 30-90s. API Gateway HTTP API
+// has a hard 30s integration timeout. The Lambda Function URL has no timeout
+// cap — it respects the Lambda's own 90s timeout.
+const AI_URL = process.env.NEXT_PUBLIC_AI_FUNCTION_URL ?? '';
+const aiClient = AI_URL ? axios.create({ baseURL: AI_URL }) : api;
+
+// Reuse JWT + 401 interceptors for the dedicated AI client
+if (AI_URL) {
+  aiClient.interceptors.request.use(async (config) => {
+    const session = await getSession();
+    const s = session as { accessToken?: string; idToken?: string } | null;
+    const token = s?.accessToken ?? s?.idToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  aiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response?.status === 401) {
+        await signOut({ callbackUrl: '/login' });
+      }
+      return Promise.reject(error);
+    },
+  );
+}
+
 // ==================== Document Studio ====================
 export const documentsApi = {
   list:   (params?: object) => api.get('/api/v1/document-studio/documents', { params }),
@@ -57,43 +87,43 @@ export const aiApi = {
   documentGenerate: (
     data: { documentType: string; standards: string[]; orgContext: string; sections: string[] },
     config?: AxiosRequestConfig,
-  ) => api.post('/api/v1/ai/document-generate', data, config),
+  ) => aiClient.post('/api/v1/ai/document-generate', data, config),
 
   /** Doki classifies uploaded document text by ISO clause */
   clauseClassify: (data: { documentText: string; fileName: string }) =>
-    api.post('/api/v1/ai/clause-classify', data),
+    aiClient.post('/api/v1/ai/clause-classify', data),
 
   /** Audie generates audit plan per ISO 19011:6.3 */
   auditPlan: (data: {
     standards: string[]; scope: string; auditType: string; orgContext: string;
-  }) => api.post('/api/v1/ai/audit-plan', data),
+  }) => aiClient.post('/api/v1/ai/audit-plan', data),
 
   /** Audie clause examination per ISO 19011:6.4 */
   auditExamine: (data: {
     clause: string; standard: string; auditContext: string;
     evidence?: string[]; conversationHistory?: { role: string; content: string }[];
-  }) => api.post('/api/v1/ai/audit-examine', data),
+  }) => aiClient.post('/api/v1/ai/audit-examine', data),
 
   /** Audie formal audit report per ISO 19011:6.5 */
   auditReport: (data: {
     sessionId: string; findings: object[]; scope: string; standards: string[]; auditDate: string;
-  }) => api.post('/api/v1/ai/audit-report', data),
+  }) => aiClient.post('/api/v1/ai/audit-report', data),
 
   /** Nexus guides root cause analysis */
   rootCause: (data: {
     findingDescription: string; clauseRef: string; standard: string;
     method: '5why' | 'fishbone' | '8d'; history?: { role: string; content: string }[];
-  }) => api.post('/api/v1/ai/root-cause', data),
+  }) => aiClient.post('/api/v1/ai/root-cause', data),
 
   /** Platform gap detection across compliance matrix */
   gapDetect: (data: {
     standards: string[]; existingControls?: object[]; auditResults?: object[];
-  }) => api.post('/api/v1/ai/gap-detect', data),
+  }) => aiClient.post('/api/v1/ai/gap-detect', data),
 
   /** Platform management review input report */
   managementReview: (data: {
     auditResults?: object; capaStatus?: object; complianceScores?: object;
-  }) => api.post('/api/v1/ai/management-review', data),
+  }) => aiClient.post('/api/v1/ai/management-review', data),
 };
 
 /** @deprecated — use aiApi instead */

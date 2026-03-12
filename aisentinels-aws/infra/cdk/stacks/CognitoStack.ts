@@ -86,7 +86,10 @@ export class CognitoStack extends cdk.Stack {
       role: triggerRole,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
-      environment: { ENV_NAME: envName },
+      environment: {
+        ENV_NAME: envName,
+        PROVISION_FUNCTION_NAME: `aisentinels-api-provision-${envName}`,
+      },
       logGroup: postConfirmLogGroup,
       bundling: {
         minify: true,
@@ -113,7 +116,10 @@ export class CognitoStack extends cdk.Stack {
       role: triggerRole,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
-      environment: { ENV_NAME: envName },
+      environment: {
+        ENV_NAME: envName,
+        PROVISION_FUNCTION_NAME: `aisentinels-api-provision-${envName}`,
+      },
       logGroup: preTokenLogGroup,
       bundling: {
         minify: true,
@@ -225,6 +231,19 @@ export class CognitoStack extends cdk.Stack {
         actions: ['cognito-idp:AdminUpdateUserAttributes'],
         resources: [
           `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.region}_*`,
+        ],
+      }),
+    );
+
+    // Pre-token trigger invokes the provision Lambda asynchronously to create
+    // Aurora rows (tenants + users + subscriptions) for new users on first login.
+    // Uses deterministic function name — no cross-stack reference needed.
+    preTokenFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowInvokeProvisionLambda',
+        actions: ['lambda:InvokeFunction'],
+        resources: [
+          `arn:aws:lambda:${this.region}:${this.account}:function:aisentinels-api-provision-${envName}`,
         ],
       }),
     );

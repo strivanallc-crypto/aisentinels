@@ -751,6 +751,34 @@ export class ApiStack extends cdk.Stack {
       },
     }));
 
+    // ── Function URL (bypasses API GW 30s integration timeout) ─────────────
+    // AI inference (Gemini 2.5 Pro) routinely takes 30-90s.
+    // API Gateway HTTP API max integration timeout = 30s (hard AWS limit).
+    // Function URL has no timeout cap — respects the Lambda's own 90s timeout.
+    const aiFnUrl = aiFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,   // JWT validated inside handler
+      cors: {
+        allowedOrigins: isProd
+          ? ['https://aisentinels.io', 'https://www.aisentinels.io']
+          : ['*'],
+        allowedMethods: [lambda.HttpMethod.POST],
+        allowedHeaders: ['Authorization', 'Content-Type'],
+        maxAge: cdk.Duration.hours(1),
+      },
+    });
+
+    new ssm.StringParameter(this, 'AiFunctionUrlParam', {
+      parameterName: `/aisentinels/${envName}/ai/function-url`,
+      stringValue: aiFnUrl.url,
+    });
+    tag(aiFnUrl);
+
+    new cdk.CfnOutput(this, 'AiFunctionUrl', {
+      value: aiFnUrl.url,
+      exportName: `aisentinels-${envName}-ai-function-url`,
+      description: 'Lambda Function URL for AI sentinel inference (bypasses API GW 30s limit)',
+    });
+
     // ── Billing routes (E9) ──────────────────────────────────────────────────
     const billingIntegration = new HttpLambdaIntegration('BillingIntegration', billingFn);
 

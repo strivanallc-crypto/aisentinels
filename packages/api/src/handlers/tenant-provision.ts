@@ -1,12 +1,17 @@
 /**
  * POST /api/v1/tenants/provision — protected (JWT required).
+ * Also invocable directly by pre-token-generation trigger (fire-and-forget).
  *
- * Called once from the frontend during the post-signup onboarding flow.
+ * Called once from the frontend during the post-signup onboarding flow,
+ * or automatically by the pre-token-generation trigger when a new user
+ * is detected (missing tenantId backfill path).
+ *
  * Creates the tenant, owner user, and starter trial subscription in a single
  * RLS-scoped transaction.
  *
  * All three inserts use onConflictDoNothing() — safe to retry if the
- * frontend re-submits (e.g. network timeout):
+ * frontend re-submits (e.g. network timeout) or if pre-token invokes
+ * this Lambda on every login for the same user:
  *   • tenants    — conflict on PK (tenantId from JWT)
  *   • users      — conflict on unique cognitoSub
  *   • subscriptions — only inserted when user row is newly created,
@@ -21,6 +26,39 @@ import { tenants, users, subscriptions } from '@aisentinels/db/schema';
 import { withTenantContext } from '../middleware/tenant-context.ts';
 import { extractClaims } from '../middleware/auth-context.ts';
 
+// ── Dual-source payload extraction ──────────────────────────────────────────
+// Supports two event shapes:
+//   1. API Gateway v2 JWT authorizer event (frontend POST)
+//   2. Direct Lambda invocation from pre-token-generation trigger
+interface ProvisionPayload {
+  sub: string;
+  email: string;
+  tenantId: string;
+  role: string;
+}
+
+function extractPayload(event: any): ProvisionPayload {
+  // API Gateway v2 JWT authorizer event — claims nested in requestContext
+  if (event?.requestContext?.authorizer?.jwt?.claims) {
+    return extractClaims(event);
+  }
+
+  // Direct Lambda invocation from pre-token-generation trigger
+  if (event?.source === 'pre-token-generation') {
+    const { sub, email, tenantId, role } = event;
+    if (!sub || !tenantId) {
+      throw new Error(
+        `Direct invoke missing required fields: sub=${sub}, tenantId=${tenantId}`,
+      );
+    }
+    return { sub, email: email ?? '', tenantId, role: role ?? 'owner' };
+  }
+
+  throw new Error(
+    `Unknown event source: ${JSON.stringify(event).slice(0, 200)}`,
+  );
+}
+
 // Module-scope singleton — reused across warm Lambda invocations to avoid
 // per-request IAM token fetch and connection setup latency.
 let _dbInstance: Awaited<ReturnType<typeof createDb>> | null = null;
@@ -34,13 +72,13 @@ async function getDbInstance(): Promise<Awaited<ReturnType<typeof createDb>>> {
 
 export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
   try {
-    const { sub, email, tenantId, role } = extractClaims(event);
+    const { sub, email, tenantId, role } = extractPayload(event);
 
     // Parse optional body for custom name/slug overrides
     let parsedBody: { name?: string; slug?: string } = {};
-    if (event.body) {
+    if ((event as any).body) {
       try {
-        parsedBody = JSON.parse(event.body) as { name?: string; slug?: string };
+        parsedBody = JSON.parse((event as any).body) as { name?: string; slug?: string };
       } catch {
         // Ignore malformed body — fall through to defaults
       }
