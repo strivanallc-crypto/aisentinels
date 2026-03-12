@@ -9,9 +9,17 @@
  * Google sign-in is federated through Cognito (UserPoolIdentityProviderGoogle)
  * so only the Cognito provider is needed here — both email/password and Google
  * users get Cognito-issued JWTs that API Gateway can validate.
+ *
+ * NOTE: Explicit authorization/token/userinfo endpoints bypass OIDC discovery.
+ * This avoids a runtime failure in the Amplify SSR Lambda where Next.js's
+ * patched fetch() interferes with the well-known config request, causing
+ * Auth.js to throw a masked "Configuration" error.
  */
 import NextAuth from 'next-auth';
 import Cognito from 'next-auth/providers/cognito';
+
+/** Cognito Hosted UI domain — set via COGNITO_DOMAIN env var. */
+const cognitoDomain = process.env.COGNITO_DOMAIN!;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -19,6 +27,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId:     process.env.COGNITO_CLIENT_ID!,
       clientSecret: process.env.COGNITO_CLIENT_SECRET ?? '',
       issuer:       process.env.COGNITO_ISSUER!,
+      // Explicit endpoints bypass OIDC discovery (see header comment).
+      authorization: {
+        url: `https://${cognitoDomain}/oauth2/authorize`,
+        params: { scope: 'openid email profile' },
+      },
+      token:    `https://${cognitoDomain}/oauth2/token`,
+      userinfo: `https://${cognitoDomain}/oauth2/userInfo`,
     }),
   ],
   callbacks: {
