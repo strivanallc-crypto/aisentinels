@@ -47,7 +47,7 @@ export async function createDocument(event: APIGatewayProxyEventV2WithJWTAuthori
         version:    1,
         standards,
         clauseRefs,
-        createdBy:  sub,  // users.id === cognitoSub (set by tenant-provision)
+        createdBy:  sub,  // users.id = Cognito sub UUID (set by tenant-provision)
       })
       .returning(),
   );

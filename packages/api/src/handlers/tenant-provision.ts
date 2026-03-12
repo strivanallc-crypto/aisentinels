@@ -9,6 +9,11 @@
  * Creates the tenant, owner user, and starter trial subscription in a single
  * RLS-scoped transaction.
  *
+ * IMPORTANT — users.id is set to the Cognito sub (JWT sub claim):
+ *   All downstream handlers use the JWT sub claim directly as a foreign key
+ *   reference to users.id (e.g. documents.created_by, records.created_by).
+ *   This MUST match — if users.id !== cognitoSub, FK constraints will fail.
+ *
  * All three inserts use onConflictDoNothing() — safe to retry if the
  * frontend re-submits (e.g. network timeout) or if pre-token invokes
  * this Lambda on every login for the same user:
@@ -21,6 +26,7 @@
  * Connection singleton is reused across warm Lambda invocations.
  */
 import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { eq } from 'drizzle-orm';
 import { createDb } from '@aisentinels/db';
 import { tenants, users, subscriptions } from '@aisentinels/db/schema';
 import { withTenantContext } from '../middleware/tenant-context.ts';
@@ -103,6 +109,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
     const { client } = await getDbInstance();
 
     let userId: string | undefined;
+    let isNewUser = false;
 
     await withTenantContext(client, tenantId, async (txDb) => {
       // 1. Upsert tenant row — idempotent on PK (tenantId is the UUID from JWT)
@@ -111,25 +118,56 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
         .values({ id: tenantId, name, slug, status: 'trial' })
         .onConflictDoNothing();
 
-      // 2. Upsert user row — idempotent on unique cognitoSub; returns id only on first insert
-      const [newUser] = await txDb
-        .insert(users)
-        .values({
-          tenantId,
-          cognitoSub: sub,
-          email,
-          firstName,
-          lastName,
-          role: 'owner', // provision endpoint always creates the initial tenant owner
-          status: 'active',
-        })
-        .onConflictDoNothing()
-        .returning({ id: users.id });
+      // 2. Upsert user row — users.id MUST equal Cognito sub (JWT sub claim)
+      //    so that downstream handlers can use `sub` directly as FK to users.id.
+      //
+      //    Check if user exists first to distinguish new vs existing users
+      //    and to fix legacy rows where id !== cognitoSub.
+      const [existingUser] = await txDb
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.cognitoSub, sub));
 
-      userId = newUser?.id;
+      if (existingUser) {
+        // Fix legacy users provisioned before the id=sub fix:
+        // update PK to match Cognito sub so FK references work.
+        if (existingUser.id !== sub) {
+          await txDb
+            .update(users)
+            .set({ id: sub })
+            .where(eq(users.cognitoSub, sub));
+          console.log(
+            JSON.stringify({
+              event: 'TenantProvision_FixUserId',
+              tenantId,
+              oldId: existingUser.id,
+              newId: sub,
+            }),
+          );
+        }
+        userId = sub;
+      } else {
+        // New user — insert with id = sub (Cognito sub UUID as PK)
+        isNewUser = true;
+        const [newUser] = await txDb
+          .insert(users)
+          .values({
+            id: sub,
+            tenantId,
+            cognitoSub: sub,
+            email,
+            firstName,
+            lastName,
+            role: 'owner', // provision endpoint always creates the initial tenant owner
+            status: 'active',
+          })
+          .returning({ id: users.id });
+
+        userId = newUser?.id;
+      }
 
       // 3. Insert subscription only on first provision — prevents duplicate trial rows on retry
-      if (newUser) {
+      if (isNewUser) {
         await txDb
           .insert(subscriptions)
           .values({
@@ -150,7 +188,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
         event: 'TenantProvision',
         tenantId,
         userId,
-        isFirstProvision: userId !== undefined,
+        isFirstProvision: isNewUser,
       }),
     );
 

@@ -22,6 +22,12 @@
  *   rows (tenants + users + subscriptions). The provision Lambda is fully
  *   idempotent — ON CONFLICT DO NOTHING on all three inserts.
  *
+ * IMPORTANT — sub vs userName:
+ *   event.userName is the Cognito username (e.g. Google_1003366...). For
+ *   Google-federated users this is NOT a UUID. The provision Lambda uses
+ *   `sub` as users.id (PK), so we MUST send attrs['sub'] (the Cognito user
+ *   pool sub UUID), NOT event.userName.
+ *
  * Wired as V2_0 in CognitoStack via:
  *   userPool.addTrigger(
  *     cognito.UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG,
@@ -48,6 +54,9 @@ const lambdaClient = new LambdaClient({
 export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
   const attrs = event.request.userAttributes;
   const email = attrs['email'] ?? '';
+  // Cognito user pool sub (UUID) — this is the REAL user identity.
+  // NOT event.userName which is Google_xxx for federated users.
+  const cognitoSub = attrs['sub'] ?? '';
 
   let tenantId = attrs['custom:tenantId'] ?? '';
   let role = attrs['custom:role'] ?? '';
@@ -75,6 +84,7 @@ export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
         JSON.stringify({
           event: 'PreTokenGeneration_BackfillTenantId',
           user: event.userName,
+          cognitoSub,
           tenantId,
           role,
           triggerSource: event.triggerSource,
@@ -97,6 +107,9 @@ export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
     // The provision Lambda creates tenants + users + subscriptions rows.
     // InvocationType: 'Event' = async — pre-token does NOT wait for completion.
     // All three DB inserts use ON CONFLICT DO NOTHING — safe to retry/duplicate.
+    //
+    // CRITICAL: Pass attrs['sub'] (UUID) NOT event.userName (Google_xxx).
+    // The provision Lambda uses `sub` as users.id (PK).
     const provisionFnName = process.env.PROVISION_FUNCTION_NAME;
     if (provisionFnName) {
       try {
@@ -106,7 +119,7 @@ export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
             InvocationType: 'Event',
             Payload: JSON.stringify({
               source: 'pre-token-generation',
-              sub: event.userName,
+              sub: cognitoSub,
               email,
               tenantId,
               role,
@@ -117,6 +130,7 @@ export const handler: PreTokenGenerationV2TriggerHandler = async (event) => {
           JSON.stringify({
             event: 'PreTokenGeneration_ProvisionInvoked',
             user: event.userName,
+            cognitoSub,
             tenantId,
             functionName: provisionFnName,
           }),
