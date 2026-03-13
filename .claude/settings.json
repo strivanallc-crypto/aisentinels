@@ -1,5 +1,10 @@
 {
   "hooks": {
     "Stop": []
+  },
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1"
   }
 }
