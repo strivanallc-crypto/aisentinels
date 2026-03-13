@@ -8,4 +8,9 @@
  */
 import { handlers } from '@/lib/auth';
 
+// Force request-time evaluation so server-side env vars (COGNITO_DOMAIN,
+// COGNITO_CLIENT_SECRET, etc.) are read from the Lambda environment rather
+// than baked in during the static build phase.
+export const dynamic = 'force-dynamic';
+
 export const { GET, POST } = handlers;
