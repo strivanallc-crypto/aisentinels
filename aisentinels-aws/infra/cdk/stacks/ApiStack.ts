@@ -697,6 +697,11 @@ export class ApiStack extends cdk.Stack {
       methods: [HttpMethod.GET],
       integration: capaIntegration,
     });
+    this.httpApi.addRoutes({
+      path: '/api/v1/capa/{id}/actions',
+      methods: [HttpMethod.POST],
+      integration: capaIntegration,
+    });
 
     // ── Records Vault routes (E8) ─────────────────────────────────────────────
     const recordsIntegration = new HttpLambdaIntegration('RecordsIntegration', recordsFn);

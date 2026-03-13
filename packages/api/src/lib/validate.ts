@@ -24,8 +24,14 @@ const RECORD_CATEGORIES  = [
 
 const futureDate = (label: string) =>
   z.string().refine(
-    (s) => { const d = new Date(s); return !isNaN(d.getTime()) && d > new Date(); },
-    `${label} must be a valid future date`,
+    (s) => {
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    },
+    `${label} must be a valid date today or in the future`,
   );
 
 const anyDate = (label: string) =>
@@ -49,6 +55,15 @@ export const CreateCapaSchema = z.object({
 
 export const UpdateCapaStatusSchema = z.object({
   status: z.enum(CAPA_STATUSES),
+});
+
+const ACTION_TYPES = ['corrective', 'preventive'] as const;
+
+export const AddCapaActionSchema = z.object({
+  description: z.string().min(1).max(2000).transform((s) => s.trim()),
+  actionType:  z.enum(ACTION_TYPES).optional().default('corrective'),
+  owner:       z.string().max(200).optional().transform((s) => s?.trim() || undefined),
+  dueDate:     anyDate('dueDate').optional(),
 });
 
 export const CreateAuditSchema = z.object({

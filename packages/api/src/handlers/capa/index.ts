@@ -10,12 +10,14 @@
  *   GET   /api/v1/capa/stats/dashboard    → capaStatsDashboard
  *   GET   /api/v1/capa/{id}               → getCapa
  *   PATCH /api/v1/capa/{id}/status        → updateCapaStatus
+ *   POST  /api/v1/capa/{id}/actions       → addCapaAction
  */
 import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { listCapas }          from './list.ts';
 import { createCapa }         from './create.ts';
 import { getCapa }            from './get.ts';
 import { updateCapaStatus }   from './update-status.ts';
+import { addCapaAction }      from './add-action.ts';
 import { capaStatsDashboard } from './stats.ts';
 
 export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
@@ -41,6 +43,11 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
     // PATCH /api/v1/capa/{id}/status — check BEFORE the GET /{id} branch
     if (method === 'PATCH' && path.endsWith('/status')) {
       return updateCapaStatus(event);
+    }
+
+    // POST /api/v1/capa/{id}/actions — add corrective/preventive action
+    if (method === 'POST' && path.endsWith('/actions')) {
+      return addCapaAction(event);
     }
 
     // GET /api/v1/capa/{id}
