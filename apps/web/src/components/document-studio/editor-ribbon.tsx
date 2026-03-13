@@ -15,6 +15,7 @@ import {
   Strikethrough,
   List,
   ListOrdered,
+  ListChecks,
   Quote,
   Code2,
   AlignLeft,
@@ -22,7 +23,7 @@ import {
   AlignRight,
   AlignJustify,
   Minus,
-  WrapText,
+  Table2,
   ChevronDown,
   Sparkles,
   RotateCcw,
@@ -431,6 +432,14 @@ export function EditorRibbon({ editor, readOnly, onAskDoki, onImprove, onIsoClau
         <ListOrdered className="h-3.5 w-3.5" />
       </RibbonBtn>
       <RibbonBtn
+        active={editor.isActive('taskList')}
+        disabled={disabled}
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        title="Task List"
+      >
+        <ListChecks className="h-3.5 w-3.5" />
+      </RibbonBtn>
+      <RibbonBtn
         active={editor.isActive('blockquote')}
         disabled={disabled}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -438,31 +447,23 @@ export function EditorRibbon({ editor, readOnly, onAskDoki, onImprove, onIsoClau
       >
         <Quote className="h-3.5 w-3.5" />
       </RibbonBtn>
-      <RibbonBtn
-        active={editor.isActive('codeBlock')}
-        disabled={disabled}
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        title="Code Block"
-      >
-        <Code2 className="h-3.5 w-3.5" />
-      </RibbonBtn>
 
       <Sep />
 
-      {/* §4 — Insert */}
+      {/* §5 — Insert */}
+      <RibbonBtn
+        disabled={disabled}
+        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+        title="Insert Table"
+      >
+        <Table2 className="h-3.5 w-3.5" />
+      </RibbonBtn>
       <RibbonBtn
         disabled={disabled}
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
         title="Horizontal Rule"
       >
         <Minus className="h-3.5 w-3.5" />
-      </RibbonBtn>
-      <RibbonBtn
-        disabled={disabled}
-        onClick={() => editor.chain().focus().setHardBreak().run()}
-        title="Hard Break"
-      >
-        <WrapText className="h-3.5 w-3.5" />
       </RibbonBtn>
 
       <Sep />
