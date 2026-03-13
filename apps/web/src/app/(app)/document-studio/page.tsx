@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Upload, Sparkles, Plus, ArrowUpRight } from 'lucide-react';
+import { Search, Upload, Sparkles, Plus, Pencil, Archive } from 'lucide-react';
 import { documentsApi } from '@/lib/api';
-import type { Document, DocType, DocStatus } from '@/lib/types';
+import type { Document, DocType } from '@/lib/types';
 import { DOC_TYPE_LABELS, DOC_STATUS_LABELS } from '@/lib/types';
-import { Modal } from '@/components/ui/modal';
-import { Button } from '@/components/ui/button';
 import {
   SentinelPageHero,
   PrimaryButton,
@@ -23,32 +21,30 @@ import { BulkUploadModal } from '@/components/document-studio/bulk-upload-modal'
 
 const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: '#6b7280',
-  review: '#F59E0B',
-  approved: '#22C55E',
-  published: '#3B82F6',
-  archived: '#4b5563',
+const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  draft: { text: '#94a3b8', bg: 'rgba(148,163,184,0.12)' },
+  review: { text: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+  approved: { text: '#c2fa69', bg: 'rgba(194,250,105,0.12)' },
+  published: { text: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  archived: { text: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
 };
 
-interface CreateForm {
-  title: string;
-  docType: DocType;
-  content: string;
-}
-const EMPTY_FORM: CreateForm = { title: '', docType: 'procedure', content: '' };
+const STANDARD_COLORS: Record<string, { text: string; bg: string }> = {
+  iso_9001: { text: '#60a5fa', bg: 'rgba(59,130,246,0.10)' },
+  iso_14001: { text: '#4ade80', bg: 'rgba(34,197,94,0.10)' },
+  iso_45001: { text: '#fbbf24', bg: 'rgba(245,158,11,0.10)' },
+};
 
 export default function DocumentStudioPage() {
   const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
   const [showAiWizard, setShowAiWizard] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
-  const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [standardFilter, setStandardFilter] = useState<string>('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,32 +61,30 @@ export default function DocumentStudioPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-    setSaving(true);
-    try {
-      await documentsApi.create({ title: form.title.trim(), docType: form.docType, content: form.content.trim() || undefined });
-      setShowCreate(false);
-      setForm(EMPTY_FORM);
-      await load();
-    } catch { /* silent */ } finally { setSaving(false); }
-  };
-
   const filtered = documents.filter((doc) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return doc.title.toLowerCase().includes(q) || doc.docType.includes(q);
+    if (typeFilter && doc.docType !== typeFilter) return false;
+    if (standardFilter && !(doc.standards ?? []).includes(standardFilter)) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return doc.title.toLowerCase().includes(q) || doc.docType.includes(q) || doc.id.toLowerCase().includes(q);
+    }
+    return true;
   });
 
-  /* Stats for hero */
-  const totalCount    = documents.length;
+  const totalCount = documents.length;
   const approvedCount = documents.filter((d) => d.status === 'approved' || d.status === 'published').length;
-  const draftCount    = documents.filter((d) => d.status === 'draft').length;
+  const draftCount = documents.filter((d) => d.status === 'draft').length;
+
+  const handleArchive = async (docId: string) => {
+    try {
+      await documentsApi.update(docId, { status: 'archived' });
+      await load();
+    } catch { /* silent */ }
+  };
 
   return (
     <div className="p-6 max-w-[1280px]">
-      {/* ── Hero ── */}
+      {/* Hero */}
       <SentinelPageHero
         sectionLabel="DOCUMENT STUDIO"
         title="Generate. Review. Approve."
@@ -107,10 +101,10 @@ export default function DocumentStudioPage() {
         }
       />
 
-      {/* ── Section label + actions ── */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <SectionLabel>ALL DOCUMENTS</SectionLabel>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--content-text-dim)' }} />
@@ -119,20 +113,51 @@ export default function DocumentStudioPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search documents..."
-              className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-56 focus:border-white/20"
+              className="rounded-full border bg-transparent py-2 pl-9 pr-4 text-sm outline-none w-48 focus:border-white/20"
               style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </div>
+
+          {/* Type filter */}
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-full border bg-transparent py-2 px-3 text-sm outline-none"
+            style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--content-surface)' }}
+          >
+            <option value="">All Types</option>
+            {DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+
+          {/* Standard filter */}
+          <select
+            value={standardFilter}
+            onChange={(e) => setStandardFilter(e.target.value)}
+            className="rounded-full border bg-transparent py-2 px-3 text-sm outline-none"
+            style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--content-surface)' }}
+          >
+            <option value="">All Standards</option>
+            <option value="iso_9001">ISO 9001</option>
+            <option value="iso_14001">ISO 14001</option>
+            <option value="iso_45001">ISO 45001</option>
+          </select>
+
           <SecondaryButton onClick={() => setShowUpload(true)}>
-            <Upload className="h-4 w-4" /> Upload Document
+            <Upload className="h-4 w-4" /> Upload
+          </SecondaryButton>
+          <SecondaryButton onClick={() => setShowBulk(true)}>
+            <Upload className="h-4 w-4" /> Bulk Upload
           </SecondaryButton>
           <PrimaryButton onClick={() => setShowAiWizard(true)}>
             <Sparkles className="h-4 w-4" /> Generate with AI
           </PrimaryButton>
+          <PrimaryButton onClick={() => router.push('/document-studio/new')}>
+            <Plus className="h-4 w-4" /> New Document
+          </PrimaryButton>
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* Table */}
       <ContentCard>
         {loading ? (
           <PageSkeleton rows={6} />
@@ -142,126 +167,124 @@ export default function DocumentStudioPage() {
             heading={documents.length === 0 ? 'No documents yet' : 'No matching documents'}
             description={
               documents.length === 0
-                ? 'Upload your first ISO document to get started.'
-                : 'Try adjusting your search query.'
+                ? 'Create your first ISO document to get started.'
+                : 'Try adjusting your search or filters.'
             }
             action={
               documents.length === 0 ? (
-                <PrimaryButton onClick={() => setShowAiWizard(true)}>
-                  <Sparkles className="h-4 w-4" /> Generate with AI
-                </PrimaryButton>
+                <div className="flex gap-3">
+                  <PrimaryButton onClick={() => setShowAiWizard(true)}>
+                    <Sparkles className="h-4 w-4" /> Generate with AI
+                  </PrimaryButton>
+                  <SecondaryButton onClick={() => router.push('/document-studio/new')}>
+                    <Plus className="h-4 w-4" /> Blank Document
+                  </SecondaryButton>
+                </div>
               ) : undefined
             }
           />
         ) : (
-          <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
-            {filtered.map((doc, i) => (
-              <div
-                key={doc.id}
-                onClick={() => router.push(`/document-studio/${doc.id}`)}
-                className="flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] hover:pl-5 group"
-              >
-                {/* Number */}
-                <span
-                  className="text-[12px] font-semibold font-heading w-8 flex-shrink-0 tabular-nums transition-colors group-hover:text-white/25"
-                  style={{ color: 'var(--row-number)' }}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr
+                  className="text-left text-[11px] font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--content-text-muted)', borderBottom: '1px solid var(--row-divider)' }}
                 >
-                  /{String(i + 1).padStart(2, '0')}
-                </span>
-
-                {/* Title */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold truncate">{doc.title}</p>
-                  <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
-                    {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
-                  </p>
-                </div>
-
-                {/* Standards */}
-                <div className="flex gap-1.5 flex-shrink-0">
-                  {(doc.standards ?? []).slice(0, 2).map((s) => (
-                    <span
-                      key={s}
-                      className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
-                      style={{ background: 'rgba(99,102,241,0.10)', color: '#818CF8' }}
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3 w-28">Doc ID</th>
+                  <th className="px-4 py-3 w-32">Type</th>
+                  <th className="px-4 py-3 w-36">Standards</th>
+                  <th className="px-4 py-3 w-32">Status</th>
+                  <th className="px-4 py-3 w-24">Updated</th>
+                  <th className="px-4 py-3 w-20 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((doc) => {
+                  const sc = STATUS_COLORS[doc.status] ?? STATUS_COLORS.draft;
+                  return (
+                    <tr
+                      key={doc.id}
+                      className="group cursor-pointer transition-colors hover:bg-white/[0.03]"
+                      style={{ borderBottom: '1px solid var(--row-divider)' }}
+                      onClick={() => router.push(`/document-studio/${doc.id}`)}
                     >
-                      {s.replace('iso_', 'ISO ').toUpperCase()}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Status */}
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0"
-                  style={{
-                    color: STATUS_COLORS[doc.status] ?? '#6b7280',
-                    background: `${STATUS_COLORS[doc.status] ?? '#6b7280'}1a`,
-                  }}
-                >
-                  {DOC_STATUS_LABELS[doc.status] ?? doc.status}
-                </span>
-
-                {/* Date */}
-                <span className="text-[11px] flex-shrink-0 w-20 text-right tabular-nums" style={{ color: 'var(--content-text-dim)' }}>
-                  {new Date(doc.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-
-                <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: 'var(--content-text-dim)' }} />
-              </div>
-            ))}
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-[14px] truncate max-w-xs">{doc.title}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[11px]" style={{ color: 'var(--content-text-dim)' }}>
+                          {doc.id.slice(0, 8)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ background: 'rgba(99,102,241,0.10)', color: '#818CF8' }}
+                        >
+                          {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1 flex-wrap">
+                          {(doc.standards ?? []).map((s) => {
+                            const c = STANDARD_COLORS[s] ?? { text: '#818CF8', bg: 'rgba(99,102,241,0.10)' };
+                            return (
+                              <span
+                                key={s}
+                                className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
+                                style={{ background: c.bg, color: c.text }}
+                              >
+                                {s.replace('iso_', 'ISO ').toUpperCase()}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                          style={{ color: sc.text, background: sc.bg }}
+                        >
+                          {DOC_STATUS_LABELS[doc.status] ?? doc.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[11px] tabular-nums" style={{ color: 'var(--content-text-dim)' }}>
+                          {new Date(doc.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); router.push(`/document-studio/${doc.id}`); }}
+                            className="rounded p-1 hover:bg-white/10 transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="h-3.5 w-3.5" style={{ color: 'var(--content-text-dim)' }} />
+                          </button>
+                          {doc.status === 'draft' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleArchive(doc.id); }}
+                              className="rounded p-1 hover:bg-white/10 transition-colors"
+                              title="Archive"
+                            >
+                              <Archive className="h-3.5 w-3.5" style={{ color: 'var(--content-text-dim)' }} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </ContentCard>
 
-      {/* ── Modals (existing components) ── */}
-      <Modal
-        open={showCreate}
-        onOpenChange={(o) => { setShowCreate(o); if (!o) setForm(EMPTY_FORM); }}
-        title="New Document"
-      >
-        <form onSubmit={handleCreate} className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Title</label>
-            <input
-              type="text"
-              required
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Supplier Qualification Procedure"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-white/20"
-              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Type</label>
-            <select
-              required
-              value={form.docType}
-              onChange={(e) => setForm((f) => ({ ...f, docType: e.target.value as DocType }))}
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
-            >
-              {DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Content <span style={{ color: 'var(--content-text-dim)' }}>(optional)</span></label>
-            <textarea
-              rows={4}
-              value={form.content}
-              onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-              placeholder="Enter content or leave blank..."
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }}
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-1">
-            <Button type="button" variant="ghost" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); }}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Creating...' : 'Create Document'}</Button>
-          </div>
-        </form>
-      </Modal>
-
+      {/* Modals */}
       <AiGenerateWizard open={showAiWizard} onOpenChange={setShowAiWizard} onCreated={load} />
       <UploadClassifyModal open={showUpload} onOpenChange={setShowUpload} onCreated={load} />
       <BulkUploadModal open={showBulk} onClose={() => setShowBulk(false)} onComplete={() => { setShowBulk(false); load(); }} />

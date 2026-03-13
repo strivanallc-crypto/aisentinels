@@ -13,6 +13,7 @@ import {
   BookOpen,
   CreditCard,
   BarChart3,
+  ClipboardCheck,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -23,6 +24,8 @@ export interface NavItem {
   sentinelId?: SentinelId;
   /** Minimum plan required. Lower plans see this item locked. */
   requiredPlan?: PlanType;
+  /** Badge key for dynamic count rendering (e.g. 'approvals'). */
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -41,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'COMPLIANCE WORK',
     items: [
       { href: '/document-studio',   label: 'Document Studio',   icon: FileText,      sentinelId: 'doki' },
+      { href: '/document-studio/approvals', label: 'Approvals', icon: ClipboardCheck, sentinelId: 'doki', badge: 'approvals' },
       { href: '/audit',             label: 'Audit Room',        icon: Search,        sentinelId: 'audie' },
       { href: '/capa',              label: 'CAPA Engine',       icon: AlertTriangle, sentinelId: 'nexus' },
       { href: '/risk',              label: 'Risk Navigator',    icon: Compass,       sentinelId: 'saffy', requiredPlan: 'professional' },

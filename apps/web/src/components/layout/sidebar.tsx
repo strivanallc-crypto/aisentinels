@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -8,6 +8,8 @@ import type { Session } from 'next-auth';
 import { LogOut, Lock, Calendar, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { NAV_GROUPS } from './nav-items';
 import type { PlanType } from '@/lib/types';
+import type { Document } from '@/lib/types';
+import { documentsApi } from '@/lib/api';
 
 /* Calendly global — loaded via <Script> in root layout */
 declare global {
@@ -93,6 +95,26 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
   // Responsive collapse — auto-collapse below lg breakpoint
   const [collapsed, setCollapsed] = useState(false);
 
+  // Approval badge count with 30s cache
+  const [approvalCount, setApprovalCount] = useState(0);
+  const lastFetchRef = useRef(0);
+
+  const fetchApprovalCount = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 30_000) return; // skip if last fetch < 30s ago
+    lastFetchRef.current = now;
+    try {
+      const res = await documentsApi.list({ status: 'review' });
+      const data = res.data;
+      const docs: Document[] = Array.isArray(data)
+        ? data
+        : ((data as Record<string, unknown>)?.documents as Document[] ?? []);
+      setApprovalCount(docs.length);
+    } catch {
+      // silent — don't break sidebar for API failures
+    }
+  }, []);
+
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 1023px)');
     setCollapsed(mq.matches);
@@ -100,6 +122,11 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // Fetch approval count on mount and when pathname changes (with 30s cache)
+  useEffect(() => {
+    fetchApprovalCount();
+  }, [pathname, fetchApprovalCount]);
 
   const openCalendly = () => {
     window.Calendly?.initPopupWidget({
@@ -180,6 +207,9 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                   ? PLAN_ORDER.indexOf(item.requiredPlan) > planIdx
                   : false;
 
+                // Resolve badge count for this item
+                const badgeCount = item.badge === 'approvals' ? approvalCount : 0;
+
                 if (isLocked) {
                   return (
                     <div
@@ -202,7 +232,7 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                     key={href}
                     href={href}
                     title={collapsed ? label : undefined}
-                    className={`flex items-center gap-3 rounded-xl py-2.5 text-[13px] transition-all duration-200 ${
+                    className={`relative flex items-center gap-3 rounded-xl py-2.5 text-[13px] transition-all duration-200 ${
                       collapsed ? 'justify-center px-0' : 'px-3'
                     } ${active ? 'font-semibold' : 'hover:translate-x-0.5'}`}
                     style={{
@@ -216,6 +246,24 @@ export function Sidebar({ session, currentPlan = 'starter' }: SidebarProps) {
                       style={{ color: active ? 'var(--sidebar-active-icon)' : 'var(--sidebar-text-dim)' }}
                     />
                     {!collapsed && <span className="truncate flex-1">{label}</span>}
+
+                    {/* Badge — expanded */}
+                    {!collapsed && badgeCount > 0 && (
+                      <span
+                        className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
+                        style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}
+                      >
+                        {badgeCount}
+                      </span>
+                    )}
+
+                    {/* Badge — collapsed: amber dot */}
+                    {collapsed && badgeCount > 0 && (
+                      <span
+                        className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full"
+                        style={{ background: '#F59E0B' }}
+                      />
+                    )}
                   </Link>
                 );
               })}

@@ -1,36 +1,37 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import type { Editor } from '@tiptap/react';
 import {
   ChevronLeft,
-  FileText,
-  AlertCircle,
   Send,
   CheckCircle,
   XCircle,
-  Clock,
   Loader2,
+  AlertCircle,
+  Save,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  Undo2,
 } from 'lucide-react';
 import { documentsApi } from '@/lib/api';
-import type { Document, DocStatus } from '@/lib/types';
-import {
-  DOC_TYPE_LABELS,
-  DOC_STATUS_LABELS,
-  DOC_STATUS_VARIANT,
-  ISO_STANDARD_LABELS,
-} from '@/lib/types';
-import type { IsoStandard } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import type { Document, DocType, DocStatus } from '@/lib/types';
+import { DOC_TYPE_LABELS, DOC_STATUS_LABELS } from '@/lib/types';
 import { TipTapEditor } from '@/components/document-studio/tiptap-editor';
+import { DokiCoPilot } from '@/components/document-studio/doki-copilot';
+import { ClauseSidebar } from '@/components/document-studio/clause-sidebar';
+import { GapAnalysisPanel } from '@/components/document-studio/gap-analysis-panel';
 
-const STATUS_ICON: Record<DocStatus, React.ReactNode> = {
-  draft: <FileText className="h-4 w-4" />,
-  review: <Clock className="h-4 w-4" />,
-  approved: <CheckCircle className="h-4 w-4" />,
-  published: <CheckCircle className="h-4 w-4" />,
-  archived: <XCircle className="h-4 w-4" />,
+const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
+
+const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  draft: { text: '#94a3b8', bg: 'rgba(148,163,184,0.12)' },
+  review: { text: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+  approved: { text: '#c2fa69', bg: 'rgba(194,250,105,0.12)' },
+  published: { text: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  archived: { text: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
 };
 
 export default function DocumentDetailPage() {
@@ -43,13 +44,32 @@ export default function DocumentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deciding, setDeciding] = useState<'APPROVED' | 'REJECTED' | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+  const [dokiOpen, setDokiOpen] = useState(true);
+  const [gapOpen, setGapOpen] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+
+  // Rejection notes
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectNotes, setRejectNotes] = useState('');
+
+  // Editable header fields
+  const [title, setTitle] = useState('');
+  const [docType, setDocType] = useState<DocType>('procedure');
+  const [standards, setStandards] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await documentsApi.get(id);
-      setDoc(res.data as Document);
+      const d = res.data as Document;
+      setDoc(d);
+      setTitle(d.title);
+      setDocType(d.docType);
+      setStandards(d.standards ?? []);
     } catch {
       setError('Document not found or access denied.');
     } finally {
@@ -59,10 +79,46 @@ export default function DocumentDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Auto-save debounce ref
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAutoSave = useCallback(async (json: Record<string, unknown>) => {
+    if (!doc) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await documentsApi.update(doc.id, { bodyJsonb: json });
+        setLastSaved(new Date());
+      } catch { /* silent */ }
+      finally { setSaving(false); }
+    }, 2000);
+  }, [doc]);
+
+  const handleSaveDraft = async () => {
+    if (!doc) return;
+    setSaving(true);
+    try {
+      await documentsApi.update(doc.id, { title, docType, standards });
+      setLastSaved(new Date());
+      // Also save editor content if available
+      if (editorInstance) {
+        const json = editorInstance.getJSON() as Record<string, unknown>;
+        await documentsApi.update(doc.id, { bodyJsonb: json });
+      }
+    } catch {
+      setError('Failed to save.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!doc) return;
     setSubmitting(true);
     try {
+      // Save first
+      await handleSaveDraft();
       await documentsApi.submit(doc.id, []);
       await load();
     } catch {
@@ -72,11 +128,13 @@ export default function DocumentDetailPage() {
     }
   };
 
-  const handleDecide = async (decision: 'APPROVED' | 'REJECTED') => {
+  const handleDecide = async (decision: 'APPROVED' | 'REJECTED', comments?: string) => {
     if (!doc) return;
     setDeciding(decision);
     try {
-      await documentsApi.decide(doc.id, decision);
+      await documentsApi.decide(doc.id, decision, comments);
+      setShowRejectInput(false);
+      setRejectNotes('');
       await load();
     } catch {
       setError(`Failed to ${decision.toLowerCase()} document.`);
@@ -85,10 +143,29 @@ export default function DocumentDetailPage() {
     }
   };
 
+  const handleWithdraw = async () => {
+    if (!doc) return;
+    setWithdrawing(true);
+    try {
+      await documentsApi.update(doc.id, { status: 'draft' as DocStatus });
+      await load();
+    } catch {
+      setError('Failed to withdraw document.');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  const toggleStandard = (std: string) => {
+    setStandards((prev) =>
+      prev.includes(std) ? prev.filter((s) => s !== std) : [...prev, std]
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--content-text-dim)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#6366F1' }} />
       </div>
     );
   }
@@ -99,7 +176,7 @@ export default function DocumentDetailPage() {
         <button onClick={() => router.push('/document-studio')} className="mb-4 flex items-center gap-1 text-sm" style={{ color: 'var(--content-text-muted)' }}>
           <ChevronLeft className="h-4 w-4" /> Back to Documents
         </button>
-        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error ?? 'Document not found'}
         </div>
@@ -107,182 +184,305 @@ export default function DocumentDetailPage() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-6 p-6" style={{ color: 'var(--content-text)' }}>
-      {/* Back link */}
-      <button
-        onClick={() => router.push('/document-studio')}
-        className="flex items-center gap-1 text-sm self-start transition-colors"
-        style={{ color: 'var(--content-text-muted)' }}
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to Documents
-      </button>
+  const isEditable = doc.status === 'draft';
+  const sc = STATUS_COLORS[doc.status] ?? STATUS_COLORS.draft;
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 flex-shrink-0 mt-0.5">
-            {STATUS_ICON[doc.status]}
+  return (
+    <div className="flex flex-col h-[calc(100vh-64px)]" style={{ color: 'var(--content-text)' }}>
+      {/* Document Header */}
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+        style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+      >
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          {/* Back */}
+          <button
+            onClick={() => router.push('/document-studio')}
+            className="flex items-center gap-1 text-sm flex-shrink-0 transition-colors hover:text-white"
+            style={{ color: 'var(--content-text-muted)' }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* Doki toggle */}
+          <button
+            onClick={() => setDokiOpen((o) => !o)}
+            className="flex-shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            title={dokiOpen ? 'Hide Doki' : 'Show Doki'}
+          >
+            {dokiOpen ? (
+              <PanelLeftClose className="h-4 w-4" style={{ color: '#6366F1' }} />
+            ) : (
+              <PanelLeftOpen className="h-4 w-4" style={{ color: '#6366F1' }} />
+            )}
+          </button>
+
+          {/* Title */}
+          {isEditable ? (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-lg font-bold bg-transparent outline-none border-none flex-1 min-w-0 truncate"
+              style={{ color: 'var(--text)' }}
+              placeholder="Untitled Document"
+            />
+          ) : (
+            <h1 className="text-lg font-bold truncate flex-1 min-w-0">{doc.title}</h1>
+          )}
+
+          {/* Type selector */}
+          {isEditable ? (
+            <select
+              value={docType}
+              onChange={(e) => setDocType(e.target.value as DocType)}
+              className="rounded-lg border bg-transparent px-2 py-1 text-xs outline-none flex-shrink-0"
+              style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--content-surface)' }}
+            >
+              {DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          ) : (
+            <span className="text-xs flex-shrink-0 rounded-lg px-2 py-0.5" style={{ background: 'rgba(99,102,241,0.10)', color: '#818CF8' }}>
+              {DOC_TYPE_LABELS[doc.docType]}
+            </span>
+          )}
+
+          {/* Standards toggles */}
+          <div className="flex gap-1 flex-shrink-0">
+            {(['iso_9001', 'iso_14001', 'iso_45001'] as const).map((std) => {
+              const active = standards.includes(std);
+              const colors: Record<string, { on: string; off: string }> = {
+                iso_9001: { on: '#3B82F6', off: 'rgba(59,130,246,0.15)' },
+                iso_14001: { on: '#22C55E', off: 'rgba(34,197,94,0.15)' },
+                iso_45001: { on: '#F59E0B', off: 'rgba(245,158,11,0.15)' },
+              };
+              const c = colors[std];
+              return (
+                <button
+                  key={std}
+                  onClick={() => isEditable && toggleStandard(std)}
+                  disabled={!isEditable}
+                  className="rounded-lg px-2 py-0.5 text-[10px] font-semibold transition-all"
+                  style={{
+                    background: active ? `${c.on}22` : 'transparent',
+                    color: active ? c.on : 'var(--content-text-dim)',
+                    border: `1px solid ${active ? c.on : 'var(--border)'}`,
+                    opacity: isEditable ? 1 : 0.7,
+                    cursor: isEditable ? 'pointer' : 'default',
+                  }}
+                >
+                  {std.replace('iso_', '').toUpperCase()}
+                </button>
+              );
+            })}
           </div>
-          <div>
-            <h1 className="text-xl font-bold">{doc.title}</h1>
-            <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <Badge variant={DOC_STATUS_VARIANT[doc.status]}>
-                {DOC_STATUS_LABELS[doc.status]}
-              </Badge>
-              <span className="text-xs" style={{ color: 'var(--content-text-muted)' }}>
-                {DOC_TYPE_LABELS[doc.docType]}
-              </span>
-              <span className="text-xs rounded bg-white/10 px-1.5 py-0.5 font-mono" style={{ color: 'var(--content-text-dim)' }}>
-                v{doc.version}
-              </span>
-            </div>
-          </div>
+
+          {/* Status badge */}
+          <span
+            className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold flex-shrink-0"
+            style={{ color: sc.text, background: sc.bg }}
+          >
+            {DOC_STATUS_LABELS[doc.status] ?? doc.status}
+          </span>
+
+          {/* Version */}
+          <span className="text-[11px] font-mono flex-shrink-0" style={{ color: 'var(--content-text-dim)' }}>
+            v{doc.version}
+          </span>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 flex-shrink-0">
-          {doc.status === 'draft' && (
-            <Button onClick={handleSubmit} disabled={submitting} size="sm">
-              <Send className="mr-1.5 h-3.5 w-3.5" />
-              {submitting ? 'Submitting…' : 'Submit for Review'}
-            </Button>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+          {/* Save indicator */}
+          {saving && (
+            <span className="text-[11px] flex items-center gap-1" style={{ color: 'var(--content-text-dim)' }}>
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+            </span>
           )}
+          {!saving && lastSaved && (
+            <span className="text-[11px]" style={{ color: 'var(--content-text-dim)' }}>
+              Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+
+          {/* Analyze Compliance button — visible for drafts */}
+          {isEditable && (
+            <button
+              onClick={() => setGapOpen((o) => !o)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border"
+              style={{
+                borderColor: gapOpen ? '#6366F1' : 'var(--border)',
+                color: gapOpen ? '#6366F1' : 'var(--text)',
+                background: gapOpen ? 'rgba(99,102,241,0.08)' : 'transparent',
+              }}
+            >
+              <Search className="h-3.5 w-3.5" />
+              Analyze Compliance
+            </button>
+          )}
+
+          {isEditable && (
+            <>
+              <button
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border"
+                style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+              >
+                <Save className="h-3.5 w-3.5" /> Save Draft
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                style={{ background: '#c2fa69', color: '#0a0f1a' }}
+              >
+                <Send className="h-3.5 w-3.5" />
+                {submitting ? 'Submitting...' : 'Submit for Approval'}
+              </button>
+            </>
+          )}
+
           {doc.status === 'review' && (
             <>
-              <Button
-                onClick={() => handleDecide('APPROVED')}
-                disabled={deciding !== null}
-                size="sm"
-              >
-                <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                {deciding === 'APPROVED' ? 'Approving…' : 'Approve'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleDecide('REJECTED')}
-                disabled={deciding !== null}
-                size="sm"
-              >
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                {deciding === 'REJECTED' ? 'Rejecting…' : 'Reject'}
-              </Button>
+              {!showRejectInput ? (
+                <>
+                  <button
+                    onClick={() => handleDecide('APPROVED')}
+                    disabled={deciding !== null}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                    style={{ background: '#c2fa69', color: '#0a0f1a' }}
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    {deciding === 'APPROVED' ? 'Approving...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={() => setShowRejectInput(true)}
+                    disabled={deciding !== null}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border"
+                    style={{ borderColor: 'var(--border)', color: '#f87171' }}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Reject
+                  </button>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={rejectNotes}
+                    onChange={(e) => setRejectNotes(e.target.value)}
+                    placeholder="Rejection notes..."
+                    className="rounded-lg border bg-transparent px-3 py-1.5 text-xs outline-none w-48"
+                    style={{ borderColor: 'rgba(248,113,113,0.3)', color: 'var(--text)' }}
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => handleDecide('REJECTED', rejectNotes || undefined)}
+                    disabled={deciding !== null}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                    style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171' }}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    {deciding === 'REJECTED' ? 'Rejecting...' : 'Confirm Rejection'}
+                  </button>
+                  <button
+                    onClick={() => { setShowRejectInput(false); setRejectNotes(''); }}
+                    className="text-xs transition-colors"
+                    style={{ color: 'var(--content-text-muted)' }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {/* Metadata panel + Content */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        {/* Content — TipTap Editor with Ribbon */}
+      {/* Status Banners */}
+      {doc.status === 'review' && (
         <div
-          className="overflow-hidden rounded-xl border"
-          style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+          className="flex items-center justify-between px-5 py-2.5 flex-shrink-0"
+          style={{ background: 'rgba(245,158,11,0.08)', borderBottom: '1px solid rgba(245,158,11,0.15)' }}
         >
-          <TipTapEditor
-            content={doc.bodyJsonb as Record<string, unknown> | null | undefined}
-            editable={doc.status === 'draft'}
-            onSave={async (json) => {
-              await documentsApi.update(doc.id, { bodyJsonb: json });
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: '#F59E0B' }} />
+            <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>
+              Awaiting Approval
+            </span>
+          </div>
+          <button
+            onClick={handleWithdraw}
+            disabled={withdrawing}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1 text-[11px] font-semibold transition-colors border"
+            style={{ borderColor: 'rgba(245,158,11,0.3)', color: '#F59E0B' }}
+          >
+            <Undo2 className="h-3 w-3" />
+            {withdrawing ? 'Withdrawing...' : 'Withdraw'}
+          </button>
         </div>
+      )}
 
-        {/* Sidebar metadata */}
-        <div className="flex flex-col gap-4">
-          {/* Standards */}
-          <div
-            className="rounded-xl border p-4"
-            style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-          >
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-              Standards
-            </h3>
-            {doc.standards.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {doc.standards.map((s) => (
-                  <Badge key={s} variant="default">
-                    {ISO_STANDARD_LABELS[s as IsoStandard] ?? s}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs" style={{ color: 'var(--content-text-dim)' }}>No standards assigned</p>
-            )}
-          </div>
-
-          {/* Clause References */}
-          <div
-            className="rounded-xl border p-4"
-            style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-          >
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-              Clause References
-            </h3>
-            {doc.clauseRefs.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {doc.clauseRefs.map((ref) => (
-                  <Badge key={ref} variant="outline" className="text-[10px]">{ref}</Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs" style={{ color: 'var(--content-text-dim)' }}>No clauses mapped</p>
-            )}
-          </div>
-
-          {/* Timeline */}
-          <div
-            className="rounded-xl border p-4"
-            style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-          >
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-              Timeline
-            </h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--content-text-muted)' }}>Created</span>
-                <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--content-text-muted)' }}>Updated</span>
-                <span>{new Date(doc.updatedAt).toLocaleDateString()}</span>
-              </div>
+      {doc.status === 'approved' && (
+        <div
+          className="flex items-center px-5 py-2.5 flex-shrink-0"
+          style={{ background: 'rgba(194,250,105,0.06)', borderBottom: '1px solid rgba(194,250,105,0.12)' }}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-3.5 w-3.5" style={{ color: '#c2fa69' }} />
+            <span className="text-xs font-semibold" style={{ color: '#c2fa69' }}>
+              Approved
               {doc.approvedAt && (
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--content-text-muted)' }}>Approved</span>
-                  <span>{new Date(doc.approvedAt).toLocaleDateString()}</span>
-                </div>
+                <> on {new Date(doc.approvedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</>
               )}
-              {doc.effectiveDate && (
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--content-text-muted)' }}>Effective</span>
-                  <span>{new Date(doc.effectiveDate).toLocaleDateString()}</span>
-                </div>
-              )}
-              {doc.reviewDate && (
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--content-text-muted)' }}>Next Review</span>
-                  <span>{new Date(doc.reviewDate).toLocaleDateString()}</span>
-                </div>
-              )}
-            </div>
+            </span>
           </div>
-
-          {/* Integrity */}
-          {doc.sha256Hash && (
-            <div
-              className="rounded-xl border p-4"
-              style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
-            >
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
-                Integrity Hash
-              </h3>
-              <p className="break-all font-mono text-[10px]" style={{ color: 'var(--content-text-dim)' }}>
-                {doc.sha256Hash}
-              </p>
-            </div>
-          )}
         </div>
+      )}
+
+      {/* Three-zone layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: Doki AI Co-Pilot */}
+        {dokiOpen && (
+          <div
+            className="w-[30%] min-w-[280px] max-w-[400px] border-r overflow-y-auto flex-shrink-0"
+            style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+          >
+            <DokiCoPilot
+              editor={editorInstance}
+              standards={standards}
+              documentType={docType}
+            />
+          </div>
+        )}
+
+        {/* Center: Gap Analysis + TipTap Editor */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <GapAnalysisPanel
+            open={gapOpen}
+            onClose={() => setGapOpen(false)}
+            editor={editorInstance}
+            standards={standards}
+            docType={docType}
+          />
+          <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: '#0a0f1a' }}>
+            <TipTapEditor
+              content={doc.bodyJsonb as Record<string, unknown> | null | undefined}
+              editable={isEditable}
+              onSave={handleAutoSave}
+              onEditorReady={setEditorInstance}
+            />
+          </div>
+        </div>
+
+        {/* Right: ISO Clause Sidebar */}
+        <ClauseSidebar
+          editor={editorInstance}
+          standards={standards}
+          createdAt={doc.createdAt}
+          updatedAt={doc.updatedAt}
+        />
       </div>
     </div>
   );
