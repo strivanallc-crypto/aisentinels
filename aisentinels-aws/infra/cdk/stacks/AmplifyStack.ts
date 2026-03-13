@@ -48,6 +48,7 @@ applications:
               echo "COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> .env.production
               echo "COGNITO_CLIENT_SECRET=$COGNITO_CLIENT_SECRET" >> .env.production
               echo "COGNITO_ISSUER=$COGNITO_ISSUER" >> .env.production
+              echo "COGNITO_DOMAIN=$COGNITO_DOMAIN" >> .env.production
               echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.production
               echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.production
               echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
@@ -99,6 +100,13 @@ export class AmplifyStack extends cdk.Stack {
       this,
       `/aisentinels/${envName}/cognito/web-client-id`,
     );
+    const userPoolDomainPrefix = ssm.StringParameter.valueForStringParameter(
+      this,
+      `/aisentinels/${envName}/cognito/user-pool-domain`,
+    );
+
+    // Full Cognito hosted UI domain — used by Auth.js for explicit OAuth endpoints
+    const cognitoDomain = `${userPoolDomainPrefix}.auth.${this.region}.amazoncognito.com`;
 
     // API endpoint
     const apiEndpoint = ssm.StringParameter.valueForStringParameter(
@@ -157,6 +165,7 @@ export class AmplifyStack extends cdk.Stack {
         { name: 'NEXT_PUBLIC_AWS_REGION', value: this.region },
         { name: 'COGNITO_CLIENT_ID',      value: webClientId },
         { name: 'COGNITO_ISSUER',         value: cognitoIssuer },
+        { name: 'COGNITO_DOMAIN',         value: cognitoDomain },
         { name: 'GOOGLE_CLIENT_ID',       value: googleOauth.secretValueFromJson('client_id').unsafeUnwrap() },
         { name: 'GOOGLE_CLIENT_SECRET',   value: googleOauth.secretValueFromJson('client_secret').unsafeUnwrap() },
         { name: 'AUTH_SECRET',            value: authSecret.secretValue.unsafeUnwrap() },
