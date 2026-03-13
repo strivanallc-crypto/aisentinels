@@ -51,6 +51,7 @@ applications:
               echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.production
               echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.production
               echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
+              echo "NEXT_PUBLIC_AI_FUNCTION_URL=$NEXT_PUBLIC_AI_FUNCTION_URL" >> .env.production
               echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
         build:
           commands:
@@ -106,6 +107,12 @@ export class AmplifyStack extends cdk.Stack {
       `/aisentinels/${envName}/api/endpoint`,
     );
 
+    // AI Lambda Function URL (bypasses API GW 30s timeout for Gemini calls)
+    const aiFunctionUrl = ssm.StringParameter.valueForStringParameter(
+      this,
+      `/aisentinels/${envName}/ai/function-url`,
+    );
+
     // Google OAuth credentials — stored in Secrets Manager as JSON
     const googleOauth = secretsmanager.Secret.fromSecretNameV2(
       this,
@@ -143,7 +150,7 @@ export class AmplifyStack extends cdk.Stack {
   - pattern: '**/*'
     headers:
       - key: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com; style-src 'self' 'unsafe-inline' https://assets.calendly.com; frame-src 'self' https://calendly.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com https://accounts.google.com https://calendly.com"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com; style-src 'self' 'unsafe-inline' https://assets.calendly.com; frame-src 'self' https://calendly.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com https://*.lambda-url.us-east-1.on.aws https://accounts.google.com https://calendly.com"
       - key: X-Frame-Options
         value: SAMEORIGIN
       - key: X-Content-Type-Options
@@ -153,8 +160,9 @@ export class AmplifyStack extends cdk.Stack {
 
       environmentVariables: [
         { name: 'AMPLIFY_MONOREPO_APP_ROOT', value: 'apps/web' },
-        { name: 'NEXT_PUBLIC_API_URL',    value: apiEndpoint },
-        { name: 'NEXT_PUBLIC_AWS_REGION', value: this.region },
+        { name: 'NEXT_PUBLIC_API_URL',          value: apiEndpoint },
+        { name: 'NEXT_PUBLIC_AI_FUNCTION_URL', value: aiFunctionUrl },
+        { name: 'NEXT_PUBLIC_AWS_REGION',      value: this.region },
         { name: 'COGNITO_CLIENT_ID',      value: webClientId },
         { name: 'COGNITO_ISSUER',         value: cognitoIssuer },
         { name: 'GOOGLE_CLIENT_ID',       value: googleOauth.secretValueFromJson('client_id').unsafeUnwrap() },
