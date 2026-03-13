@@ -333,3 +333,95 @@ h1, h2, h3, h4, h5, h6 {
 .theme-transition *::after {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
 }
+
+/* ── Print Stylesheet (G-DS-3: PDF export via window.print()) ────────────── */
+
+@media print {
+  /* Hide everything except the editor content area */
+  body > *:not(#__next),
+  aside,
+  nav,
+  header,
+  footer,
+  [data-radix-portal],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset backgrounds and colors for print */
+  body,
+  html {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Page setup — A4 margins */
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  /* Show only the TipTap editor content */
+  .tiptap-editor-content {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .tiptap-editor-content * {
+    color: black !important;
+    background: transparent !important;
+  }
+
+  /* Preserve table borders */
+  .tiptap-editor-content table {
+    border-collapse: collapse !important;
+  }
+
+  .tiptap-editor-content th,
+  .tiptap-editor-content td {
+    border: 1px solid #333 !important;
+    padding: 4pt 8pt !important;
+  }
+
+  /* Honor page breaks */
+  .tiptap-editor-content h1,
+  .tiptap-editor-content h2 {
+    page-break-after: avoid;
+  }
+
+  .tiptap-editor-content hr.page-break {
+    page-break-after: always;
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+  }
+
+  /* Prevent image overflow */
+  .tiptap-editor-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent orphan/widow lines */
+  .tiptap-editor-content p,
+  .tiptap-editor-content li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Links — show URL in print */
+  .tiptap-editor-content a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #666 !important;
+  }
+}

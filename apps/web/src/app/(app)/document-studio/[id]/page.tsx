@@ -15,6 +15,9 @@ import {
   PanelLeftOpen,
   Search,
   Undo2,
+  Clock,
+  ChevronDown,
+  FileDown,
 } from 'lucide-react';
 import { documentsApi } from '@/lib/api';
 import type { Document, DocType, DocStatus } from '@/lib/types';
@@ -23,6 +26,7 @@ import { TipTapEditor } from '@/components/document-studio/tiptap-editor';
 import { DokiCoPilot } from '@/components/document-studio/doki-copilot';
 import { ClauseSidebar } from '@/components/document-studio/clause-sidebar';
 import { GapAnalysisPanel } from '@/components/document-studio/gap-analysis-panel';
+import { VersionHistoryPanel } from '@/components/document-studio/version-history-panel';
 
 const DOC_TYPES = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
 
@@ -33,6 +37,167 @@ const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
   published: { text: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
   archived: { text: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
 };
+
+/* ── DOCX Export — TipTap JSON → docx.js ─────────────────────────────── */
+
+interface TipTapNode {
+  type: string;
+  content?: TipTapNode[];
+  text?: string;
+  attrs?: Record<string, unknown>;
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
+}
+
+async function exportToDocx(title: string, json: Record<string, unknown> | null | undefined) {
+  const { Document: DocxDocument, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } =
+    await import('docx');
+
+  const content = (json as { content?: TipTapNode[] } | null)?.content ?? [];
+
+  /** Convert TipTap marks to TextRun options */
+  const toTextRun = (node: TipTapNode) => {
+    const text = node.text ?? '';
+    const marks = node.marks ?? [];
+    const opts: Record<string, unknown> = { text };
+    for (const m of marks) {
+      if (m.type === 'bold') opts.bold = true;
+      if (m.type === 'italic') opts.italics = true;
+      if (m.type === 'underline') opts.underline = {};
+      if (m.type === 'strike') opts.strike = true;
+    }
+    return new TextRun(opts as ConstructorParameters<typeof TextRun>[0]);
+  };
+
+  /** Collect inline TextRuns from a node's content */
+  const inlineRuns = (node: TipTapNode): InstanceType<typeof TextRun>[] => {
+    if (!node.content) return [new TextRun('')];
+    return node.content.map((child) => {
+      if (child.type === 'text') return toTextRun(child);
+      if (child.type === 'hardBreak') return new TextRun({ break: 1 });
+      return new TextRun(child.text ?? '');
+    });
+  };
+
+  const paragraphs: InstanceType<typeof Paragraph>[] = [];
+
+  const processList = (items: TipTapNode[], ordered: boolean) => {
+    items.forEach((item, idx) => {
+      if (item.type !== 'listItem') return;
+      const inner = item.content ?? [];
+      for (const p of inner) {
+        if (p.type === 'paragraph') {
+          const runs = inlineRuns(p);
+          if (ordered) {
+            // Prefix with number for ordered lists
+            runs.unshift(new TextRun({ text: `${idx + 1}. ` }));
+            paragraphs.push(new Paragraph({ children: runs, indent: { left: 720 } }));
+          } else {
+            paragraphs.push(new Paragraph({ children: runs, bullet: { level: 0 } }));
+          }
+        } else if (p.type === 'bulletList') {
+          processList(p.content ?? [], false);
+        } else if (p.type === 'orderedList') {
+          processList(p.content ?? [], true);
+        }
+      }
+    });
+  };
+
+  for (const node of content) {
+    switch (node.type) {
+      case 'heading': {
+        const level = (node.attrs?.level ?? 1) as number;
+        const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
+          1: HeadingLevel.HEADING_1,
+          2: HeadingLevel.HEADING_2,
+          3: HeadingLevel.HEADING_3,
+          4: HeadingLevel.HEADING_4,
+          5: HeadingLevel.HEADING_5,
+          6: HeadingLevel.HEADING_6,
+        };
+        paragraphs.push(
+          new Paragraph({
+            children: inlineRuns(node),
+            heading: headingMap[level] ?? HeadingLevel.HEADING_1,
+          })
+        );
+        break;
+      }
+      case 'paragraph':
+        paragraphs.push(new Paragraph({ children: inlineRuns(node) }));
+        break;
+      case 'bulletList':
+        processList(node.content ?? [], false);
+        break;
+      case 'orderedList':
+        processList(node.content ?? [], true);
+        break;
+      case 'blockquote': {
+        const inner = node.content ?? [];
+        for (const child of inner) {
+          if (child.type === 'paragraph') {
+            paragraphs.push(
+              new Paragraph({
+                children: inlineRuns(child),
+                indent: { left: 720 },
+                style: 'IntenseQuote',
+              })
+            );
+          }
+        }
+        break;
+      }
+      case 'horizontalRule':
+        paragraphs.push(
+          new Paragraph({
+            children: [new TextRun({ text: '―'.repeat(50) })],
+            alignment: AlignmentType.CENTER,
+          })
+        );
+        break;
+      default:
+        // TODO: Handle tables, images, and other complex nodes in a future iteration
+        if (node.content) {
+          paragraphs.push(new Paragraph({ children: inlineRuns(node) }));
+        }
+        break;
+    }
+  }
+
+  // Build document
+  const docxDoc = new DocxDocument({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
+        },
+        children: [
+          new Paragraph({
+            children: [new TextRun({ text: title, bold: true, size: 32 })],
+            heading: HeadingLevel.TITLE,
+            spacing: { after: 400 },
+          }),
+          ...paragraphs,
+        ],
+      },
+    ],
+  });
+
+  // Generate blob and trigger download
+  const blob = await Packer.toBlob(docxDoc);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${title.replace(/[^a-zA-Z0-9\s-]/g, '').trim() || 'document'}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ── Main Page Component ──────────────────────────────────────────────── */
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -54,6 +219,11 @@ export default function DocumentDetailPage() {
   // Rejection notes
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
+
+  // G-DS-3: History + Export state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   // Editable header fields
   const [title, setTitle] = useState('');
@@ -161,6 +331,36 @@ export default function DocumentDetailPage() {
       prev.includes(std) ? prev.filter((s) => s !== std) : [...prev, std]
     );
   };
+
+  // G-DS-3: Export handlers
+  const handleExportPDF = () => {
+    setExportOpen(false);
+    window.print();
+  };
+
+  const handleExportDOCX = async () => {
+    if (!doc) return;
+    setExportOpen(false);
+    try {
+      const json = editorInstance
+        ? (editorInstance.getJSON() as Record<string, unknown>)
+        : (doc.bodyJsonb as Record<string, unknown> | null | undefined);
+      await exportToDocx(doc.title, json);
+    } catch {
+      setError('Failed to export DOCX.');
+    }
+  };
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    if (exportOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [exportOpen]);
 
   if (loading) {
     return (
@@ -305,6 +505,20 @@ export default function DocumentDetailPage() {
             </span>
           )}
 
+          {/* G-DS-3: History button — visible all statuses */}
+          <button
+            onClick={() => setHistoryOpen((o) => !o)}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border"
+            style={{
+              borderColor: historyOpen ? '#6366F1' : 'var(--border)',
+              color: historyOpen ? '#6366F1' : 'var(--text)',
+              background: historyOpen ? 'rgba(99,102,241,0.08)' : 'transparent',
+            }}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            History
+          </button>
+
           {/* Analyze Compliance button — visible for drafts */}
           {isEditable && (
             <button
@@ -320,6 +534,50 @@ export default function DocumentDetailPage() {
               Analyze Compliance
             </button>
           )}
+
+          {/* G-DS-3: Export dropdown — visible all statuses */}
+          <div className="relative" ref={exportRef}>
+            <button
+              onClick={() => setExportOpen((o) => !o)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border"
+              style={{
+                borderColor: exportOpen ? '#6366F1' : 'var(--border)',
+                color: exportOpen ? '#6366F1' : 'var(--text)',
+                background: exportOpen ? 'rgba(99,102,241,0.08)' : 'transparent',
+              }}
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Export
+              <ChevronDown className="h-3 w-3" />
+            </button>
+
+            {exportOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border py-1 shadow-lg"
+                style={{
+                  background: 'var(--content-surface)',
+                  borderColor: 'var(--content-border)',
+                }}
+              >
+                <button
+                  onClick={handleExportPDF}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/5"
+                  style={{ color: 'var(--content-text)' }}
+                >
+                  <FileDown className="h-3.5 w-3.5" style={{ color: '#ef4444' }} />
+                  Export as PDF
+                </button>
+                <button
+                  onClick={handleExportDOCX}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/5"
+                  style={{ color: 'var(--content-text)' }}
+                >
+                  <FileDown className="h-3.5 w-3.5" style={{ color: '#3B82F6' }} />
+                  Export as DOCX
+                </button>
+              </div>
+            )}
+          </div>
 
           {isEditable && (
             <>
@@ -442,7 +700,7 @@ export default function DocumentDetailPage() {
       )}
 
       {/* Three-zone layout */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left: Doki AI Co-Pilot */}
         {dokiOpen && (
           <div
@@ -483,6 +741,15 @@ export default function DocumentDetailPage() {
           createdAt={doc.createdAt}
           updatedAt={doc.updatedAt}
         />
+
+        {/* G-DS-3: Version History Panel overlay */}
+        {historyOpen && (
+          <VersionHistoryPanel
+            open={historyOpen}
+            onClose={() => setHistoryOpen(false)}
+            doc={doc}
+          />
+        )}
       </div>
     </div>
   );
