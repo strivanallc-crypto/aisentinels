@@ -1,0 +1,46 @@
+version: 1
+applications:
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install -g pnpm@9.15.0
+            - cd ../.. && pnpm install --frozen-lockfile && cd apps/web
+            - |
+              echo "AUTH_SECRET=$AUTH_SECRET" >> .env.production
+              echo "AUTH_URL=$AUTH_URL" >> .env.production
+              echo "AUTH_TRUST_HOST=$AUTH_TRUST_HOST" >> .env.production
+              echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
+              echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
+              echo "COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> .env.production
+              echo "COGNITO_CLIENT_SECRET=$COGNITO_CLIENT_SECRET" >> .env.production
+              echo "COGNITO_ISSUER=$COGNITO_ISSUER" >> .env.production
+              echo "COGNITO_DOMAIN=$COGNITO_DOMAIN" >> .env.production
+              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.production
+              echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.production
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
+              echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
+              echo "NEXT_PUBLIC_AI_FUNCTION_URL=$NEXT_PUBLIC_AI_FUNCTION_URL" >> .env.production
+        build:
+          commands:
+            - cd ../.. && pnpm --filter @aisentinels/web run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - ../../node_modules/**/*
+    customHeaders:
+      - pattern: '**/*'
+        headers:
+          - key: Content-Security-Policy
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com; style-src 'self' 'unsafe-inline' https://assets.calendly.com; frame-src 'self' https://calendly.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com https://accounts.google.com https://calendly.com https://*.lambda-url.us-east-1.on.aws"
+          - key: X-Frame-Options
+            value: SAMEORIGIN
+          - key: X-Content-Type-Options
+            value: nosniff
+          - key: Referrer-Policy
+            value: strict-origin-when-cross-origin
