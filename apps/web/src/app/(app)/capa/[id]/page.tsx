@@ -31,9 +31,15 @@ import { SentinelAvatar } from '@/components/SentinelAvatar';
 import { AiRcaPanel } from '@/components/capa/ai-rca-panel';
 import dynamic from 'next/dynamic';
 import type { IshikawaCause } from '@/components/capa/ishikawa-diagram';
+import { generateFishboneDiagram } from '@/lib/fishbone-generator';
 
 const IshikawaDiagram = dynamic(
   () => import('@/components/capa/ishikawa-diagram').then((m) => m.IshikawaDiagram),
+  { ssr: false },
+);
+
+const MermaidDiagram = dynamic(
+  () => import('@/components/capa/mermaid-diagram').then((m) => m.MermaidDiagram),
   { ssr: false },
 );
 
@@ -330,7 +336,44 @@ export default function CapaDetailPage() {
             )}
           </div>
 
-          {/* Ishikawa Diagram — additive, below RCA text */}
+          {/* Root Cause Diagram */}
+          {capa.rootCauseAnalysis ? (
+            (() => {
+              const causes = parseCausesFromRCA(capa.rootCauseAnalysis);
+              const fishboneDef = generateFishboneDiagram(capa.problemDescription, causes);
+              return fishboneDef ? (
+                <div
+                  className="rounded-xl border p-4"
+                  style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <SentinelAvatar sentinelId="nexus" size={28} />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+                      / Root Cause Diagram
+                    </h3>
+                  </div>
+                  <MermaidDiagram definition={fishboneDef} />
+                </div>
+              ) : null;
+            })()
+          ) : (
+            <div
+              className="rounded-xl border p-4"
+              style={{ borderColor: 'var(--content-border)', background: 'var(--content-surface)' }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <SentinelAvatar sentinelId="nexus" size={28} />
+                <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--content-text-muted)' }}>
+                  / Root Cause Diagram
+                </h3>
+              </div>
+              <p className="text-sm" style={{ color: 'var(--content-text-dim)' }}>
+                Run Nexus root cause analysis to generate the fishbone diagram
+              </p>
+            </div>
+          )}
+
+          {/* Ishikawa Diagram — full-featured view with legend & download */}
           {(capa.rootCauseAnalysis || showRca) && (
             <IshikawaDiagram
               problem={capa.problemDescription}
