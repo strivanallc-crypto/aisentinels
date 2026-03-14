@@ -64,9 +64,10 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
     }
 
     try {
+      const safeClauseRef = clauseRef || '';
       const res = await aiApi.rootCause({
         findingDescription,
-        clauseRef,
+        clauseRef: safeClauseRef,
         standard,
         method,
         history: history.map((m) => ({ role: m.role, content: m.content })),
@@ -86,8 +87,12 @@ export function AiRcaPanel({ findingDescription, clauseRef, standard, method, on
           onComplete(data.rootCause, data.actions ?? []);
         }
       }
-    } catch {
-      setError('Nexus could not respond. Please try again.');
+    } catch (err: unknown) {
+      console.error('[AiRcaPanel] root-cause failed:', err);
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setError(msg ?? `Nexus could not respond (${status ?? 'network error'}). Please try again.`);
     } finally {
       setLoading(false);
     }

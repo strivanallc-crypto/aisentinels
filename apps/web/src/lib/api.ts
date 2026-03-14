@@ -113,7 +113,9 @@ export const aiApi = {
   rootCause: (data: {
     findingDescription: string; clauseRef: string; standard: string;
     method: '5why' | 'fishbone' | '8d'; history?: { role: string; content: string }[];
-  }) => aiClient.post('/api/v1/ai/root-cause', data),
+  }) => AI_URL
+    ? aiClient.post('/ai/root-cause', data)
+    : api.post('/api/v1/ai/root-cause', data),
 
   /** Platform gap detection across compliance matrix */
   gapDetect: (data: {
