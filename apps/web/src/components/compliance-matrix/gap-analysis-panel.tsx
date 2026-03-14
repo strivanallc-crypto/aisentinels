@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   X,
   Loader2,
@@ -102,6 +102,8 @@ function parseResponse(raw: string): GapAnalysisResult | null {
 interface GapAnalysisPanelProps {
   open: boolean;
   onClose: () => void;
+  autoRun?: boolean;
+  onAutoRunConsumed?: () => void;
   activeStandards: IsoStandard[];
   gapClauses: string[];
   coveredCount: number;
@@ -110,6 +112,8 @@ interface GapAnalysisPanelProps {
 export function GapAnalysisPanel({
   open,
   onClose,
+  autoRun,
+  onAutoRunConsumed,
   activeStandards,
   gapClauses,
   coveredCount,
@@ -165,6 +169,19 @@ export function GapAnalysisPanel({
       setLoading(false);
     }
   }, [activeStandards, gapClauses]);
+
+  // Auto-run when triggered by parent (button click or Fix with AI)
+  const hasAutoRun = useRef(false);
+  useEffect(() => {
+    if (autoRun && open && !hasAutoRun.current && !loading) {
+      hasAutoRun.current = true;
+      runAnalysis();
+      onAutoRunConsumed?.();
+    }
+    if (!open) {
+      hasAutoRun.current = false;
+    }
+  }, [autoRun, open, loading, runAnalysis, onAutoRunConsumed]);
 
   if (!open) return null;
 

@@ -34,6 +34,7 @@ export default function ComplianceMatrixPage() {
   ]);
   const [activeTab, setActiveTab] = useState<ViewTab>('heatmap');
   const [gapPanelOpen, setGapPanelOpen] = useState(false);
+  const [gapAutoRun, setGapAutoRun] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{
     clauseId: string;
     standard: IsoStandard;
@@ -95,6 +96,7 @@ export default function ComplianceMatrixPage() {
   const handleFixWithAi = useCallback(() => {
     setSelectedCell(null);
     setGapPanelOpen(true);
+    setGapAutoRun(true);
   }, []);
 
   return (
@@ -228,7 +230,7 @@ export default function ComplianceMatrixPage() {
 
           {/* Run Gap Analysis */}
           <PrimaryButton
-            onClick={() => setGapPanelOpen(true)}
+            onClick={() => { setGapPanelOpen(true); setGapAutoRun(true); }}
             disabled={activeStandards.length === 0}
           >
             <Sparkles className="h-4 w-4" />
@@ -265,7 +267,9 @@ export default function ComplianceMatrixPage() {
       {/* ── Gap Analysis Panel ── */}
       <GapAnalysisPanel
         open={gapPanelOpen}
-        onClose={() => setGapPanelOpen(false)}
+        onClose={() => { setGapPanelOpen(false); setGapAutoRun(false); }}
+        autoRun={gapAutoRun}
+        onAutoRunConsumed={() => setGapAutoRun(false)}
         activeStandards={activeStandards}
         gapClauses={gapClauses}
         coveredCount={coveredCount}
