@@ -1,124 +1,101 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Sparkles,
-  Loader2,
-  CheckCircle2,
-  Copy,
-  Check,
-  BarChart3,
-  Grid3X3,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { aiApi } from '@/lib/api';
-import type { IsoStandard } from '@/lib/types';
-import { ComplianceHeatmap, deriveStatus } from '@/components/compliance/compliance-heatmap';
-import type { HeatmapCell } from '@/components/compliance/compliance-heatmap';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Sparkles, Loader2, Grid3X3, BarChart3 } from 'lucide-react';
+import type { Document, IsoStandard } from '@/lib/types';
+import { documentsApi } from '@/lib/api';
 import {
   SentinelPageHero,
   PrimaryButton,
   SectionLabel,
   ContentCard,
 } from '@/components/ui/sentinel-page-hero';
+import { ANNEX_SL_CLAUSES } from '@/components/compliance-matrix/annex-sl-clauses';
+import { computeCoverage, computeCellScore } from '@/components/compliance-matrix/coverage-utils';
+import { HeatMapGrid } from '@/components/compliance-matrix/heat-map-grid';
+import { CellDetailPanel } from '@/components/compliance-matrix/cell-detail-panel';
+import { GapAnalysisPanel } from '@/components/compliance-matrix/gap-analysis-panel';
 
 const STANDARDS: { value: IsoStandard; label: string; color: string }[] = [
-  { value: 'iso_9001', label: 'ISO 9001', color: '#3B82F6' },
+  { value: 'iso_9001',  label: 'ISO 9001',  color: '#3B82F6' },
   { value: 'iso_14001', label: 'ISO 14001', color: '#22C55E' },
   { value: 'iso_45001', label: 'ISO 45001', color: '#F59E0B' },
 ];
 
-const ANNEX_SL_CLAUSES = [
-  { id: '4', title: 'Context of the Organisation', subclauses: ['4.1', '4.2', '4.3', '4.4'] },
-  { id: '5', title: 'Leadership', subclauses: ['5.1', '5.2', '5.3'] },
-  { id: '6', title: 'Planning', subclauses: ['6.1', '6.2', '6.3'] },
-  { id: '7', title: 'Support', subclauses: ['7.1', '7.2', '7.3', '7.4', '7.5'] },
-  { id: '8', title: 'Operation', subclauses: ['8.1', '8.2'] },
-  { id: '9', title: 'Performance Evaluation', subclauses: ['9.1', '9.2', '9.3'] },
-  { id: '10', title: 'Improvement', subclauses: ['10.1', '10.2', '10.3'] },
-];
-
-interface GapResult {
-  gaps: { clause: string; standard: string; severity: string; description: string }[];
-  suggestions: { clause: string; standard: string; recommendation: string }[];
-  coverageByStandard: Record<string, number>;
-}
-
-type ViewTab = 'matrix' | 'heatmap';
-
-function adaptMatrixToHeatmap(gapResult: GapResult, standards: IsoStandard[]): HeatmapCell[] {
-  const cells: HeatmapCell[] = [];
-  for (const clause of ANNEX_SL_CLAUSES) {
-    for (const sub of clause.subclauses) {
-      for (const std of standards) {
-        const gap = gapResult.gaps.find((g) => g.clause === sub && g.standard === std);
-        const overallCoverage = gapResult.coverageByStandard[std] ?? 0;
-        if (gap) {
-          const score = gap.severity === 'high' ? 15 : gap.severity === 'medium' ? 35 : 50;
-          const isCritical = gap.severity === 'high';
-          cells.push({ clause: sub, standard: std, score, status: deriveStatus(score, isCritical), label: gap.description });
-        } else {
-          const score = Math.max(Math.min(Math.round(overallCoverage), 100), 80);
-          cells.push({ clause: sub, standard: std, score, status: deriveStatus(score), label: 'No gaps detected' });
-        }
-      }
-    }
-  }
-  return cells;
-}
+type ViewTab = 'heatmap' | 'table';
 
 export default function ComplianceMatrixPage() {
-  const router = useRouter();
-  const [selectedStandards, setSelectedStandards] = useState<IsoStandard[]>(['iso_9001']);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<GapResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<ViewTab>('matrix');
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [activeStandards, setActiveStandards] = useState<IsoStandard[]>([
+    'iso_9001',
+    'iso_14001',
+    'iso_45001',
+  ]);
+  const [activeTab, setActiveTab] = useState<ViewTab>('heatmap');
+  const [gapPanelOpen, setGapPanelOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<{
+    clauseId: string;
+    standard: IsoStandard;
+  } | null>(null);
 
-  const heatmapCells = useMemo<HeatmapCell[]>(() => {
-    if (!result) return [];
-    return adaptMatrixToHeatmap(result, selectedStandards);
-  }, [result, selectedStandards]);
+  // Fetch documents on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await documentsApi.list();
+        const data = res.data as { documents?: Document[] } | Document[];
+        const docs = Array.isArray(data) ? data : data.documents ?? [];
+        if (!cancelled) setDocuments(docs);
+      } catch {
+        // Empty state is fine — all cells will be red
+      } finally {
+        if (!cancelled) setLoadingDocs(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-  const handleCellClick = useCallback(
-    (clause: string, standard: IsoStandard) => {
-      router.push(`/capa?clause=${encodeURIComponent(clause)}&standard=${encodeURIComponent(standard)}`);
-    },
-    [router],
-  );
+  // Coverage scores
+  const coverageScores = useMemo(() => {
+    return STANDARDS.map((s) => ({
+      ...s,
+      coverage: computeCoverage(documents, s.value),
+    }));
+  }, [documents]);
+
+  // Gap clause list (for gap analysis panel)
+  const gapClauses = useMemo(() => {
+    const gaps: string[] = [];
+    for (const clause of ANNEX_SL_CLAUSES) {
+      const hasAnyApproved = activeStandards.some(
+        (std) => computeCellScore(documents, clause.id, std) === 100,
+      );
+      if (!hasAnyApproved) gaps.push(clause.id);
+    }
+    return gaps;
+  }, [documents, activeStandards]);
+
+  const coveredCount = ANNEX_SL_CLAUSES.length - gapClauses.length;
 
   const toggleStandard = (s: IsoStandard) => {
-    setSelectedStandards((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+    setActiveStandards((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
   };
 
-  const handleAnalyze = async () => {
-    setAnalyzing(true);
-    setError(null);
-    try {
-      const res = await aiApi.gapDetect({ standards: selectedStandards });
-      setResult(res.data as GapResult);
-    } catch {
-      setError('Gap analysis failed. Please try again.');
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+  const handleCellClick = useCallback(
+    (clauseId: string, standard: IsoStandard) => {
+      setSelectedCell({ clauseId, standard });
+    },
+    [],
+  );
 
-  const handleCopy = () => {
-    if (!result) return;
-    const text = result.gaps.map((g) => `${g.standard} ${g.clause} [${g.severity}]: ${g.description}`).join('\n');
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const getSeverityBg = (severity: string) => {
-    if (severity === 'high') return { color: '#EF4444', bg: '#EF44441a' };
-    if (severity === 'medium') return { color: '#F59E0B', bg: '#F59E0B1a' };
-    return { color: 'var(--muted)', bg: 'var(--surface)' };
-  };
+  const handleFixWithAi = useCallback(() => {
+    setSelectedCell(null);
+    setGapPanelOpen(true);
+  }, []);
 
   return (
     <div className="p-6 max-w-[1280px]">
@@ -126,19 +103,59 @@ export default function ComplianceMatrixPage() {
       <SentinelPageHero
         sectionLabel="COMPLIANCE MATRIX"
         title="One IMS. Three Standards."
-        subtitle="Qualy maps your Annex SL clause coverage across ISO 9001, 14001, and 45001 simultaneously."
-        sentinelColor="#3B82F6"
-        stats={
-          result
-            ? STANDARDS.filter((s) => selectedStandards.includes(s.value)).map((s) => ({
-                value: `${Math.round(result.coverageByStandard[s.value] ?? 0)}%`,
-                label: s.label,
-              }))
-            : undefined
-        }
+        subtitle="Map your Annex SL clause coverage across ISO 9001, 14001, and 45001 simultaneously."
+        sentinelColor="#c2fa69"
+        stats={coverageScores.map((s) => ({
+          value: `${s.coverage}%`,
+          label: s.label,
+        }))}
       />
 
-      {/* ── Standard selector + actions ── */}
+      {/* ── KPI Coverage Cards ── */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {coverageScores.map((s) => (
+          <ContentCard key={s.value}>
+            <div
+              className="h-1 w-full rounded-full mb-4"
+              style={{ backgroundColor: s.color }}
+            />
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: s.color }}
+              />
+              <span
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {s.label}
+              </span>
+            </div>
+            <div className="flex items-end gap-2">
+              <span
+                className="text-4xl font-bold font-heading tabular-nums"
+                style={{ color: s.color }}
+              >
+                {loadingDocs ? '—' : s.coverage}
+              </span>
+              <span
+                className="text-sm mb-1 font-heading"
+                style={{ color: s.color, opacity: 0.7 }}
+              >
+                %
+              </span>
+            </div>
+            <p
+              className="text-[11px] mt-1"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              clause coverage
+            </p>
+          </ContentCard>
+        ))}
+      </div>
+
+      {/* ── Toolbar: Standard toggles + View toggle + Gap Analysis button ── */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <SectionLabel>STANDARDS</SectionLabel>
@@ -149,180 +166,119 @@ export default function ComplianceMatrixPage() {
                 onClick={() => toggleStandard(s.value)}
                 className="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-all hover:scale-[1.02]"
                 style={{
-                  borderColor: selectedStandards.includes(s.value) ? s.color : 'var(--border)',
-                  background: selectedStandards.includes(s.value) ? `${s.color}1a` : 'transparent',
-                  color: selectedStandards.includes(s.value) ? s.color : 'var(--muted)',
+                  borderColor: activeStandards.includes(s.value)
+                    ? s.color
+                    : 'var(--border)',
+                  background: activeStandards.includes(s.value)
+                    ? `${s.color}1a`
+                    : 'transparent',
+                  color: activeStandards.includes(s.value)
+                    ? s.color
+                    : 'var(--text-muted)',
                 }}
               >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: s.color }}
+                />
                 {s.label}
               </button>
             ))}
           </div>
         </div>
-        <PrimaryButton onClick={handleAnalyze} disabled={analyzing || selectedStandards.length === 0}>
-          {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {analyzing ? 'Analysing...' : 'AI Gap Analysis'}
-        </PrimaryButton>
-      </div>
 
-      {/* ── View tabs ── */}
-      <div className="flex gap-1 rounded-full border p-1 mb-6 w-fit" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-        <button
-          onClick={() => setActiveTab('matrix')}
-          className="flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200"
-          style={{
-            background: activeTab === 'matrix' ? 'var(--card-bg)' : 'transparent',
-            color: activeTab === 'matrix' ? 'var(--text)' : 'var(--muted)',
-            boxShadow: activeTab === 'matrix' ? 'var(--card-shadow)' : 'none',
-          }}
-        >
-          <Grid3X3 className="h-3.5 w-3.5" /> Matrix
-        </button>
-        <button
-          onClick={() => setActiveTab('heatmap')}
-          className="flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-200"
-          style={{
-            background: activeTab === 'heatmap' ? 'var(--card-bg)' : 'transparent',
-            color: activeTab === 'heatmap' ? 'var(--text)' : 'var(--muted)',
-            boxShadow: activeTab === 'heatmap' ? 'var(--card-shadow)' : 'none',
-          }}
-        >
-          <BarChart3 className="h-3.5 w-3.5" /> Heat Map
-        </button>
-      </div>
+        <div className="flex items-center gap-3">
+          {/* View toggle */}
+          <div
+            className="flex gap-1 rounded-full border p-1"
+            style={{
+              borderColor: 'var(--border)',
+              background: 'var(--bg-surface)',
+            }}
+          >
+            <button
+              onClick={() => setActiveTab('heatmap')}
+              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
+              style={{
+                background:
+                  activeTab === 'heatmap' ? 'var(--bg-elevated)' : 'transparent',
+                color:
+                  activeTab === 'heatmap'
+                    ? 'var(--text-primary)'
+                    : 'var(--text-muted)',
+              }}
+            >
+              <BarChart3 className="h-3.5 w-3.5" /> Heat Map
+            </button>
+            <button
+              onClick={() => setActiveTab('table')}
+              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
+              style={{
+                background:
+                  activeTab === 'table' ? 'var(--bg-elevated)' : 'transparent',
+                color:
+                  activeTab === 'table'
+                    ? 'var(--text-primary)'
+                    : 'var(--text-muted)',
+              }}
+            >
+              <Grid3X3 className="h-3.5 w-3.5" /> Table
+            </button>
+          </div>
 
-      {error && (
-        <div className="mb-6 rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.15)' }}>
-          {error}
+          {/* Run Gap Analysis */}
+          <PrimaryButton
+            onClick={() => setGapPanelOpen(true)}
+            disabled={activeStandards.length === 0}
+          >
+            <Sparkles className="h-4 w-4" />
+            Run Gap Analysis
+          </PrimaryButton>
         </div>
+      </div>
+
+      {/* ── Loading state ── */}
+      {loadingDocs && (
+        <ContentCard>
+          <div className="flex items-center justify-center py-16 gap-3">
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: 'var(--text-muted)' }}
+            />
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Loading documents...
+            </span>
+          </div>
+        </ContentCard>
       )}
 
-      {/* ── Heat Map tab ── */}
-      {activeTab === 'heatmap' && (
-        result ? (
-          <ComplianceHeatmap cells={heatmapCells} standards={selectedStandards} onCellClick={handleCellClick} />
-        ) : (
-          <ContentCard>
-            <div className="py-12 text-center">
-              <BarChart3 className="mx-auto h-8 w-8 mb-3" style={{ color: 'var(--content-text-dim)' }} />
-              <p className="text-sm" style={{ color: 'var(--muted)' }}>Run AI Gap Analysis first to generate the heat map.</p>
-            </div>
-          </ContentCard>
-        )
+      {/* ── Heat Map Grid ── */}
+      {!loadingDocs && (activeTab === 'heatmap' || activeTab === 'table') && (
+        <HeatMapGrid
+          documents={documents}
+          activeStandards={activeStandards}
+          onCellClick={handleCellClick}
+        />
       )}
 
-      {/* ── Matrix tab ── */}
-      {activeTab === 'matrix' && (
-        <>
-          {/* Coverage scores */}
-          {result?.coverageByStandard && (
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {STANDARDS.filter((s) => selectedStandards.includes(s.value)).map((s) => {
-                const pct = Math.round(result.coverageByStandard[s.value] ?? 0);
-                return (
-                  <ContentCard key={s.value}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: s.color }} />
-                      <span className="text-sm font-semibold">{s.label}</span>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <span className="text-3xl font-bold font-heading" style={{ color: s.color }}>{pct}%</span>
-                      <span className="text-[11px] mb-1" style={{ color: 'var(--muted)' }}>coverage</span>
-                    </div>
-                    <div className="mt-2 h-2 rounded-full bg-white/10">
-                      <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: s.color }} />
-                    </div>
-                  </ContentCard>
-                );
-              })}
-            </div>
-          )}
+      {/* ── Gap Analysis Panel ── */}
+      <GapAnalysisPanel
+        open={gapPanelOpen}
+        onClose={() => setGapPanelOpen(false)}
+        activeStandards={activeStandards}
+        gapClauses={gapClauses}
+        coveredCount={coveredCount}
+      />
 
-          {/* Annex SL Clause Grid */}
-          <ContentCard>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>/ ANNEX SL CLAUSE STRUCTURE</p>
-              {result && (
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
-                  {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
-                  {copied ? 'Copied' : 'Copy Gaps'}
-                </Button>
-              )}
-            </div>
-            <div className="divide-y" style={{ borderColor: 'var(--row-divider)' }}>
-              {ANNEX_SL_CLAUSES.map((clause) => {
-                const clauseGaps = result?.gaps.filter((g) => g.clause.startsWith(clause.id)) ?? [];
-                const hasGaps = clauseGaps.length > 0;
-                return (
-                  <div key={clause.id} className="py-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold">Clause {clause.id}</span>
-                        <span className="text-sm" style={{ color: 'var(--muted)' }}>{clause.title}</span>
-                      </div>
-                      {result && (
-                        hasGaps ? (
-                          <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold" style={{ color: '#EF4444', background: '#EF44441a' }}>
-                            {clauseGaps.length} gap{clauseGaps.length > 1 ? 's' : ''}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-xs" style={{ color: '#22C55E' }}>
-                            <CheckCircle2 className="h-3 w-3" /> Covered
-                          </span>
-                        )
-                      )}
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      {clause.subclauses.map((sub) => {
-                        const subGap = result?.gaps.find((g) => g.clause === sub);
-                        const style = subGap ? getSeverityBg(subGap.severity) : result ? { color: '#22C55E', bg: '#22C55E1a' } : { color: 'var(--content-text-dim)', bg: 'var(--surface)' };
-                        return (
-                          <div key={sub} className="rounded-lg border px-3 py-1.5 text-xs font-medium" style={{ color: style.color, background: style.bg, borderColor: `${style.color}30` }} title={subGap?.description}>
-                            {sub}
-                            {subGap && <span className="ml-1 text-[10px]">({subGap.severity})</span>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {clauseGaps.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {clauseGaps.map((g, idx) => {
-                          const s = getSeverityBg(g.severity);
-                          return (
-                            <div key={idx} className="flex items-start gap-2 text-xs" style={{ color: 'var(--muted)' }}>
-                              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0 mt-0.5" style={{ color: s.color, background: s.bg }}>
-                                {g.severity}
-                              </span>
-                              <span><strong>{g.standard.replace('_', ' ').toUpperCase()} {g.clause}:</strong> {g.description}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </ContentCard>
-
-          {/* Suggestions */}
-          {result && result.suggestions && result.suggestions.length > 0 && (
-            <ContentCard className="mt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--muted)' }}>/ AI RECOMMENDATIONS</p>
-              <div className="space-y-2">
-                {result.suggestions.slice(0, 10).map((s, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold flex-shrink-0 mt-0.5" style={{ color: '#3B82F6', background: '#3B82F61a' }}>
-                      {s.standard?.replace('_', ' ') ?? ''} {s.clause}
-                    </span>
-                    <span>{s.recommendation}</span>
-                  </div>
-                ))}
-              </div>
-            </ContentCard>
-          )}
-        </>
+      {/* ── Cell Detail Panel ── */}
+      {selectedCell && (
+        <CellDetailPanel
+          clauseId={selectedCell.clauseId}
+          standard={selectedCell.standard}
+          documents={documents}
+          onClose={() => setSelectedCell(null)}
+          onFixWithAi={handleFixWithAi}
+        />
       )}
     </div>
   );
