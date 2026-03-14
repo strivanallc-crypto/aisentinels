@@ -41,34 +41,58 @@ const STANDARD_LABELS: Record<string, string> = {
   iso_45001: 'ISO 45001',
 };
 
+/**
+ * 4-tier robust JSON parser for AI responses.
+ * AI models may wrap JSON in markdown, add commentary, or return arrays.
+ */
 function parseResponse(raw: string): GapAnalysisResult | null {
-  // Try direct JSON parse
+  // Tier 1: Direct JSON parse
   try {
     const parsed = JSON.parse(raw);
     if (parsed.gaps) return parsed as GapAnalysisResult;
+    // AI returned array instead of object — wrap it
+    if (Array.isArray(parsed)) {
+      return { summary: '', gaps: parsed as GapItem[], overallScore: 0 };
+    }
   } catch {
-    // fallback
+    // fallback to tier 2
   }
 
-  // Try extracting JSON from markdown fences
+  // Tier 2: Extract from ```json ... ``` markdown fences
   const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) {
     try {
       const parsed = JSON.parse(fenceMatch[1].trim());
       if (parsed.gaps) return parsed as GapAnalysisResult;
+      if (Array.isArray(parsed)) {
+        return { summary: '', gaps: parsed as GapItem[], overallScore: 0 };
+      }
     } catch {
-      // fallback
+      // fallback to tier 3
     }
   }
 
-  // Try finding any JSON object with "gaps" key
+  // Tier 3: Extract first { ... } block containing "gaps"
   const jsonMatch = raw.match(/\{[\s\S]*"gaps"[\s\S]*\}/);
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[0]);
       if (parsed.gaps) return parsed as GapAnalysisResult;
     } catch {
-      // fallback
+      // fallback to tier 4
+    }
+  }
+
+  // Tier 4: Extract [...] array if AI returned bare array
+  const arrayMatch = raw.match(/\[[\s\S]*\]/);
+  if (arrayMatch) {
+    try {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return { summary: '', gaps: parsed as GapItem[], overallScore: 0 };
+      }
+    } catch {
+      // all tiers exhausted
     }
   }
 
@@ -102,30 +126,41 @@ export function GapAnalysisPanel({
 
     try {
       const standards = activeStandards.length > 0 ? activeStandards : ['iso_9001'];
-      const standardLabels = standards.map((s) => STANDARD_LABELS[s] ?? s).join(', ');
 
-      const res = await aiApi.documentGenerate({
-        documentType: 'compliance_gap_analysis',
+      // Use the dedicated gapDetect endpoint
+      const res = await aiApi.gapDetect({
         standards,
-        orgContext: `Analyze the compliance matrix for ${standardLabels}. The following Annex SL clauses have no documents: ${gapClauses.join(', ')}. Return JSON only: { "summary": "string", "gaps": [{"clause": "string", "standard": "string", "severity": "critical|major|minor", "recommendation": "string", "suggestedDocType": "string"}], "overallScore": number }`,
-        sections: ['gap_analysis'],
+        existingControls: gapClauses.map((c) => ({
+          clause: c,
+          status: 'missing',
+        })),
       });
 
-      const data = res.data as { content?: string; text?: string; result?: string };
+      // Log full response for debugging
+      console.log('[GapAnalysis] Raw API response:', res.data);
+
+      const data = res.data as Record<string, unknown>;
       const rawContent =
         typeof data === 'string'
           ? data
-          : data.content ?? data.text ?? data.result ?? JSON.stringify(data);
+          : (data.content as string) ??
+            (data.text as string) ??
+            (data.result as string) ??
+            JSON.stringify(data);
+
+      console.log('[GapAnalysis] Raw content to parse:', rawContent);
 
       const parsed = parseResponse(rawContent);
+      console.log('[GapAnalysis] Parsed result:', parsed);
 
       if (!parsed || parsed.gaps.length === 0) {
-        setError('Could not parse analysis results. Try again.');
+        setError('Could not parse analysis results. Check console for raw response. Try again.');
       } else {
         setResult(parsed);
       }
-    } catch {
-      setError('Analysis failed — try again.');
+    } catch (err) {
+      console.error('[GapAnalysis] API error:', err);
+      setError('Analysis failed — check console for details. Try again.');
     } finally {
       setLoading(false);
     }
@@ -197,7 +232,7 @@ export function GapAnalysisPanel({
           <div className="flex flex-col items-center justify-center py-10 gap-3">
             <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#c2fa69' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Running gap analysis... this may take up to 40 seconds
+              Analysing... this may take up to 40 seconds
             </p>
           </div>
         )}
@@ -304,7 +339,6 @@ export function GapAnalysisPanel({
                 </button>
                 {!satisfiedCollapsed && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {/* Covered clauses rendered by parent — we just show the count */}
                     <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
                       <CheckCircle2 className="h-3 w-3" style={{ color: '#4ade80' }} />
                       {coveredCount} of 19 clauses have approved documentation
