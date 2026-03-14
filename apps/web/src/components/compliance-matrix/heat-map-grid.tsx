@@ -25,9 +25,10 @@ interface HeatMapGridProps {
   documents: Document[];
   activeStandards: IsoStandard[];
   onCellClick: (clauseId: string, standard: IsoStandard) => void;
+  compact?: boolean;
 }
 
-export function HeatMapGrid({ documents, activeStandards, onCellClick }: HeatMapGridProps) {
+export function HeatMapGrid({ documents, activeStandards, onCellClick, compact = false }: HeatMapGridProps) {
   const coverageByStandard = useMemo(() => {
     const result: Record<string, number> = {};
     for (const std of activeStandards) {
@@ -114,7 +115,7 @@ export function HeatMapGrid({ documents, activeStandards, onCellClick }: HeatMap
                   </td>
                   {activeStandards.map((std) => {
                     const score = computeCellScore(documents, clause.id, std);
-                    const style = cellStyle(score);
+                    const cs = cellStyle(score);
                     const { approved, draft } = getDocsForCell(documents, clause.id, std);
                     const docCount = approved.length + draft.length;
                     const tooltipLines = [
@@ -125,6 +126,31 @@ export function HeatMapGrid({ documents, activeStandards, onCellClick }: HeatMap
                       ? tooltipLines.join('\n')
                       : `No documents for ${clause.id} — ${STANDARD_META[std]?.label}`;
 
+                    if (compact) {
+                      return (
+                        <td
+                          key={std}
+                          onClick={() => onCellClick(clause.id, std)}
+                          title={tooltip}
+                          className={`px-3 py-2 text-center cursor-pointer transition-colors hover:brightness-125 ${score === 0 ? 'animate-pulse' : ''}`}
+                          style={{
+                            backgroundColor: cs.bg,
+                            color: cs.text,
+                          }}
+                        >
+                          <span className="text-[11px] font-bold">
+                            {score === 100 ? '✓' : score === 50 ? '⚠' : '✕'}
+                            {' '}
+                            {score === 100
+                              ? `${docCount}`
+                              : score === 50
+                                ? 'Draft'
+                                : 'Gap'}
+                          </span>
+                        </td>
+                      );
+                    }
+
                     return (
                       <td key={std} className="px-3 py-3 text-center">
                         <button
@@ -133,9 +159,9 @@ export function HeatMapGrid({ documents, activeStandards, onCellClick }: HeatMap
                           title={tooltip}
                           className={`inline-flex flex-col items-center justify-center rounded-lg border px-3 py-2 transition-all hover:scale-105 cursor-pointer ${score === 0 ? 'animate-pulse' : ''}`}
                           style={{
-                            backgroundColor: style.bg,
-                            borderColor: style.border,
-                            color: style.text,
+                            backgroundColor: cs.bg,
+                            borderColor: cs.border,
+                            color: cs.text,
                             minWidth: 80,
                           }}
                         >

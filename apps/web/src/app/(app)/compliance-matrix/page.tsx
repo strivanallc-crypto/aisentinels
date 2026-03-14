@@ -252,12 +252,13 @@ export default function ComplianceMatrixPage() {
         </ContentCard>
       )}
 
-      {/* ── Heat Map Grid ── */}
-      {!loadingDocs && (activeTab === 'heatmap' || activeTab === 'table') && (
+      {/* ── Heat Map / Table Grid ── */}
+      {!loadingDocs && (
         <HeatMapGrid
           documents={documents}
           activeStandards={activeStandards}
           onCellClick={handleCellClick}
+          compact={activeTab === 'table'}
         />
       )}
 
